@@ -16,16 +16,6 @@ const elements = {
     },
 }
 
-// Helper Functions
-/**
- * Format time
- * @param {...number} parts - Time values to format
- * @returns {string} - Fully formatted time string
- */
-function formatTime(...parts) {
-    return parts.map((part) => String(part).padStart(2, "0")).join(":")
-}
-
 /**
  * Updates the SVG timer display.
  *
