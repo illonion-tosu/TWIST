@@ -1,0 +1,167 @@
+name: Lint and Fix
+
+on:
+    pull_request:
+        branches: [main]
+
+permissions:
+    contents: write
+    pull-requests: write
+
+jobs:
+    lint:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout PR branch
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.head_ref }}
+                  fetch-depth: 0
+                  token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Checkout lint configs
+              run: |
+                  git clone https://x-access-token:${{ secrets.CONFIG_REPO_PAT }}@github.com/illonion/lint-configs.git ../lint-configs
+
+            - name: Set up Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+
+            - name: Install linters globally
+              run: |
+                  npm install --global eslint htmlhint stylelint stylelint-config-standard
+
+            - name: Auto-fix CSS
+              id: css_fix
+              continue-on-error: true
+              run: |
+                  stylelint "**/*.css" \
+                    --config ../lint-configs/.stylelintrc.json \
+                    --fix
+
+            - name: Auto-fix JavaScript
+              id: js_fix
+              continue-on-error: true
+              run: |
+                  eslint "**/*.js" \
+                    --config ../lint-configs/eslint.config.js \
+                    --fix
+
+            - name: Lint HTML
+              id: html_lint
+              continue-on-error: true
+              run: |
+                  htmlhint "**/*.html" \
+                    --config ../lint-configs/.htmlhintrc
+
+            - name: Report lint results
+              if: always()
+              run: |
+                  echo "Lint results:"
+                  echo "  CSS:  ${{ steps.css_fix.outcome }}"
+                  echo "  JS:   ${{ steps.js_fix.outcome }}"
+                  echo "  HTML: ${{ steps.html_lint.outcome }}"
+
+            - name: Check for changes
+              id: changes
+              run: |
+                  if [ -n "$(git status --porcelain)" ]; then
+                      echo "changed=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "changed=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Prepare fix branch name
+              id: branch_name
+              if: steps.changes.outputs.changed == 'true'
+              run: |
+                  echo "name=lint-fixes/${{ github.head_ref }}" >> "$GITHUB_OUTPUT"
+
+            - name: Check if fix branch exists remotely
+              id: branch_check
+              if: steps.changes.outputs.changed == 'true'
+              env:
+                  BRANCH_NAME: lint-fixes/${{ github.head_ref }}
+              run: |
+                  if git ls-remote --exit-code --heads origin "$BRANCH_NAME" >/dev/null 2>&1; then
+                      echo "exists=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "exists=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Create or reset fix branch locally
+              if: steps.changes.outputs.changed == 'true'
+              run: |
+                  branch_name="lint-fixes/${{ github.head_ref }}"
+
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+                  if [ "${{ steps.branch_check.outputs.exists }}" = "true" ]; then
+                      git fetch origin "$branch_name":"$branch_name"
+                      git checkout "$branch_name"
+                      git reset --hard HEAD
+                  else
+                      git checkout -b "$branch_name"
+                  fi
+
+                  git add -A
+                  git commit -m "lint: auto-fix style issues" || echo "No new commit to create"
+
+            - name: Push fix branch
+              if: steps.changes.outputs.changed == 'true'
+              run: |
+                  branch_name="lint-fixes/${{ github.head_ref }}"
+                  git push --force-with-lease origin "$branch_name"
+
+            - name: Check existing PR state
+              if: steps.changes.outputs.changed == 'true'
+              id: pr_check
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  BRANCH_NAME: lint-fixes/${{ github.head_ref }}
+              run: |
+                  pr_state=$(gh pr list \
+                    --head "$BRANCH_NAME" \
+                    --base "${{ github.head_ref }}" \
+                    --json state \
+                    --jq '.[0].state // empty')
+
+                  if [ -z "$pr_state" ]; then
+                      echo "state=none" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "state=$pr_state" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Create new PR if none or closed
+              if: steps.changes.outputs.changed == 'true' && steps.pr_check.outputs.state != 'OPEN'
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  branch_name="lint-fixes/${{ github.head_ref }}"
+
+                  gh pr create \
+                    --base "${{ github.head_ref }}" \
+                    --head "$branch_name" \
+                    --title "Automated lint fixes for ${{ github.head_ref }}" \
+                    --body "This PR was automatically created by GitHub Actions after running lint autofixes on the current PR branch.
+
+                  Lint results:
+                  - CSS: ${{ steps.css_fix.outcome }}
+                  - JS: ${{ steps.js_fix.outcome }}
+                  - HTML: ${{ steps.html_lint.outcome }}"
+
+            - name: Final lint check
+              run: |
+                  echo "Running final lint verification..."
+
+                  stylelint "**/*.css" \
+                    --config ../lint-configs/.stylelintrc.json
+
+                  eslint "**/*.js" \
+                    --config ../lint-configs/eslint.config.js
+
+                  htmlhint "**/*.html" \
+                    --config ../lint-configs/.htmlhintrc
