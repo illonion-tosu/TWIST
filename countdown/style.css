@@ -15,8 +15,8 @@
 /* Timer */
 .timer {
     position: absolute;
-    top: 300px;
-    left: 945px;
+    top: 280px;
+    left: 889px;
     transform: rotate(1deg);
 }
 
@@ -29,8 +29,8 @@
     height: 1080px;
     color: white;
     font-size: 1.25rem;
-    background-color: rgb(149 114 89);
-    font-family: Lexend, sans-serif;
+    background-color: #31313B;
+    font-family: "Super Mario Galaxy", sans-serif;
 }
 
 /* Sidebar Timer */

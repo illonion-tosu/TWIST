@@ -10,14 +10,16 @@ const elements = {
         minutes: document.getElementById("minutes-number-utc"),
         errorMessage: document.getElementById("timer2-error-message"),
     },
-    display: document.getElementById("timer"),
+    display: {
+        minutes: document.querySelectorAll(".timer-minutes"),
+        seconds: document.querySelectorAll(".timer-seconds"),
+    },
 }
 
 // Helper Functions
 /**
  * Format time
- * @constructor
- * @param {...number} parts - Time values to fromat
+ * @param {...number} parts - Time values to format
  * @returns {string} - Fully formatted time string
  */
 function formatTime(...parts) {
@@ -25,18 +27,28 @@ function formatTime(...parts) {
 }
 
 /**
- * Converts total seconds to hours, minutes, and seconds, then formats it
- * 
- * @param {number} seconds - Total number of seconds
- * @returns {string} - Fully formatted time string
+ * Updates the SVG timer display.
+ *
+ * @param {number} totalSeconds - Total number of seconds
  */
-function secondsToDisplay(totalSeconds) {
+function updateDisplay(totalSeconds) {
     const hours = Math.floor(totalSeconds / 3600)
     const minutes = Math.floor((totalSeconds % 3600) / 60)
     const seconds = totalSeconds % 60
-    return hours >= 1
-        ? formatTime(hours, minutes, seconds)
-        : formatTime(minutes, seconds)
+
+    const minuteText = hours >= 1
+        ? `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
+        : String(minutes).padStart(2, "0")
+
+    const secondText = String(seconds).padStart(2, "0")
+
+    elements.display.minutes.forEach((element) => {
+        element.textContent = minuteText
+    })
+
+    elements.display.seconds.forEach((element) => {
+        element.textContent = secondText
+    })
 }
 
 /**
@@ -65,7 +77,7 @@ class CountdownTimer {
     }
 
     /**
-     * Sets the countdown time from inputs and immediately starts the timer
+     * Sets the countdown time from inputs and immediately starts the timer.
      */
     setAndStart() {
         this.setTime()
@@ -94,12 +106,12 @@ class CountdownTimer {
         }
 
         hideErrors()
-        elements.display.textContent = secondsToDisplay(this.remainingSeconds)
+        updateDisplay(this.remainingSeconds)
         this.stop()
     }
 
     /**
-     * Starts the countdown timer if time remains
+     * Starts the countdown timer if time remains.
      */
     start() {
         this.stop()
@@ -119,7 +131,7 @@ class CountdownTimer {
     reset() {
         this.stop()
         this.remainingSeconds = 0
-        elements.display.textContent = "00:00"
+        updateDisplay(0)
     }
 
     /**
@@ -130,7 +142,7 @@ class CountdownTimer {
     tick() {
         if (!this.active) return
         this.remainingSeconds--
-        elements.display.textContent = secondsToDisplay(this.remainingSeconds)
+        updateDisplay(this.remainingSeconds)
         if (this.remainingSeconds <= 0) this.stop()
     }
 }
@@ -144,9 +156,6 @@ class UTCTimer {
 
     /**
      * Starts the UTC countdown timer using the provided UTC hour and minute.
-     *
-     * If the selected time has already passed today,
-     * the timer rolls over to the next UTC day.
      */
     start() {
         this.stop()
@@ -190,7 +199,7 @@ class UTCTimer {
             timeDiff = this.targetTime - Date.now()
         }
 
-        elements.display.textContent = secondsToDisplay(Math.floor(timeDiff / 1000))
+        updateDisplay(Math.floor(timeDiff / 1000))
     }
 }
 
@@ -215,6 +224,7 @@ window.startUTCTimer = () => {
     utcTimer.start()
 }
 
+// Timer tick
 setInterval(() => {
     countdownTimer.tick()
     utcTimer.tick()
