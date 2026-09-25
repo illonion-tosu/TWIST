@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="main">
+        <div id="timer"><span id="timer-minutes">00:</span><span id="timer-seconds">00</span></div>
+    </div>
+
+    <!-- Sidebar -->
+    <section class="sidebar">
+        <div class="sidebar-timer">
+            <div class="sidebar-title">Timer</div>
+            <section id="normal-timer">
+                <div class="sidebar-text">Set timer for: </div>
+                <input id="minutes-number" class="sidebar-input" type="number"> minutes<br>
+                <input id="seconds-number" class="sidebar-input" type="number"> seconds<br>
+                <button class="sidebar-button" onclick="setAndStartTimer()">Set / Start Timer</button>
+                <button class="sidebar-button" onclick="setMinuteSecondTimer()">Set Timer Only</button>
+                <button class="sidebar-button" onclick="startTimer()">Start Timer Only</button>
+                <div class="sidebar-text timer-error-message" id="timer1-error-message">Make sure your timer is positive!</div>
+            </section>
+            <section id="utc-timer">
+                <div class="sidebar-text">or... set timer for: </div>
+                <div>
+                    <input id="hours-number-utc" class="sidebar-input time-input" type="number">:
+                    <input id="minutes-number-utc" class="sidebar-input time-input" type="number"> UTC
+                </div>
+                <button class="sidebar-button" onclick="startUTCTimer()">Start Timer</button>
+                <div class="sidebar-text timer-error-message" id="timer2-error-message">Make sure your hours and minutes are over 0!</div>
+            </section>
+            <button class="sidebar-button light-pink-button" onclick="stopTimer()">Stop Timer</button>
+            <button class="sidebar-button light-pink-button" onclick="resetTimer()">Reset Timer</button>
+        </div>
+    </section>
+
+    <script src="index.js" type="module"></script>
+</body>
+</html>

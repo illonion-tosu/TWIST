@@ -1,0 +1,150 @@
+.main {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-image: url("static/background.png");
+    width: 1920px;
+    height: 1080px;
+}
+
+/* Sidebar */
+.sidebar {
+    position: absolute;
+    left: 1920px;
+    top: 0;
+    width: 250px;
+    height: 1080px;
+    color: white;
+    font-size: 1.25rem;
+    background-color: rgb(149 114 89);
+    font-family: Lexend, sans-serif;
+}
+
+/* Sidebar Timer */
+.sidebar-timer {
+    width: 250px;
+    height: inherit;
+    border-right: 2px solid white;
+}
+.sidebar-timer > * { margin-left: 20px; }
+
+.sidebar-stream-idle-text {
+    position: absolute;
+    left: 270px;
+    top: 0;
+    width: 230px;
+    height: inherit;
+    border-right: 2px solid white;
+}
+
+.sidebar-team-text {
+    position: absolute; 
+    left: 520px;
+    top: 0;
+    width: 230px;
+    height: inherit;
+}
+
+/* Sidebar title */
+.sidebar-title {
+    padding-top: 10px;
+    font-size: 2rem;
+}
+
+#team-vs-text {
+    margin-right: 20px;
+    margin-bottom: 40px;
+}
+
+/* Sidebar text */
+.sidebar-text { margin-bottom: 10px; }
+#sidebar-red-team-text { color: var(--love-fumes-colour); }
+#sidebar-blue-team-text { color: lightblue; }
+
+/* Sidebar input */
+.sidebar-input {
+    width: 100px;
+    text-align: center;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    background: none;
+    color: white;
+    border: none;
+    border-bottom: 1px solid white;
+    margin-bottom: 10px;
+}
+
+.sidebar-input[type="number"]::-webkit-inner-spin-button, 
+.sidebar-input[type="number"]::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+}
+
+.sidebar-input-long { 
+    width: 210px;
+    text-align: left;
+}
+
+/* Sidebar Button */
+.sidebar-button {
+    width: 210px;
+    height: 50px;
+    border-radius: 10px;
+    background: none;
+    border: 2px solid white;
+    margin-top: 20px;
+    color: white;
+    font-family: inherit;
+    font-weight: inherit;
+    font-size: inherit;
+    cursor: pointer;
+}
+
+.sidebar-button:active {
+    background-color: white;
+    color: var(--main-text);
+}
+.sidebar-button-large { height: 80px; }
+
+/* Timer Containers */
+#normal-timer { height: 470px; }
+#utc-timer { height: 250px; }
+
+/* Timer Error Message */
+.timer-error-message {
+    margin-top: 10px;
+    color: var(--love-fumes-colour);
+    margin-right: 20px;
+    display: none;
+}
+
+/* Time Input */
+.time-input { width: 60px; }
+
+/* Border Light Pink */
+.light-pink-button { 
+    border-color: var(--love-fumes-colour);
+    color: var(--love-fumes-colour);
+}
+
+.light-pink-button:active {
+    background-color: var(--love-fumes-colour);
+    color: var(--book-background-colour);
+}
+
+/* Sidebar custom text */
+#sidebar-custom-text { margin-right: 20px; }
+
+/* Sidebar text area */
+.sidebar-textarea {
+    width: 200px;
+    height: 100px;
+    background-color: #1d8d68;
+    color: white;
+    border: 2px solid white;
+    font-family: inherit;
+    font-size: 1.25rem;
+    font-weight: inherit;
+    resize: none;
+}
