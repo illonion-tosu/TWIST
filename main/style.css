@@ -52,6 +52,21 @@
 .chatbox-background {
     position: absolute;
     bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 900px;
+}
+
+.chatbox-jupiter {
+    position: absolute;
     left: 400px;
-    width: 1069px;
+    bottom: 10px;
+    width: 187px;
+}
+
+.chatbox-saturn {
+    position: absolute;
+    right: 449px;
+    bottom: 134px;
+    width: 145px;
 }
