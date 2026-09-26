@@ -1,5 +1,13 @@
+/* Whole Page */
 .main { background-image: url("static/background.png"); }
 
+/* Team Names */
 .team-name-container { position: absolute; }
 .team-name-container-left { left: 0; }
 .team-name-container-right { right: 0; }
+
+/* Round Name */
+.round-name-container {
+    position: absolute;
+    top: 135px;
+}
