@@ -3,6 +3,7 @@
     --greenscreen-top-y: 170px;
     --greenscreen-width: 480px;
     --greenscreen-height: 360px;
+    --team-score-container-x: 941px;
 }
 
 /* Whole Page */
@@ -87,16 +88,25 @@
 }
 
 /* Team Score Container */
-.team-left-score-container {
+.team-score-container {
     position: absolute;
     bottom: 84px;
-    right: 941px;
     transform: skewX(-2deg)
 }
+.team-left-score-container { right: var(--team-score-container-x); }
+.team-right-score-container { left: var(--team-score-container-x); }
 
-.team-right-score-container {
+/* Now Playing Earth */
+.now-playing-earth {
     position: absolute;
-    bottom: 84px;
-    left: 941px;
-    transform: skewX(-2deg)
+    right: 481px;
+    bottom: 0;
+    width: 240px;
+}
+
+.now-playing-saturn {
+    position: absolute;
+    left: 482px;
+    bottom: 17px;
+    width: 200px;
 }
