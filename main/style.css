@@ -62,11 +62,13 @@
     left: 400px;
     bottom: 10px;
     width: 187px;
+    z-index: 1;
 }
 
 .chatbox-saturn {
     position: absolute;
-    right: 449px;
+    right: 450px;
     bottom: 134px;
     width: 145px;
+    z-index: 1;
 }
