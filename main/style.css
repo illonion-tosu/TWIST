@@ -1,5 +1,8 @@
 :root {
     --team-star-container-x: 50px;
+    --greenscreen-top-y: 170px;
+    --greenscreen-width: 480px;
+    --greenscreen-height: 360px;
 }
 
 /* Whole Page */
@@ -29,3 +32,18 @@
     position: absolute;
     top: 135px;
 }
+
+/* Green Screens */
+.greenscreen {
+    position: absolute;
+    left: 0;
+    background-color: #0F0;
+    width: var(--greenscreen-width);
+    height: var(--greenscreen-height);
+}
+.greenscreen-top { top: var(--greenscreen-top-y); }
+.greenscreen-bottom { top: calc(var(--greenscreen-height) + var(--greenscreen-top-y)); }
+.greenscreen-x-1 { left: calc(var(--greenscreen-width) * 0); }
+.greenscreen-x-2 { left: calc(var(--greenscreen-width) * 1); }
+.greenscreen-x-3 { left: calc(var(--greenscreen-width) * 2); }
+.greenscreen-x-4 { left: calc(var(--greenscreen-width) * 3); }
