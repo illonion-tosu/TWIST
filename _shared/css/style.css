@@ -1,13 +1,13 @@
 @font-face {
     font-family: "Super Mario Galaxy";
-    src: url("../fonts/Super\ Mario\ Galaxy.ttf");
+    src: url("../../fonts/Super\ Mario\ Galaxy.ttf");
 }
 
 .main {
     position: absolute;
     top: 0;
     left: 0;
-    background-image: url("static/background.png");
     width: 1920px;
     height: 1080px;
+    background: center / cover;
 }

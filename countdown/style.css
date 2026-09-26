@@ -1,3 +1,5 @@
+.main { background-image: url("static/background.png"); }
+
 /* Timer */
 .timer {
     position: absolute;
