@@ -18,36 +18,57 @@
             height="104"
             viewBox="0 0 600 104"
         >
-            <!-- White outer stroke -->
+            <defs>
+                <filter id="outline-blend-left" x="-20%" y="-50%" width="140%" height="200%">
+                    <!-- Outer white ring -->
+                    <feMorphology in="SourceAlpha" operator="dilate" radius="6" result="white-dilate" />
+                    <feGaussianBlur in="white-dilate" stdDeviation="2.5" result="white-blur" />
+                    <feColorMatrix
+                        in="white-blur"
+                        type="matrix"
+                        values="0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 25 -8"
+                        result="white-round"
+                    />
+                    <feFlood flood-color="white" result="white-color" />
+                    <feComposite in="white-color" in2="white-round" operator="in" result="white-layer" />
+                
+                    <!-- Inner red ring -->
+                    <feMorphology in="SourceAlpha" operator="dilate" radius="3" result="red-dilate" />
+                    <feGaussianBlur in="red-dilate" stdDeviation="1.5" result="red-blur" />
+                    <feColorMatrix
+                        in="red-blur"
+                        type="matrix"
+                        values="0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 25 -8"
+                        result="red-round"
+                    />
+                    <feFlood flood-color="#ff0000" result="red-color" />
+                    <feComposite in="red-color" in2="red-round" operator="in" result="red-layer" />
+                
+                    <!-- Stack: white ring (bottom) -> red ring -> actual text fill (top) -->
+                    <feMerge>
+                        <feMergeNode in="white-layer" />
+                        <feMergeNode in="red-layer" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+            </defs>
+        
             <text
                 x="47"
                 y="78"
-                text-anchor="left"
+                text-anchor="start"
                 font-size="55px"
                 letter-spacing="-4"
                 font-family="Super Mario Galaxy"
-                stroke="white"
-                stroke-width="8px"
-                stroke-linejoin="round"
                 fill="white"
                 class="team-name-left"
-            >
-                KIM HYUJIN
-            </text>
-
-            <!-- Red outer stroke -->
-            <text
-                x="47"
-                y="78"
-                text-anchor="left"
-                font-size="55px"
-                letter-spacing="-4"
-                font-family="Super Mario Galaxy"
-                stroke="#ff0000"
-                stroke-width="4px"
-                stroke-linejoin="round"
-                fill="white"
-                class="team-name-left"
+                filter="url(#outline-blend-left)"
             >
                 KIM HYUJIN
             </text>
@@ -58,9 +79,50 @@
             class="round-name-container"
             xmlns="http://www.w3.org/2000/svg"
             width="1920"
-            height="55"
-            viewBox="0 0 1920 55"
+            height="65"
+            viewBox="0 0 1920 65"
         >
+            <defs>
+                <filter id="round-name-outline" x="-10%" y="-100%" width="120%" height="300%">
+                    <!-- Outer white ring -->
+                    <feMorphology in="SourceAlpha" operator="dilate" radius="6" result="white-dilate" />
+                    <feGaussianBlur in="white-dilate" stdDeviation="2.5" result="white-blur" />
+                    <feColorMatrix
+                        in="white-blur"
+                        type="matrix"
+                        values="0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 25 -8"
+                        result="white-round"
+                    />
+                    <feFlood flood-color="white" result="white-color" />
+                    <feComposite in="white-color" in2="white-round" operator="in" result="white-layer" />
+                
+                    <!-- Inner black ring -->
+                    <feMorphology in="SourceAlpha" operator="dilate" radius="2.5" result="black-dilate" />
+                    <feGaussianBlur in="black-dilate" stdDeviation="1.2" result="black-blur" />
+                    <feColorMatrix
+                        in="black-blur"
+                        type="matrix"
+                        values="0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 25 -8"
+                        result="black-round"
+                    />
+                    <feFlood flood-color="black" result="black-color" />
+                    <feComposite in="black-color" in2="black-round" operator="in" result="black-layer" />
+                
+                    <!-- Stack: white ring (bottom) -> black ring -> actual text fill (top) -->
+                    <feMerge>
+                        <feMergeNode in="white-layer" />
+                        <feMergeNode in="black-layer" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+            </defs>
+        
             <text
                 x="960"
                 y="50"
@@ -68,33 +130,13 @@
                 font-size="50px"
                 letter-spacing="-4"
                 font-family="Super Mario Galaxy"
-                stroke="white"
-                stroke-width="8px"
-                stroke-linejoin="round"
                 fill="white"
                 class="round-name-text"
-            >
-                ROUND NAME HERE
-            </text>
-
-            <!-- Red outer stroke -->
-            <text
-                x="960"
-                y="50"
-                text-anchor="middle"
-                font-size="50px"
-                letter-spacing="-4"
-                font-family="Super Mario Galaxy"
-                stroke="black"
-                stroke-width="3px"
-                stroke-linejoin="round"
-                fill="white"
-                class="round-name-text"
+                filter="url(#round-name-outline)"
             >
                 ROUND NAME HERE
             </text>
         </svg>
-
         <!-- Team Name Right  -->
         <svg
             class="team-name-container team-name-container-right"
@@ -103,36 +145,57 @@
             height="104"
             viewBox="0 0 600 104"
         >
-            <!-- White outer stroke -->
+            <defs>
+                <filter id="outline-blend" x="-20%" y="-50%" width="140%" height="200%">
+                    <!-- Outer white ring -->
+                    <feMorphology in="SourceAlpha" operator="dilate" radius="6" result="white-dilate" />
+                    <feGaussianBlur in="white-dilate" stdDeviation="2.5" result="white-blur" />
+                    <feColorMatrix
+                        in="white-blur"
+                        type="matrix"
+                        values="0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 25 -8"
+                        result="white-round"
+                    />
+                    <feFlood flood-color="white" result="white-color" />
+                    <feComposite in="white-color" in2="white-round" operator="in" result="white-layer" />
+                
+                    <!-- Inner blue ring -->
+                    <feMorphology in="SourceAlpha" operator="dilate" radius="3" result="blue-dilate" />
+                    <feGaussianBlur in="blue-dilate" stdDeviation="1.5" result="blue-blur" />
+                    <feColorMatrix
+                        in="blue-blur"
+                        type="matrix"
+                        values="0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 25 -8"
+                        result="blue-round"
+                    />
+                    <feFlood flood-color="#0078ff" result="blue-color" />
+                    <feComposite in="blue-color" in2="blue-round" operator="in" result="blue-layer" />
+                
+                    <!-- Stack: white ring (bottom) -> blue ring -> actual text fill (top) -->
+                    <feMerge>
+                        <feMergeNode in="white-layer" />
+                        <feMergeNode in="blue-layer" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+            </defs>
+        
             <text
                 x="553"
                 y="78"
                 text-anchor="end"
                 font-size="55px"
-                letter-spacing="-4"
+                letter-spacing="-6"
                 font-family="Super Mario Galaxy"
-                stroke="white"
-                stroke-width="8px"
-                stroke-linejoin="round"
                 fill="white"
                 class="team-name-right"
-            >
-                KIM HYUJIN
-            </text>
-
-            <!-- Red outer stroke -->
-            <text
-                x="553"
-                y="78"
-                text-anchor="end"
-                font-size="55px"
-                letter-spacing="-4"
-                font-family="Super Mario Galaxy"
-                stroke="#0078ff"
-                stroke-width="4px"
-                stroke-linejoin="round"
-                fill="white"
-                class="team-name-right"
+                filter="url(#outline-blend)"
             >
                 KIM HYUJIN
             </text>
