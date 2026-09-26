@@ -48,7 +48,11 @@
 .greenscreen-x-3 { left: calc(var(--greenscreen-width) * 2); }
 .greenscreen-x-4 { left: calc(var(--greenscreen-width) * 3); }
 
-/* Chatbox Background */
+/* Chatbox */
+.chat-container {
+    opacity: 0;
+}
+
 .chatbox-background {
     position: absolute;
     bottom: 0;
