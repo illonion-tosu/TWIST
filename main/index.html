@@ -36,7 +36,7 @@
                     <feComposite in="white-color" in2="white-round" operator="in" result="white-layer" />
                 
                     <!-- Inner red ring -->
-                    <feMorphology in="SourceAlpha" operator="dilate" radius="3" result="red-dilate" />
+                    <feMorphology in="SourceAlpha" operator="dilate" radius="3.5" result="red-dilate" />
                     <feGaussianBlur in="red-dilate" stdDeviation="1.5" result="red-blur" />
                     <feColorMatrix
                         in="red-blur"
@@ -110,7 +110,7 @@
                     <feComposite in="white-color" in2="white-round" operator="in" result="white-layer" />
                 
                     <!-- Inner black ring -->
-                    <feMorphology in="SourceAlpha" operator="dilate" radius="2.5" result="black-dilate" />
+                    <feMorphology in="SourceAlpha" operator="dilate" radius="3.5" result="black-dilate" />
                     <feGaussianBlur in="black-dilate" stdDeviation="1.2" result="black-blur" />
                     <feColorMatrix
                         in="black-blur"
@@ -147,6 +147,7 @@
                 ROUND NAME HERE
             </text>
         </svg>
+
         <!-- Team Name Right  -->
         <svg
             class="team-name-container team-name-container-right"
@@ -173,7 +174,7 @@
                     <feComposite in="white-color" in2="white-round" operator="in" result="white-layer" />
                 
                     <!-- Inner blue ring -->
-                    <feMorphology in="SourceAlpha" operator="dilate" radius="3" result="blue-dilate" />
+                    <feMorphology in="SourceAlpha" operator="dilate" radius="3.5" result="blue-dilate" />
                     <feGaussianBlur in="blue-dilate" stdDeviation="1.5" result="blue-blur" />
                     <feColorMatrix
                         in="blue-blur"
@@ -235,14 +236,141 @@
             <img class="chatbox-jupiter" src="static/chatbox/jupiter.png">
             <img class="chatbox-uranus" src="static/chatbox/uranus.png">
         </div>
+
+        <!-- Scores and Now Playing -->
+        <div class="scores-now-playing">
+            <!-- Scores Text -->
+            <img class="scores-text" src="static/scores.png">
+
+            <!-- Left Score -->
+            <svg
+                class="team-left-score-container"
+                xmlns="http://www.w3.org/2000/svg"
+                width="600"
+                height="104"
+                viewBox="0 0 600 104"
+            >
+                <defs>
+                    <filter id="outline-blend-score-red" x="-20%" y="-50%" width="140%" height="200%">
+                        <!-- Outer white ring -->
+                        <feMorphology in="SourceAlpha" operator="dilate" radius="6" result="white-dilate" />
+                        <feGaussianBlur in="white-dilate" stdDeviation="2.5" result="white-blur" />
+                        <feColorMatrix
+                            in="white-blur"
+                            type="matrix"
+                            values="0 0 0 0 0
+                                    0 0 0 0 0
+                                    0 0 0 0 0
+                                    0 0 0 25 -8"
+                            result="white-round"
+                        />
+                        <feFlood flood-color="white" result="white-color" />
+                        <feComposite in="white-color" in2="white-round" operator="in" result="white-layer" />
+                    
+                        <!-- Inner red ring -->
+                        <feMorphology in="SourceAlpha" operator="dilate" radius="3.5" result="red-dilate" />
+                        <feGaussianBlur in="red-dilate" stdDeviation="1.5" result="red-blur" />
+                        <feColorMatrix
+                            in="red-blur"
+                            type="matrix"
+                            values="0 0 0 0 0
+                                    0 0 0 0 0
+                                    0 0 0 0 0
+                                    0 0 0 25 -8"
+                            result="red-round"
+                        />
+                        <feFlood flood-color="#ff0000" result="red-color" />
+                        <feComposite in="red-color" in2="red-round" operator="in" result="red-layer" />
+                    
+                        <!-- Stack: white ring (bottom) -> red ring -> actual text fill (top) -->
+                        <feMerge>
+                            <feMergeNode in="white-layer" />
+                            <feMergeNode in="red-layer" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                </defs>
+            
+                <text
+                    x="553"
+                    y="78"
+                    text-anchor="end"
+                    font-size="48px"
+                    letter-spacing="-1"
+                    font-family="Super Mario Galaxy"
+                    fill="white"
+                    class="team-name-right"
+                    filter="url(#outline-blend-score-red)"
+                >
+                    1,000,000
+                </text>
+            </svg>
+
+            <!-- Right Score -->
+            <svg
+                class="team-right-score-container"
+                xmlns="http://www.w3.org/2000/svg"
+                width="600"
+                height="104"
+                viewBox="0 0 600 104"
+            >
+                <defs>
+                    <filter id="outline-blend-score-blue" x="-20%" y="-50%" width="140%" height="200%">
+                        <!-- Outer white ring -->
+                        <feMorphology in="SourceAlpha" operator="dilate" radius="6" result="white-dilate" />
+                        <feGaussianBlur in="white-dilate" stdDeviation="2.5" result="white-blur" />
+                        <feColorMatrix
+                            in="white-blur"
+                            type="matrix"
+                            values="0 0 0 0 0
+                                    0 0 0 0 0
+                                    0 0 0 0 0
+                                    0 0 0 25 -8"
+                            result="white-round"
+                        />
+                        <feFlood flood-color="white" result="white-color" />
+                        <feComposite in="white-color" in2="white-round" operator="in" result="white-layer" />
+                    
+                        <!-- Inner blue ring -->
+                        <feMorphology in="SourceAlpha" operator="dilate" radius="3.5" result="blue-dilate" />
+                        <feGaussianBlur in="blue-dilate" stdDeviation="1.5" result="blue-blur" />
+                        <feColorMatrix
+                            in="blue-blur"
+                            type="matrix"
+                            values="0 0 0 0 0
+                                    0 0 0 0 0
+                                    0 0 0 0 0
+                                    0 0 0 25 -8"
+                            result="blue-round"
+                        />
+                        <feFlood flood-color="#0078ff" result="blue-color" />
+                        <feComposite in="blue-color" in2="blue-round" operator="in" result="blue-layer" />
+                    
+                        <!-- Stack: white ring (bottom) -> blue ring -> actual text fill (top) -->
+                        <feMerge>
+                            <feMergeNode in="white-layer" />
+                            <feMergeNode in="blue-layer" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                </defs>
+            
+                <text
+                    x="47"
+                    y="78"
+                    text-anchor="start"
+                    font-size="48px"
+                    letter-spacing="-1"
+                    font-family="Super Mario Galaxy"
+                    fill="white"
+                    class="team-name-right"
+                    filter="url(#outline-blend-score-blue)"
+                >
+                    1,000,000
+                </text>
+            </svg>
+        </div>
     </div>
 
     <script src="index.js" type="module"></script>
 </body>
-
-<!-- font-size: 93px;
-letter-spacing: -4px;
-line-height: 63px;
-color: #ffffff;
-font-family: "Super Mario Galaxy";
-border: 13px solid #ffffff; -->

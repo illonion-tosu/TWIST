@@ -76,3 +76,27 @@
     width: 145px;
     z-index: 1;
 }
+
+/* Scores */
+.scores-text {
+    position: absolute;
+    bottom: 160px;
+    left: 960px;
+    transform: translateX(-50%);
+    width: 175px;
+}
+
+/* Team Score Container */
+.team-left-score-container {
+    position: absolute;
+    bottom: 84px;
+    right: 941px;
+    transform: skewX(-2deg)
+}
+
+.team-right-score-container {
+    position: absolute;
+    bottom: 84px;
+    left: 941px;
+    transform: skewX(-2deg)
+}
