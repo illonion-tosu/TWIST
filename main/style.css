@@ -1,0 +1,5 @@
+.main { background-image: url("static/background.png"); }
+
+.team-name-container { position: absolute; }
+.team-name-container-left { left: 0; }
+.team-name-container-right { right: 0; }
