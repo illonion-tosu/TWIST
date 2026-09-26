@@ -1,3 +1,7 @@
+:root {
+    --team-star-container-x: 50px;
+}
+
 /* Whole Page */
 .main { background-image: url("static/background.png"); }
 
@@ -5,6 +9,20 @@
 .team-name-container { position: absolute; }
 .team-name-container-left { left: 0; }
 .team-name-container-right { right: 0; }
+
+/* Team Stars Container */
+.team-stars-container {
+    position: absolute;
+    top: 94px;
+    display: flex;
+    gap: 4.5px;
+}
+.team-stars-container > * { width: 45px; }
+.team-stars-container-left { left: var(--team-star-container-x); }
+.team-stars-container-right {
+    right: var(--team-star-container-x);
+    flex-direction: row-reverse;
+}
 
 /* Round Name */
 .round-name-container {
