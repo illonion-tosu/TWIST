@@ -4,6 +4,7 @@
     --greenscreen-width: 480px;
     --greenscreen-height: 360px;
     --team-score-container-x: 941px;
+    --now-playing-metadata-y: 20px;
 }
 
 /* Whole Page */
@@ -179,3 +180,17 @@
     -webkit-text-stroke: 6px black;
     paint-order: stroke fill;
 }
+
+/* Metadata */
+.now-playing-metadata {
+    position: absolute;
+    left: 146px;
+    font-size: 24px;
+    letter-spacing: -2px;
+    color: white;
+    font-family: "Helvetica Neue";
+    font-weight: 700;
+    text-align: center;
+}
+.now-playing-artist-title { top: var(--now-playing-metadata-y); }
+.now-playing-version { bottom: var(--now-playing-metadata-y); }

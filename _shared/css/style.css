@@ -3,6 +3,12 @@
     src: url("../../fonts/Super\ Mario\ Galaxy.ttf");
 }
 
+@font-face {
+    font-family: "Helvetica Neue";
+    src: url("../../fonts/Helvetica\ Neue\ Heavy.otf");
+    font-weight: 700;
+}
+
 .main {
     position: absolute;
     top: 0;
