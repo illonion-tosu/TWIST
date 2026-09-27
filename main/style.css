@@ -214,3 +214,52 @@
 }
 .now-playing-stats-container > * { width: 90px; }
 .now-playing-stats-star { color: gold; }
+
+/* Cameras */
+.camera-1 {
+    position: absolute;
+    top: 260px;
+    width: 480px;
+    height: 270px;
+    font-family: "Super Mario Galaxy";
+    font-size: 40px;
+    -webkit-text-stroke: 6px black;
+    paint-order: stroke fill;
+    color: white;
+    line-height: 270px;
+    text-align: center;
+}
+
+.camera-1-left {
+    left: 480px;
+    background-color: red;
+}
+
+.camera-1-right {
+    left: 960px;
+    background-color: lightblue;
+}
+
+.camera-2 {
+    position: absolute;
+    bottom: 0;
+    width: 338px;
+    height: 190px;
+    font-family: "Super Mario Galaxy";
+    font-size: 40px;
+    -webkit-text-stroke: 6px black;
+    paint-order: stroke fill;
+    color: white;
+    line-height: 190px;
+    text-align: center;
+}
+
+.camera-2-left {
+    left: 0;
+    background-color: red;
+}
+
+.camera-2-right {
+    right: 0;
+    background-color: lightblue;
+}
