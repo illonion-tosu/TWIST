@@ -1,0 +1,44 @@
+body {
+    color: white;
+    background-color: var(--solid-graphite-colour);
+}
+
+h1 {
+    text-align: center;
+    font-family: "Super Mario Galaxy", sans-serif;
+}
+
+.team-red-colour { color: red; }
+.team-blue-colour { color: #0078ff; }
+
+.points-container {
+    text-align: center;
+    font-family: "Helvetica Neue";
+    font-weight: 700;
+    font-size: 2rem;
+}
+
+.team-points {
+    display: inline-block
+    width: 130px;
+}
+
+button {
+    --dimension: 32px;
+
+    width: var(--dimension);
+    height: var(--dimension);
+    border: 2px solid white;
+    border-radius: 5px;
+    background-color: transparent;
+    color: white;
+    font-family: "Helvetica Neue";
+    font-weight: 700;
+    font-size: 1.25rem;
+    line-height: 1px;
+    cursor: pointer;
+}
+button:active {
+    background-color: white;
+    color: var(--solid-graphite-colour);
+}

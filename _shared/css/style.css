@@ -1,3 +1,7 @@
+:root {
+    --solid-graphite-colour: #31313B;
+}
+
 @font-face {
     font-family: "Super Mario Galaxy";
     src: url("../../fonts/Super\ Mario\ Galaxy.ttf");

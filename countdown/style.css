@@ -17,7 +17,7 @@
     height: 1080px;
     color: white;
     font-size: 1.25rem;
-    background-color: #31313B;
+    background-color: var(--solid-graphite-colour);
     font-family: "Super Mario Galaxy", sans-serif;
 }
 
