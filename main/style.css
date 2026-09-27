@@ -194,3 +194,23 @@
 }
 .now-playing-artist-title { top: var(--now-playing-metadata-y); }
 .now-playing-version { bottom: var(--now-playing-metadata-y); }
+
+/* Stats */
+.now-playing-stats-container {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    width: 180px;
+    transform: translateY(-50%);
+    font-size: 20px;
+    letter-spacing: -2px;
+    color: white;
+    font-family: "Helvetica Neue";
+    font-weight: 700;
+    display: flex;
+    flex-wrap: wrap;
+    text-align: right;
+    row-gap: 5px;    
+}
+.now-playing-stats-container > * { width: 90px; }
+.now-playing-stats-star { color: gold; }
