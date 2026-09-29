@@ -1,6 +1,20 @@
 body {
-    color: white;
+    color: lightgray;
     background-color: var(--solid-graphite-colour);
+}
+
+/* Dashboard Section */
+.dashboard-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 20px;
+    font-family: "Helvetica Neue";
+    font-weight: 700;
+    padding-bottom: 20px;
+    border-bottom: 2px solid gray;
+    margin-top: 10px;
+    margin-bottom: 20px;
 }
 
 h1 {
@@ -8,9 +22,55 @@ h1 {
     font-family: "Super Mario Galaxy", sans-serif;
 }
 
+.auto-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.auto-labels {
+    padding: 10px;
+    border: 1px solid gray;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: lightgray;
+}
+
+.auto-labels:hover {
+    background-color: rgb(64, 64, 64);
+}
+
+input[type="checkbox"] {
+    background-color: transparent;
+    accent-color: red;
+    width: 20px;
+    height: 20px;
+}
+
 .team-red-colour { color: red; }
 .team-blue-colour { color: #0078ff; }
 
+/* Match Details Section */
+.match-details-section {
+    margin: 0 20px 20px 20px;
+    font-family: "Helvetica Neue";
+    font-weight: 700;
+}
+
+.match-details {
+    font-size: 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: space-around;
+    padding-bottom: 20px;
+    border-bottom: 2px solid gray;
+    margin-bottom: 20px;
+}
+
+/* Points Container */
 .points-container {
     text-align: center;
     font-family: "Helvetica Neue";
@@ -18,8 +78,14 @@ h1 {
     font-size: 2rem;
 }
 
+.team-points-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 5px;
+}
+
 .team-points {
-    display: inline-block
     width: 130px;
 }
 
@@ -28,17 +94,15 @@ button {
 
     width: var(--dimension);
     height: var(--dimension);
-    border: 2px solid white;
+    border: 2px solid gray;
     border-radius: 5px;
     background-color: transparent;
-    color: white;
-    font-family: "Helvetica Neue";
-    font-weight: 700;
+    color: lightgray;
     font-size: 1.25rem;
     line-height: 1px;
     cursor: pointer;
 }
-button:active {
-    background-color: white;
+button:hover {
+    background-color: lightgray;
     color: var(--solid-graphite-colour);
 }

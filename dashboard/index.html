@@ -11,14 +11,38 @@
     <script src="../_shared/deps/reconnecting-websocket.min.js"></script>
 </head>
 <body>
-    <h1>Match: <span class="team-red-colour">KIM HYUJIN</span> vs <span class="team-blue-colour">KIM HYUJIN</span></h1>
+    <div class="dashboard-section">
+        <h1>Match: <span class="team-red-colour">KIM HYUJIN</span> vs <span class="team-blue-colour">KIM HYUJIN</span></h1>
+        <div class="auto-section">
+            <label class="auto-labels">
+                <input type="checkbox">
+                <span>Auto Pick + Winners</span>
+            </label>
+            <label class="auto-labels">
+                <input type="checkbox">
+                <span>Toggle Stars</span>
+            </label>
+            <label class="auto-labels">
+                <input type="checkbox">
+                <span>Auto OBS Scenes</span>
+            </label>
+        </div>
+    </div>
+    <div class="match-details-section">
+        <h1>Match Details</h1>
+        <div class="match-details">
+            <div>Round Name: <span>Round of 16</span></div>|
+            <div>Current Map: <span>STAYC - SO BARjAADJKsadfhjkashjkhasdfkjhasdjk</span></div>|
+            <div>Current Mod ID: <span>DT2</span></div>
+        </div>
+    </div>
     <div class="points-container">Points:<br>
-        <div class="team-points-red">
+        <div class="team-points-container team-points-red">
             <div class="team-points team-red-colour">RED: 0</div>
             <button>+</button>
             <button>-</button>
         </div>
-        <div class="team-points-blue">
+        <div class="team-points-container team-points-blue">
             <div class="team-points team-blue-colour">BLUE: 0</div>
             <button>+</button>
             <button>-</button>
