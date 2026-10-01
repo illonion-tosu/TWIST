@@ -7,6 +7,7 @@
     --hp-bar-container-x: 37px;
     --hp-bar-container-skew: 5deg;
     --hp-bar-x: 6px;
+    --camera-x: 0px;
 }
 
 /* Whole Page */
@@ -20,8 +21,8 @@
 /* HP Bar Container */
 .hp-bar-container {
     position: absolute;
-    top: 93px;
-    width: 383px;
+    top: 100px;
+    width: 250px;
     height: 39px;
     background-color: white;
     border-radius: 3px;
@@ -50,7 +51,7 @@
 .hp-bar {
     position: absolute;
     top: 6px;
-    width: 371px;
+    width: 238px;
     height: 27px;
 }
 
@@ -62,6 +63,20 @@
 .team-right-hp-bar {
     right: var(--hp-bar-x);
     background-color: var(--team-blue-colour);
+}
+
+/* Team Names */
+.team-hp-number {
+    position: absolute;
+    top: 54px;
+}
+
+.team-left-hp-number {
+    left: 258px;
+}
+
+.team-right-hp-number {
+    right: 258px;
 }
 
 /* Round Name */
@@ -251,31 +266,7 @@
 .now-playing-stats-star { color: gold; }
 
 /* Cameras */
-.camera-1 {
-    position: absolute;
-    top: 260px;
-    width: 480px;
-    height: 270px;
-    font-family: "Super Mario Galaxy";
-    font-size: 40px;
-    -webkit-text-stroke: 6px black;
-    paint-order: stroke fill;
-    color: white;
-    line-height: 270px;
-    text-align: center;
-}
-
-.camera-1-left {
-    left: 480px;
-    background-color: red;
-}
-
-.camera-1-right {
-    left: 960px;
-    background-color: #0078FF;
-}
-
-.camera-2 {
+.camera {
     position: absolute;
     bottom: 0;
     width: 338px;
@@ -289,12 +280,12 @@
     text-align: center;
 }
 
-.camera-2-left {
-    left: 0;
-    background-color: red;
+.camera-left {
+    left: var(--camera-x);
+    background-color: var(--team-red-colour);
 }
 
-.camera-2-right {
-    right: 0;
-    background-color: #0078FF;
+.camera-right {
+    right: var(--camera-x);
+    background-color: var(--team-blue-colour);
 }
