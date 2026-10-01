@@ -1,10 +1,12 @@
 :root {
-    --team-star-container-x: 50px;
     --greenscreen-top-y: 170px;
     --greenscreen-width: 480px;
     --greenscreen-height: 360px;
     --team-score-container-x: 941px;
     --now-playing-metadata-y: 20px;
+    --hp-bar-container-x: 37px;
+    --hp-bar-container-skew: 5deg;
+    --hp-bar-x: 6px;
 }
 
 /* Whole Page */
@@ -15,18 +17,51 @@
 .team-name-container-left { left: 0; }
 .team-name-container-right { right: 0; }
 
-/* Team Stars Container */
-.team-stars-container {
+/* HP Bar Container */
+.hp-bar-container {
     position: absolute;
-    top: 94px;
-    display: flex;
-    gap: 4.5px;
+    top: 93px;
+    width: 383px;
+    height: 39px;
+    background-color: white;
+    border-radius: 3px;
 }
-.team-stars-container > * { width: 45px; }
-.team-stars-container-left { left: var(--team-star-container-x); }
-.team-stars-container-right {
-    right: var(--team-star-container-x);
-    flex-direction: row-reverse;
+
+.team-left-hp-bar-container {
+    left: var(--hp-bar-container-x);
+    transform: skewX(calc(-1 * var(--hp-bar-container-skew)));
+}
+
+.team-right-hp-bar-container {
+    right: var(--hp-bar-container-x);
+    transform: skewX(var(--hp-bar-container-skew));
+}
+
+.hp-bar-container::after {
+    content: "";
+    position: absolute;
+    inset: 3px;                
+    border: 3px solid black; 
+    border-radius: 3px;
+    pointer-events: none;      
+}
+
+/* HP Bar */
+.hp-bar {
+    position: absolute;
+    top: 6px;
+    width: 371px;
+    height: 27px;
+}
+
+.team-left-hp-bar {
+    left: var(--hp-bar-x);
+    background-color: var(--team-red-colour);
+}
+
+.team-right-hp-bar {
+    right: var(--hp-bar-x);
+    background-color: var(--team-blue-colour);
 }
 
 /* Round Name */
@@ -92,7 +127,7 @@
 .team-score-container {
     position: absolute;
     bottom: 84px;
-    transform: skewX(-2deg)
+    transform: skewX(-2deg);
 }
 .team-left-score-container { right: var(--team-score-container-x); }
 .team-right-score-container { left: var(--team-score-container-x); }
@@ -237,7 +272,7 @@
 
 .camera-1-right {
     left: 960px;
-    background-color: lightblue;
+    background-color: #0078FF;
 }
 
 .camera-2 {
@@ -261,5 +296,5 @@
 
 .camera-2-right {
     right: 0;
-    background-color: lightblue;
+    background-color: #0078FF;
 }

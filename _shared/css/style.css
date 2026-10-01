@@ -1,5 +1,7 @@
 :root {
     --solid-graphite-colour: #31313B;
+    --team-red-colour: red;
+    --team-blue-colour: #0078FF;
 }
 
 @font-face {
