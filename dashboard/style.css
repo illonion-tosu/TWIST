@@ -84,7 +84,7 @@ input[type="checkbox"] {
     text-align: center;
     font-family: "Helvetica Neue";
     font-weight: 700;
-    font-size: 2rem;
+    font-size: 1.2rem;
 }
 
 .team-hp-container {
@@ -107,7 +107,8 @@ input[type="checkbox"] {
 }
 
 .team-hp {
-    width: 130px;
+    width: max-content;
+    white-space: nowrap;
     text-align: left;
     margin-left: 20px;
 }
@@ -136,12 +137,11 @@ input::-webkit-inner-spin-button {
 
 .team-hp-button {
     align-self: end;
-    width: 100px;
-    height: 77px;
+    width: 120px;
+    height: 180px;
     background-color: transparent;
     border: 1px solid gray;
     color: lightgray;
-    line-height: 77px;
     border-radius: 5px;
     font-family: "Helvetica Neue";
     font-weight: 700;
