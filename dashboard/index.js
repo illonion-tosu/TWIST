@@ -1,9 +1,9 @@
 import { createTosuWsSocket } from "../_shared/core/websocket.js"
 
-// Team Points
-const teamRedPointsEl = document.getElementById("team-red-points")
-const teamBluePointsEl = document.getElementById("team-blue-points")
-let teamRedPoints = 0, teamBluePoints = 0
+// Team Hp
+const teamRedHpEl = document.getElementById("team-red-hp")
+const teamBlueHpEl = document.getElementById("team-blue-hp")
+let teamRedStartingHp = 0, teamBlueStartingHp = 0
 
 const socket = createTosuWsSocket()
 socket.onmessage = event => {
@@ -13,9 +13,9 @@ socket.onmessage = event => {
     // Save information
     const savedInfo = {
         tosuData: data,
-        points: {
-            red: teamRedPoints,
-            blue: teamBluePoints
+        hp: {
+            red: teamRedStartingHp,
+            blue: teamBlueStartingHp
         }
     }
 }

@@ -28,24 +28,32 @@
             </label>
         </div>
     </div>
-    <div class="match-details-section">
-        <h1>Match Details</h1>
-        <div class="match-details">
-            <div>Round Name: <span>Round of 16</span></div>|
-            <div>Current Map: <span>STAYC - SO BARjAADJKsadfhjkashjkhasdfkjhasdjk</span></div>|
-            <div>Current Mod ID: <span>DT2</span></div>
+    <div class="line-two">
+        <div class="match-details-section">
+            <h1>Match Details</h1>
+            <div class="match-details">
+                <div>Round Name: <span>Round of 16</span></div>
+                <div>Current Map: <span>STAYC - SO BARjAADJKsadfhjkashjkhasdfkjhasdjk</span></div>
+                <div>Current Mod ID: <span>DT2</span></div>
+            </div>
         </div>
-    </div>
-    <div class="points-container">Points:<br>
-        <div class="team-points-container team-points-red">
-            <div class="team-points team-red-colour">RED: <span id="team-red-points">0</span></div>
-            <button>+</button>
-            <button>-</button>
-        </div>
-        <div class="team-points-container team-points-blue">
-            <div class="team-points team-blue-colour">BLUE: <span id="team-blue-points">0</span></div>
-            <button>+</button>
-            <button>-</button>
+        <div class="hp-container">
+            <h1>Starting HP</h1>
+            <div class="team-hp-wrapper">
+                <div class="team-hp-wrapper-left">
+                    <div class="team-hp-container team-hp-red">
+                        <div class="team-hp team-red-colour">RED:</div>
+                        <input type="number">
+                    </div>
+                    <div class="team-hp-container team-hp-blue">
+                        <div class="team-hp team-blue-colour">BLUE:</div>
+                        <input type="number">
+                    </div>
+                </div>
+                <button class="team-hp-button">
+                    Submit
+                </button>
+            </div>
         </div>
     </div>
     <script src="index.js" type="module"></script>

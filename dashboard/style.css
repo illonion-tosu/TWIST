@@ -20,6 +20,7 @@ body {
 h1 {
     text-align: center;
     font-family: "Super Mario Galaxy", sans-serif;
+    font-size: 2rem;
 }
 
 .auto-section {
@@ -49,60 +50,99 @@ input[type="checkbox"] {
     height: 20px;
 }
 
-.team-red-colour { color: red; }
-.team-blue-colour { color: #0078ff; }
+.team-red-colour { color: var(--team-red-colour); }
+.team-blue-colour { color: var(--team-blue-colour); }
 
-/* Match Details Section */
-.match-details-section {
+/* Line 2 */
+.line-two {
     margin: 0 20px 20px 20px;
     font-family: "Helvetica Neue";
     font-weight: 700;
-}
-
-.match-details {
-    font-size: 1.25rem;
     display: flex;
-    flex-wrap: wrap;
-    width: 100%;
-    justify-content: space-around;
     padding-bottom: 20px;
     border-bottom: 2px solid gray;
     margin-bottom: 20px;
 }
 
+/* Match Details Section */
+.match-details-section {
+    width: 50%;
+    border-right: 2px solid gray;
+}
+
+.match-details {
+    font-size: 1.25rem;
+    width: 100%;
+    justify-content: space-around;
+}
+
 /* Points Container */
-.points-container {
+.hp-container {
+    width: 50%;
     text-align: center;
     font-family: "Helvetica Neue";
     font-weight: 700;
     font-size: 2rem;
 }
 
-.team-points-container {
+.team-hp-container {
     display: flex;
     justify-content: center;
     gap: 10px;
     margin-top: 5px;
 }
 
-.team-points {
-    width: 130px;
+/* Wrapper */
+.team-hp-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
 }
 
-button {
-    --dimension: 32px;
+.team-hp-wrapper-left {
+    display: flex;
+    flex-direction: column;
+}
 
-    width: var(--dimension);
-    height: var(--dimension);
-    border: 2px solid gray;
-    border-radius: 5px;
+.team-hp { width: 130px; }
+
+input[type="number"] {
     background-color: transparent;
+    border: 1px solid gray;
+    text-align: center;
     color: lightgray;
+    font-family: "Helvetica Neue";
+    font-weight: 700;
     font-size: 1.25rem;
-    line-height: 1px;
-    cursor: pointer;
+    border-radius: 5px;
 }
-button:hover {
-    background-color: lightgray;
-    color: var(--solid-graphite-colour);
+
+input[type="number"]:focus {
+    background-color: rgb(64, 64, 64);
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.team-hp-button {
+    align-self: end;
+    width: 100px;
+    height: 77px;
+    background-color: transparent;
+    border: 1px solid gray;
+    color: lightgray;
+    line-height: 77px;
+    border-radius: 5px;
+    font-family: "Helvetica Neue";
+    font-weight: 700;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: 200ms ease-in-out;
+}
+
+.team-hp-button:hover {
+    background-color:rgb(64, 64, 64);
 }
