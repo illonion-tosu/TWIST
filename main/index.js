@@ -45,9 +45,16 @@ let previousMaxHp, currentMaxHp
 let previousPlayerData, currentPlayerData
 let setHpInfo = false
 
+// Score related info
+const teamScoreLeftEl = document.getElementById("team-score-left")
+const teamScoreRightEl = document.getElementById("team-score-right")
+let currentLeftScore = 0, currentRightScore = 0
+
 const animation = {
     hpLeft: new CountUp(teamTotalHpLeftEl, 0, 0, 0, 0.2, { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: ""}),
-    hpRight: new CountUp(teamTotalHpRightEl, 0, 0, 0, 0.2, { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: ""})
+    hpRight: new CountUp(teamTotalHpRightEl, 0, 0, 0, 0.2, { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: ""}),
+    scoreLeft: new CountUp(teamScoreLeftEl, 0, 0, 0, 0.2, { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: ""}),
+    scoreRight: new CountUp(teamScoreRightEl, 0, 0, 0, 0.2, { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: ""})
 }
 
 function getData() {
@@ -92,6 +99,12 @@ function getData() {
         animation.hpRight.update(currentRightHp)
         teamRightHpBarEl.style.width = `${currentRightHp / (currentMaxHp * 3) * MAX_HP_BAR_WIDTH}px`
     }
+
+    // Set score info
+    currentLeftScore = 0
+    currentRightScore = 0
+    animation.scoreLeft.update(currentPlayerData.player1.currentScore + currentPlayerData.player2.currentScore + currentPlayerData.player3.currentScore)
+    animation.scoreRight.update(currentPlayerData.player4.currentScore + currentPlayerData.player5.currentScore + currentPlayerData.player6.currentScore)
 }
 
 // Deep equal for object
