@@ -14,6 +14,7 @@ let playerData = {
         currentScore: 0,
         currentTarget: 6,
         currentScoreAgainst: 0,
+        currentDeadRounds: 0,
     },
     player2: {
         id: 123456,
@@ -21,6 +22,7 @@ let playerData = {
         currentScore: 0,
         currentTarget: 5,
         currentScoreAgainst: 0,
+        currentDeadRounds: 0,
     },
     player3: {
         id: 123456,
@@ -28,6 +30,7 @@ let playerData = {
         currentScore: 0,
         currentTarget: 4,
         currentScoreAgainst: 0,
+        currentDeadRounds: 0,
     },
     player4: {
         id: 123456,
@@ -35,6 +38,7 @@ let playerData = {
         currentScore: 0,
         currentTarget: 3,
         currentScoreAgainst: 0,
+        currentDeadRounds: 0,
     },
     player5: {
         id: 123456,
@@ -42,6 +46,7 @@ let playerData = {
         currentScore: 0,
         currentTarget: 2,
         currentScoreAgainst: 0,
+        currentDeadRounds: 0,
     },
     player6: {
         id: 123456,
@@ -49,6 +54,7 @@ let playerData = {
         currentScore: 0,
         currentTarget: 1,
         currentScoreAgainst: 0,
+        currentDeadRounds: 0,
     },
 }
 
@@ -76,7 +82,6 @@ loadBeatmaps().then(beatmaps => {
     // Set all player's current max hp
     for (const key in playerData) {
         playerData[key].currentMaxHp = maxHp
-        // playerData[key].currentHp = maxHp
     }
 })
 

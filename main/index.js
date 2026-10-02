@@ -57,6 +57,11 @@ const animation = {
     scoreRight: new CountUp(teamScoreRightEl, 0, 0, 0, 0.2, { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: ""})
 }
 
+// Team Name
+const teamNameLeftEl = document.getElementById("team-name-left")
+const teamNameRightEl = document.getElementById("team-name-right")
+let currentTeamNameLeft, currentTeamNameRight
+
 function getData() {
     const data = JSON.parse(localStorage.getItem("data"))
     console.log(data)
@@ -105,6 +110,16 @@ function getData() {
     currentRightScore = 0
     animation.scoreLeft.update(currentPlayerData.player1.currentScore + currentPlayerData.player2.currentScore + currentPlayerData.player3.currentScore)
     animation.scoreRight.update(currentPlayerData.player4.currentScore + currentPlayerData.player5.currentScore + currentPlayerData.player6.currentScore)
+
+    // Team Name
+    if (currentTeamNameLeft !== data.tosuData.tourney.team.left) {
+        currentTeamNameLeft = data.tosuData.tourney.team.left
+        teamNameLeftEl.textContent = currentTeamNameLeft
+    }
+    if (currentTeamNameRight !== data.tosuData.tourney.team.right) {
+        currentTeamNameRight = data.tosuData.tourney.team.right
+        teamNameRightEl.textContent = currentTeamNameRight
+    }
 }
 
 // Deep equal for object
