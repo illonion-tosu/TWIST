@@ -53,6 +53,7 @@
     top: 6px;
     width: 238px;
     height: 27px;
+    transition: 200ms ease-in-out;
 }
 
 .team-left-hp-bar {

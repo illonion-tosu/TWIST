@@ -7,6 +7,8 @@
 
     <link rel="stylesheet" href="../_shared/css/style.css">
     <link rel="stylesheet" href="style.css">
+
+    <script src="../_shared/deps/countUp.js"></script>
 </head>
 <body>
     <div class="main">
@@ -76,7 +78,7 @@
 
         <!-- HP Bar -->
         <div class="hp-bar-container team-left-hp-bar-container">
-            <div class="hp-bar team-left-hp-bar"></div>
+            <div class="hp-bar team-left-hp-bar" id="team-left-hp-bar"></div>
         </div>
 
         <svg
@@ -136,6 +138,7 @@
                 font-family="Super Mario Galaxy"
                 fill="white"
                 class="team-name-left"
+                id="team-total-hp-left"
                 filter="url(#outline-blend-left)"
             >
                 900,000
@@ -202,9 +205,7 @@
                 class="round-name-text"
                 id="round-name"
                 filter="url(#round-name-outline)"
-            >
-                ROUND NAME HERE
-            </text>
+            ></text>
         </svg>
 
         <!-- Team Name Right  -->
@@ -273,7 +274,7 @@
 
         <!-- HP Bar -->
         <div class="hp-bar-container team-right-hp-bar-container">
-            <div class="hp-bar team-right-hp-bar"></div>
+            <div class="hp-bar team-right-hp-bar" id="team-right-hp-bar"></div>
         </div>
 
         <!-- Team Right HP Number -->
@@ -334,6 +335,7 @@
                 font-family="Super Mario Galaxy"
                 fill="white"
                 class="team-name-right"
+                id="team-total-hp-right"
                 filter="url(#outline-blend-right)"
             >
                 900,000
