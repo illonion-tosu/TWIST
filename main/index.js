@@ -78,17 +78,17 @@ function getData() {
     if (setHpInfo) {
         // Left Score
         const currentLeftHp = 
-            currentPlayerData.player1.currentHp +
-            currentPlayerData.player2.currentHp +
-            currentPlayerData.player3.currentHp
+            currentPlayerData.player1.currentMaxHp +
+            currentPlayerData.player2.currentMaxHp +
+            currentPlayerData.player3.currentMaxHp
         animation.hpLeft.update(currentLeftHp)
         teamLeftHpBarEl.style.width = `${currentLeftHp / (currentMaxHp * 3) * MAX_HP_BAR_WIDTH}px`
 
         // Right Score
         const currentRightHp =
-            currentPlayerData.player4.currentHp +
-            currentPlayerData.player5.currentHp +
-            currentPlayerData.player6.currentHp
+            currentPlayerData.player4.currentMaxHp +
+            currentPlayerData.player5.currentMaxHp +
+            currentPlayerData.player6.currentMaxHp
         animation.hpRight.update(currentRightHp)
         teamRightHpBarEl.style.width = `${currentRightHp / (currentMaxHp * 3) * MAX_HP_BAR_WIDTH}px`
     }
