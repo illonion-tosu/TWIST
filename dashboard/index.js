@@ -1,21 +1,28 @@
+import { loadBeatmaps } from "../_shared/core/beatmaps.js"
 import { createTosuWsSocket } from "../_shared/core/websocket.js"
 
-// Team Hp
-const teamRedHpEl = document.getElementById("team-red-hp")
-const teamBlueHpEl = document.getElementById("team-blue-hp")
-let teamRedStartingHp = 0, teamBlueStartingHp = 0
+// Round Name
+const roundNameEl = document.getElementById("round-name")
+let roundName
+
+loadBeatmaps().then(beatmaps => {
+    roundName = beatmaps.roundName
+    roundNameEl.textContent = roundName
+})
 
 const socket = createTosuWsSocket()
+let socketData
 socket.onmessage = event => {
-    const data = JSON.parse(event.data)
-    console.log(data)
+    socketData = JSON.parse(event.data)
+    console.log(socketData)
+}
 
+setInterval(() => {
     // Save information
     const savedInfo = {
-        tosuData: data,
-        hp: {
-            red: teamRedStartingHp,
-            blue: teamBlueStartingHp
-        }
+        tosuData: socketData,
+        roundName: roundName
     }
-}
+
+    localStorage.setItem("data", JSON.stringify(savedInfo))
+}, 100)
