@@ -117,12 +117,6 @@ async function getData() {
         teamRightHpBarEl.style.width = `${currentRightHp / (currentMaxHp * 3) * MAX_HP_BAR_WIDTH}px`
     }
 
-    // Set score info
-    currentLeftScore = currentPlayerData.player1.currentScore + currentPlayerData.player2.currentScore + currentPlayerData.player3.currentScore
-    currentRightScore = currentPlayerData.player4.currentScore + currentPlayerData.player5.currentScore + currentPlayerData.player6.currentScore
-    animation.scoreLeft.update(currentLeftScore)
-    animation.scoreRight.update(currentRightScore)
-
     // Team Name
     const tosuData = data.tosuData
     const tourneyData = tosuData.tourney

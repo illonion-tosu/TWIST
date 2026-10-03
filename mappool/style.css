@@ -178,7 +178,26 @@
 .team-left-score-container { right: var(--team-score-container-x); }
 .team-right-score-container { left: var(--team-score-container-x); }
 
-/* Now Playing */
+/* Mappool Container */
+.mappool-container {
+    position: absolute;
+    top: 201px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.mappool-mod-container {
+    width: 1300px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+}
+
+/* Mappool Map */
 .mappool-map-wrapper {
     position: absolute;
     top: 201px;
