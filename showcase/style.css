@@ -21,6 +21,21 @@
 .character-right {
     position: absolute;
     top: 185px;
-    right: -46px;
+    right: 35px;
     height: 471px;
+}
+
+/* Chat Container */
+.uranus {
+    position: absolute;
+    bottom: 400px;
+    right: 5px;
+    width: 110px;
+}
+
+.jupiter {
+    position: absolute;
+    bottom: 142px;
+    right: 417px;
+    height: 136px;
 }
