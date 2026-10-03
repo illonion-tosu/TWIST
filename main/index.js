@@ -74,6 +74,11 @@ const nowPlayingStatsOdEl = document.getElementById("now-playing-stats-od")
 const nowPlayingStatsSrEl = document.getElementById("now-playing-stats-sr")
 let currentId, currentChecksum, updateStats = false
 
+// Score visibility
+const chatContainerEl = document.getElementById("chat-container")
+const scoresNowPlayingEl = document.getElementById("scores-now-playing")
+let scoreVisible
+
 async function getData() {
     const data = JSON.parse(localStorage.getItem("data"))
     console.log(data)
@@ -184,6 +189,7 @@ async function getData() {
         }
     }
 
+    // Update Stats
     if (updateStats) {
         const tosuStats = tosuData.beatmap.stats
         updateStats = false
@@ -191,6 +197,18 @@ async function getData() {
         nowPlayingStatsArEl.textContent = `AR: ${Number(tosuStats.ar.converted).toFixed(1)}`
         nowPlayingStatsOdEl.textContent = `OD: ${Number(tosuStats.od.converted).toFixed(1)}`
         nowPlayingStatsSrEl.textContent = `SR: ${Number(tosuStats.stars.total).toFixed(2)}`
+    }
+
+    // Score Visible
+    if (scoreVisible !== tosuData.tourney.scoreVisible) {
+        scoreVisible = tosuData.tourney.scoreVisible
+        if (scoreVisible) {
+            scoresNowPlayingEl.style.opacity = 1
+            chatContainerEl.style.opacity = 0
+        } else {
+            scoresNowPlayingEl.style.opacity = 0
+            chatContainerEl.style.opacity = 1
+        }
     }
 }
 

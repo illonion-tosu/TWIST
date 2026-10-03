@@ -104,6 +104,7 @@
 /* Chatbox */
 .chat-container {
     opacity: 0;
+    transition: 500ms ease-in-out;
 }
 
 .chatbox-background {
@@ -131,6 +132,11 @@
 }
 
 /* Scores */
+.scores-now-playing {
+    opacity: 1;
+    transition: 500ms ease-in-out;
+}
+
 .scores-text {
     position: absolute;
     bottom: 160px;
