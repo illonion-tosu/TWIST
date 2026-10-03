@@ -26,6 +26,20 @@
 }
 
 /* Chat Container */
+.chat-image {
+    position: absolute;
+    right: 52px;
+    bottom: 40px;
+    height: 535px;
+}
+
+.chat-text {
+    position: absolute;
+    right: 254px;
+    bottom: 528px;
+    width: 196px;
+}
+
 .uranus {
     position: absolute;
     bottom: 400px;
