@@ -153,3 +153,35 @@ input::-webkit-inner-spin-button {
 .team-hp-button:hover {
     background-color:rgb(64 64 64);
 }
+
+/* Mappool Select Section */
+.mappool-select-section {
+    margin: 0 20px;
+}
+
+.mappool-select-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.mappool-select-button {
+    padding: 10px;
+    border: 1px solid gray;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: lightgray;
+    background-color: transparent;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    cursor: pointer;
+    width: 65px;
+}
+
+.mappool-select-button:hover {
+    background-color: rgb(64 64 64);
+}
