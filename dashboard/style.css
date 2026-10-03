@@ -54,7 +54,7 @@ input[type="checkbox"] {
 .team-blue-colour { color: var(--team-blue-colour); }
 
 /* Line 2 */
-.line-two, .line-three {
+.line-two, .line-three, .mappool-select-section, .mappool-select-bottom-section, .line-four {
     font-family: "Helvetica Neue", sans-serif;
     margin: 0 20px 20px;
     font-weight: 700;
@@ -65,11 +65,10 @@ input[type="checkbox"] {
 }
 
 /* Match Details Section */
-.match-details-section, .class-activation-container {
+.match-details-section, .class-activation-container, .mappool-select-bans {
     width: 50%;
     border-right: 2px solid gray;
 }
-
 .match-details {
     font-size: 1.25rem;
     width: calc(100% - 20px);
@@ -152,4 +151,67 @@ input::-webkit-inner-spin-button {
 
 .team-hp-button:hover {
     background-color:rgb(64 64 64);
+}
+
+/* Mappool Select Section */
+.mappool-select-section {
+    margin: 0 20px;
+}
+
+.mappool-select-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.select-next-picker-button {
+    padding: 10px;
+    border: 1px solid gray;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    color: lightgray;
+    background-color: transparent;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    cursor: pointer;
+    width: 90px;
+    text-align: center;
+}
+
+.mappool-select-button {
+    padding: 10px;
+    border: 1px solid gray;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    color: lightgray;
+    background-color: transparent;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    cursor: pointer;
+    width: 65px;
+}
+
+.mappool-select-button:hover, .select-next-picker-button:hover {
+    background-color: rgb(64 64 64);
+}
+
+p {
+    text-align: center;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+}
+
+.select-next-picker-button-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
 }

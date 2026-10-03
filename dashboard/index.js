@@ -146,7 +146,8 @@ setInterval(() => {
             mappoolMapModId: mappoolMapModId,
             currentPicker: currentPicker,
             currentBeatmap: currentBeatmap
-        }
+        },
+        allBeatmaps: allBeatmaps
     }
 
     localStorage.setItem("data", JSON.stringify(savedInfo))
