@@ -134,10 +134,10 @@ async function getData() {
     }
 
     // Set score info
-    currentLeftScore = 0
-    currentRightScore = 0
-    animation.scoreLeft.update(currentPlayerData.player1.currentScore + currentPlayerData.player2.currentScore + currentPlayerData.player3.currentScore)
-    animation.scoreRight.update(currentPlayerData.player4.currentScore + currentPlayerData.player5.currentScore + currentPlayerData.player6.currentScore)
+    currentLeftScore = currentPlayerData.player1.currentScore + currentPlayerData.player2.currentScore + currentPlayerData.player3.currentScore
+    currentRightScore = currentPlayerData.player4.currentScore + currentPlayerData.player5.currentScore + currentPlayerData.player6.currentScore
+    animation.scoreLeft.update(currentLeftScore)
+    animation.scoreRight.update(currentRightScore)
 
     // Team Name
     const tosuData = data.tosuData
