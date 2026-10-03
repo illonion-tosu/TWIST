@@ -86,12 +86,6 @@
     top: 135px;
 }
 
-/* Chatbox */
-.chat-container {
-    opacity: 0;
-    transition: 500ms ease-in-out;
-}
-
 .chatbox-chat-text {
     position: absolute;
     bottom: 195px;
