@@ -64,22 +64,6 @@ const teamNameLeftEl = document.getElementById("team-name-left")
 const teamNameRightEl = document.getElementById("team-name-right")
 let currentTeamNameLeft, currentTeamNameRight
 
-// Now Playing Info
-const nowPlayingBackgroundEl = document.getElementById("now-playing-background")
-const nowPlayingModEl = document.getElementById("now-playing-mod")
-const nowPlayingArtistTitleEl = document.getElementById("now-playing-artist-title")
-const nowPlayingVersionEl = document.getElementById("now-playing-version")
-const nowPlayingStatsCsEl = document.getElementById("now-playing-stats-cs")
-const nowPlayingStatsArEl = document.getElementById("now-playing-stats-ar")
-const nowPlayingStatsOdEl = document.getElementById("now-playing-stats-od")
-const nowPlayingStatsSrEl = document.getElementById("now-playing-stats-sr")
-let currentId, currentChecksum, updateStats = false
-
-// Score visibility
-const chatContainerEl = document.getElementById("chat-container")
-const scoresNowPlayingEl = document.getElementById("scores-now-playing")
-let scoreVisible
-
 // Chat
 const chatboxContainerEl = document.getElementById("chatbox-container")
 let chatLen
@@ -150,71 +134,6 @@ async function getData() {
     if (currentTeamNameRight !== teamNames.right) {
         currentTeamNameRight = teamNames.right
         teamNameRightEl.textContent = currentTeamNameRight
-    }
-
-    // Now Playing Information
-    const beatmapData = tosuData.beatmap
-    const mappoolInfo = data.mappoolInfo
-    if (currentId !== beatmapData.id || currentChecksum !== beatmapData.checksum) {
-        currentId = beatmapData.id
-        currentChecksum = beatmapData.checksum
-
-        // Metadata
-        const url = `${window.location.origin}/Songs/${tosuData.directPath.beatmapBackground}`
-        const fixedUrl = encodeURI(url.replaceAll("\\", "/"));
-        nowPlayingBackgroundEl.style.backgroundImage = `url("${fixedUrl}")`
-        nowPlayingArtistTitleEl.textContent = `${beatmapData.artist} - ${beatmapData.title}`
-        nowPlayingVersionEl.textContent = `[${beatmapData.version}]`
-
-        // Mod info
-        if (mappoolInfo.mappoolMapFound) {
-            nowPlayingModEl.style.backgroundColor = `var(--${mappoolInfo.currentPicker}-team-colour)`
-            nowPlayingModEl.textContent = mappoolInfo.mappoolMapModId
-
-            const currentBeatmap = mappoolInfo.currentBeatmap
-            const getStats = getModDetails(
-                currentBeatmap.diff_size,
-                currentBeatmap.diff_approach,
-                currentBeatmap.diff_overall,
-                currentBeatmap.bpm,
-                currentBeatmap.total_length,
-                mappoolInfo.mappoolMapModId
-            )
-
-            nowPlayingStatsCsEl.textContent = `CS: ${Number(getStats.cs).toFixed(1)}`
-            nowPlayingStatsArEl.textContent = `AR: ${Number(getStats.ar).toFixed(1)}`
-            nowPlayingStatsOdEl.textContent = `OD: ${Number(getStats.od).toFixed(1)}`
-            nowPlayingStatsSrEl.textContent = `SR: ${Number(currentBeatmap.difficultyrating).toFixed(2)}`
-            updateStats = false
-        } else {
-            nowPlayingModEl.style.backgroundColor = `gray`
-            nowPlayingModEl.textContent = ""
-
-            await delay(250)
-            updateStats = true
-        }
-    }
-
-    // Update Stats
-    if (updateStats) {
-        const tosuStats = tosuData.beatmap.stats
-        updateStats = false
-        nowPlayingStatsCsEl.textContent = `CS: ${Number(tosuStats.cs.converted).toFixed(1)}`
-        nowPlayingStatsArEl.textContent = `AR: ${Number(tosuStats.ar.converted).toFixed(1)}`
-        nowPlayingStatsOdEl.textContent = `OD: ${Number(tosuStats.od.converted).toFixed(1)}`
-        nowPlayingStatsSrEl.textContent = `SR: ${Number(tosuStats.stars.total).toFixed(2)}`
-    }
-
-    // Score Visible
-    if (scoreVisible !== tourneyData.scoreVisible) {
-        scoreVisible = tourneyData.scoreVisible
-        if (scoreVisible) {
-            scoresNowPlayingEl.style.opacity = 1
-            chatContainerEl.style.opacity = 0
-        } else {
-            scoresNowPlayingEl.style.opacity = 0
-            chatContainerEl.style.opacity = 1
-        }
     }
 
     // Chatbox Container
