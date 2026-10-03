@@ -1,0 +1,11 @@
+/* Whole Page */
+.main { background-image: url("static/background.png"); }
+
+/* Greenscreen */
+.greenscreen {
+    position: absolute;
+    left: 3px;
+    background-color: #0F0;
+    width: 1497px;
+    height: 842px;
+}
