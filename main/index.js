@@ -115,9 +115,9 @@ async function getData() {
             currentPlayerData.player1.currentMaxHp +
             currentPlayerData.player2.currentMaxHp +
             currentPlayerData.player3.currentMaxHp - 
-            currentPlayerData.player1.scoreAgainst -
-            currentPlayerData.player2.scoreAgainst -
-            currentPlayerData.player3.scoreAgainst 
+            currentPlayerData.player1.currentScoreAgainst -
+            currentPlayerData.player2.currentScoreAgainst -
+            currentPlayerData.player3.currentScoreAgainst 
         animation.hpLeft.update(currentLeftHp)
         teamLeftHpBarEl.style.width = `${currentLeftHp / (currentMaxHp * 3) * MAX_HP_BAR_WIDTH}px`
 
@@ -126,9 +126,9 @@ async function getData() {
             currentPlayerData.player4.currentMaxHp +
             currentPlayerData.player5.currentMaxHp +
             currentPlayerData.player6.currentMaxHp - 
-            currentPlayerData.player1.scoreAgainst -
-            currentPlayerData.player2.scoreAgainst -
-            currentPlayerData.player3.scoreAgainst
+            currentPlayerData.player1.currentScoreAgainst -
+            currentPlayerData.player2.currentScoreAgainst -
+            currentPlayerData.player3.currentScoreAgainst
         animation.hpRight.update(currentRightHp)
         teamRightHpBarEl.style.width = `${currentRightHp / (currentMaxHp * 3) * MAX_HP_BAR_WIDTH}px`
     }
