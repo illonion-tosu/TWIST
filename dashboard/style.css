@@ -1,0 +1,155 @@
+body {
+    color: lightgray;
+    background-color: var(--solid-graphite-colour);
+}
+
+/* Dashboard Section */
+.dashboard-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 20px;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    padding-bottom: 20px;
+    border-bottom: 2px solid gray;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+h1 {
+    text-align: center;
+    font-family: "Super Mario Galaxy", sans-serif;
+    font-size: 2rem;
+}
+
+.auto-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.auto-labels {
+    padding: 10px;
+    border: 1px solid gray;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: lightgray;
+}
+
+.auto-labels:hover {
+    background-color: rgb(64 64 64);
+}
+
+input[type="checkbox"] {
+    background-color: transparent;
+    accent-color: red;
+    width: 20px;
+    height: 20px;
+}
+
+.team-red-colour { color: var(--team-red-colour); }
+.team-blue-colour { color: var(--team-blue-colour); }
+
+/* Line 2 */
+.line-two, .line-three {
+    font-family: "Helvetica Neue", sans-serif;
+    margin: 0 20px 20px;
+    font-weight: 700;
+    display: flex;
+    padding-bottom: 20px;
+    border-bottom: 2px solid gray;
+    margin-bottom: 20px;
+}
+
+/* Match Details Section */
+.match-details-section, .class-activation-container {
+    width: 50%;
+    border-right: 2px solid gray;
+}
+
+.match-details {
+    font-size: 1.25rem;
+    width: calc(100% - 20px);
+    justify-content: space-around;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* Points Container */
+.hp-container, .targeting-container {
+    width: 50%;
+    text-align: center;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.team-hp-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+/* Wrapper */
+.team-hp-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.team-hp-wrapper-left {
+    display: flex;
+    flex-direction: column;
+}
+
+.team-hp {
+    width: max-content;
+    white-space: nowrap;
+    text-align: left;
+    margin-left: 20px;
+}
+
+input[type="number"], select {
+    background-color: transparent;
+    border: 1px solid gray;
+    text-align: center;
+    color: lightgray;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    border-radius: 5px;
+    width: calc(100% - 20px);
+}
+
+input[type="number"]:focus, select:focus {
+    background-color: rgb(64 64 64);
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+}
+
+.team-hp-button {
+    align-self: end;
+    width: 120px;
+    height: 180px;
+    background-color: transparent;
+    border: 1px solid gray;
+    color: lightgray;
+    border-radius: 5px;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: 200ms ease-in-out;
+}
+
+.team-hp-button:hover {
+    background-color:rgb(64 64 64);
+}

@@ -1,0 +1,26 @@
+:root {
+    --solid-graphite-colour: #31313B;
+    --team-red-colour: red;
+    --team-blue-colour: #0078FF;
+}
+
+@font-face {
+    font-family: "Super Mario Galaxy";
+    src: url("../../fonts/Super\ Mario\ Galaxy.ttf");
+}
+
+@font-face {
+    font-family: "Helvetica Neue";
+    src: url("../../fonts/Helvetica\ Neue\ Heavy.otf");
+    font-weight: 700;
+}
+
+.main {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    background: center / cover;
+    overflow: hidden;
+}
