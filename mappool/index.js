@@ -68,6 +68,9 @@ let currentTeamNameLeft, currentTeamNameRight
 const chatboxContainerEl = document.getElementById("chatbox-container")
 let chatLen
 
+// All beatmaps
+let allBeatmaps
+
 async function getData() {
     const data = JSON.parse(localStorage.getItem("data"))
     console.log(data)
@@ -135,6 +138,16 @@ async function getData() {
     if (chatLen !== chatData.length) {
         chatLen = updateChat(chatLen, chatData, chatboxContainerEl)
     }
+
+    // Get beatmaps
+    if (data.allBeatmaps && !allBeatmaps) {
+        allBeatmaps = data.allBeatmaps
+
+        for (let i = 0; i < allBeatmaps.length; i++) {
+            const container =  document.getElementById(`mappool-${allBeatmaps[i].mod.toLowerCase()}-mod-container`)
+            container.append(createMapCard(allBeatmaps[i]))
+        }
+    }
 }
 
 // Deep equal for object
@@ -194,14 +207,15 @@ function createBorder(borderColor) {
 
 function createMapCard({
     mod = "",
+    order = "",
     artist = "",
     title = "",
     version = "",
-    cs = 0,
-    ar = 0,
-    od = 0,
-    sr = 0,
-    background = "",
+    diff_size = 0,
+    diff_approach = 0,
+    diff_overall = 0,
+    difficultyrating = 0,
+    beatmapset_id = "",
     borderColor = "red",
 } = {}) {
     const wrapper = el("div", "mappool-map-wrapper")
@@ -209,19 +223,19 @@ function createMapCard({
 
     const bg = el("div", "mappool-map-background")
     bg.append(el("div", "mappool-map-background-overlay"))
-    if (background) bg.style.backgroundImage = `url("${background}")`
+    if (beatmapset_id) bg.style.backgroundImage = `url("https://assets.ppy.sh/beatmaps/${beatmapset_id}/covers/cover.jpg")`
 
     const stats = el("div", "mappool-map-stats-container")
     stats.append(
-        el("div", "mappool-map-stats-cs", `CS: ${cs}`),
-        el("div", "mappool-map-stats-ar", `AR: ${ar}`),
-        el("div", "mappool-map-stats-od", `OD: ${od}`),
-        el("div", "mappool-map-stats-star mappool-map-stats-sr", `SR: ${sr}`)
+        el("div", "mappool-map-stats-cs", `CS: ${Number(diff_size).toFixed(1)}`),
+        el("div", "mappool-map-stats-ar", `AR: ${Number(diff_approach).toFixed(1)}`),
+        el("div", "mappool-map-stats-od", `OD: ${Number(diff_overall).toFixed(1)}`),
+        el("div", "mappool-map-stats-star mappool-map-stats-sr", `SR: ${Number(difficultyrating).toFixed(2)}`)
     )
 
     container.append(
         bg,
-        el("div", "mappool-map-mod", mod),
+        el("div", `mappool-map-mod mappool-map-mod-${mod.toLowerCase()}`, `${mod}${order}`),
         el("div", "mappool-map-metadata mappool-map-artist-title", `${artist} - ${title}`),
         el("div", "mappool-map-metadata mappool-map-version", `[${version}]`),
         stats
@@ -229,8 +243,4 @@ function createMapCard({
 
     wrapper.append(createBorder(borderColor), container)
     return wrapper
-}
-
-function renderMappool(maps, container) {
-    container.replaceChildren(...maps.map(createMapCard))
 }

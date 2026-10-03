@@ -181,9 +181,9 @@
 /* Mappool Container */
 .mappool-container {
     position: absolute;
-    top: 201px;
+    top: 503.5px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -199,12 +199,10 @@
 
 /* Mappool Map */
 .mappool-map-wrapper {
-    position: absolute;
-    top: 201px;
-    left: 617px;
     width: 680px;
     height: 91px;
     transform: scale(0.6);
+    margin: calc(91px * -0.2) calc(680px * -0.2);
 }
 
 .mappool-map-border {
@@ -252,7 +250,6 @@
     position: absolute;
     width: 133px;
     height: 92px;
-    background-color: #3b7cc4;
     border-right: 3px solid black;
     text-align: center;
     color: white;
@@ -262,6 +259,11 @@
     -webkit-text-stroke: 6px black;
     paint-order: stroke fill;
 }
+.mappool-map-mod-nm { background-color: #4BC43B; }
+.mappool-map-mod-hd { background-color: #DB6D45; }
+.mappool-map-mod-hr { background-color: #C43B3B; }
+.mappool-map-mod-dt { background-color: #B540DB; }
+.mappool-map-mod-fm { background-color: #F5EB46; }
 
 /* Metadata */
 .mappool-map-metadata {
