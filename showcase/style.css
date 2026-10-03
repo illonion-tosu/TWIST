@@ -16,3 +16,11 @@
     top: 36px;
     right: 0;
 }
+
+/* Character Right */
+.character-right {
+    position: absolute;
+    top: 185px;
+    right: -46px;
+    height: 471px;
+}
