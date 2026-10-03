@@ -302,6 +302,27 @@
 .mappool-map-stats-container > * { width: 90px; }
 .mappool-map-stats-star { color: gold; }
 
+/* Pick Ban */
+.mappool-map-pick-ban {
+    position: absolute;
+    top: 22px;
+    left: 405px;
+    transform: translateX(-50%);
+    font-size: 36px;
+    letter-spacing: -1px;
+    color: white;
+    font-family: "Super Mario Galaxy";
+    text-align: center;
+    line-height: 37.5px;
+    height: 37.5px;
+    width: max-content;
+    padding: 5px;
+    border: 3px solid white;
+    display: none;
+}
+.mappool-map-pick-ban-left { background-color: var(--team-red-colour); }
+.mappool-map-pick-ban-right { background-color: var(--team-blue-colour); }
+
 /* Cameras */
 .camera {
     position: absolute;

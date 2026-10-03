@@ -238,7 +238,8 @@ function createMapCard({
         el("div", `mappool-map-mod mappool-map-mod-${mod.toLowerCase()}`, `${mod}${order}`),
         el("div", "mappool-map-metadata mappool-map-artist-title", `${artist} - ${title}`),
         el("div", "mappool-map-metadata mappool-map-version", `[${version}]`),
-        stats
+        stats,
+        el("div", `mappool-map-pick-ban mappool-map-pick-ban-right`, `PICKED BY BLUE TEAM`)
     )
 
     wrapper.append(createBorder(borderColor), container)
