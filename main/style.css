@@ -107,6 +107,14 @@
     transition: 500ms ease-in-out;
 }
 
+.chatbox-chat-text {
+    position: absolute;
+    bottom: 195px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+}
+
 .chatbox-background {
     position: absolute;
     bottom: 0;
@@ -130,6 +138,43 @@
     width: 145px;
     z-index: 1;
 }
+
+.chatbox-container {
+    position: absolute;
+    bottom: 0;
+    left: 955px;
+    transform: translateX(-50%);
+    width: 833px;
+    height: 190px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow-y: scroll;
+    font-family: "Helvetica Neue";
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin: 15px;
+}
+.chatbox-container::-webkit-scrollbar { display: none;}
+
+/* Chat Display Message */
+.chatbox-message {
+    display: flex;
+    width: inherit;
+    color: black;
+    line-height: 27px;
+}
+
+.chatbox-name {
+    margin-right: 10px;
+    white-space: nowrap;
+}
+
+.chatbox-content { width: 100%; }
+.left { color: var(--team-red-colour); }
+.right { color: var(--team-blue-colour); }
+.bot { color: purple; }
+.unknown { color: green; }
 
 /* Scores */
 .scores-now-playing {

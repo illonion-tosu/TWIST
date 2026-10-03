@@ -6,7 +6,7 @@ const roundNameEl = document.getElementById("round-name")
 let roundName
 
 // Beatmaps
-const allBeatmaps = []
+let allBeatmaps = []
 
 // Current picker
 let currentPicker = "red"
@@ -99,6 +99,7 @@ let checkedWinner = false
 // Mappool Map Found
 let mappoolMapFound = false
 let mappoolMapModId
+let currentBeatmap
 
 // Socket
 const socket = createTosuWsSocket()
@@ -124,7 +125,7 @@ socket.onmessage = event => {
     }
 
     // Mappool Map Found
-    const currentBeatmap = allBeatmaps.find(beatmap => Number(beatmap.beatmap_id) === Number(socketData.beatmap.id))
+    currentBeatmap = allBeatmaps.find(beatmap => Number(beatmap.beatmap_id) === Number(socketData.beatmap.id))
     if (currentBeatmap) {
         mappoolMapFound = true
         mappoolMapModId = `${currentBeatmap.mod.toUpperCase()}${currentBeatmap.order}`

@@ -1,3 +1,4 @@
+import { updateChat } from "../_shared/core/chat.js";
 import { constants } from "../_shared/js/constants.js";
 import { delay, getModDetails } from "../_shared/core/utils.js"
 
@@ -79,6 +80,10 @@ const chatContainerEl = document.getElementById("chat-container")
 const scoresNowPlayingEl = document.getElementById("scores-now-playing")
 let scoreVisible
 
+// Chat
+const chatboxContainerEl = document.getElementById("chatbox-container")
+let chatLen
+
 async function getData() {
     const data = JSON.parse(localStorage.getItem("data"))
     console.log(data)
@@ -136,7 +141,8 @@ async function getData() {
 
     // Team Name
     const tosuData = data.tosuData
-    const teamNames = tosuData.tourney.team
+    const tourneyData = tosuData.tourney
+    const teamNames = tourneyData.team
     if (currentTeamNameLeft !== teamNames.left) {
         currentTeamNameLeft = teamNames.left
         teamNameLeftEl.textContent = currentTeamNameLeft
@@ -200,8 +206,8 @@ async function getData() {
     }
 
     // Score Visible
-    if (scoreVisible !== tosuData.tourney.scoreVisible) {
-        scoreVisible = tosuData.tourney.scoreVisible
+    if (scoreVisible !== tourneyData.scoreVisible) {
+        scoreVisible = tourneyData.scoreVisible
         if (scoreVisible) {
             scoresNowPlayingEl.style.opacity = 1
             chatContainerEl.style.opacity = 0
@@ -209,6 +215,12 @@ async function getData() {
             scoresNowPlayingEl.style.opacity = 0
             chatContainerEl.style.opacity = 1
         }
+    }
+
+    // Chatbox Container
+    const chatData = tourneyData.chat
+    if (chatLen !== chatData.length) {
+        chatLen = updateChat(chatLen, chatData, chatboxContainerEl)
     }
 }
 
