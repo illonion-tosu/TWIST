@@ -3,7 +3,7 @@
     --greenscreen-width: 480px;
     --greenscreen-height: 360px;
     --team-score-container-x: 941px;
-    --now-playing-metadata-y: 20px;
+    --mappool-map-metadata-y: 20px;
     --hp-bar-container-x: 37px;
     --hp-bar-container-skew: 5deg;
     --hp-bar-x: 6px;
@@ -156,7 +156,7 @@
 .unknown { color: green; }
 
 /* Scores */
-.scores-now-playing {
+.scores-mappool-map {
     opacity: 1;
     transition: 500ms ease-in-out;
 }
@@ -178,30 +178,17 @@
 .team-left-score-container { right: var(--team-score-container-x); }
 .team-right-score-container { left: var(--team-score-container-x); }
 
-/* Now Playing Earth */
-.now-playing-earth {
+/* Now Playing */
+.mappool-map-wrapper {
     position: absolute;
-    right: 481px;
-    bottom: 0;
-    width: 240px;
-}
-
-.now-playing-saturn {
-    position: absolute;
-    left: 482px;
-    bottom: 17px;
-    width: 200px;
-}
-
-.now-playing-wrapper {
-    position: absolute;
-    bottom: -1px;
+    top: 201px;
     left: 617px;
     width: 680px;
     height: 91px;
+    transform: scale(0.6);
 }
 
-.now-playing-border {
+.mappool-map-border {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -211,13 +198,13 @@
     pointer-events: none;
 }
 
-.now-playing-container {
+.mappool-map-container {
     position: absolute;
     inset: 0;
     z-index: 2;
     width: 100%;
     height: 100%;
-    mask-image: url("static/now-playing/mask.svg");
+    mask-image: url("static/mappool-map/mask.svg");
     -webkit-mask-mode: alpha;
     mask-mode: alpha;
     mask-size: 100% 100%;
@@ -226,14 +213,14 @@
 }
 
 /* Now Playing Background */
-.now-playing-background {
+.mappool-map-background {
     position: absolute;
     width: 100%;
     height: 100%;
     background-image: url("https://assets.ppy.sh/beatmaps/1/covers/cover.jpg");
 }
 
-.now-playing-background-overlay {
+.mappool-map-background-overlay {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -242,7 +229,7 @@
 }
 
 /* Now Playing Mod */
-.now-playing-mod {
+.mappool-map-mod {
     position: absolute;
     width: 133px;
     height: 92px;
@@ -258,7 +245,7 @@
 }
 
 /* Metadata */
-.now-playing-metadata {
+.mappool-map-metadata {
     position: absolute;
     left: 146px;
     font-size: 24px;
@@ -271,11 +258,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.now-playing-artist-title { top: var(--now-playing-metadata-y); }
-.now-playing-version { bottom: var(--now-playing-metadata-y); }
+.mappool-map-artist-title { top: var(--mappool-map-metadata-y); }
+.mappool-map-version { bottom: var(--mappool-map-metadata-y); }
 
 /* Stats */
-.now-playing-stats-container {
+.mappool-map-stats-container {
     position: absolute;
     top: 50%;
     right: 10px;
@@ -291,8 +278,8 @@
     text-align: right;
     row-gap: 5px;    
 }
-.now-playing-stats-container > * { width: 90px; }
-.now-playing-stats-star { color: gold; }
+.mappool-map-stats-container > * { width: 90px; }
+.mappool-map-stats-star { color: gold; }
 
 /* Cameras */
 .camera {
