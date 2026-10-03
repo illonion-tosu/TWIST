@@ -5,6 +5,12 @@ import { createTosuWsSocket } from "../_shared/core/websocket.js"
 const roundNameEl = document.getElementById("round-name")
 let roundName
 
+// Beatmaps
+const allBeatmaps = []
+
+// Current picker
+let currentPicker = "red"
+
 // Max HP
 let maxHp
 let playerData = {
@@ -62,6 +68,7 @@ loadBeatmaps().then(beatmaps => {
     // Set Round Name
     roundName = beatmaps.roundName
     roundNameEl.textContent = roundName
+    allBeatmaps = beatmaps.beatmaps
 
     // Set Max HP
     switch (roundName.toLowerCase()) {
@@ -89,6 +96,10 @@ loadBeatmaps().then(beatmaps => {
 let previousIpcState, currentIpcState
 let checkedWinner = false
 
+// Mappool Map Found
+let mappoolMapFound = false
+let mappoolMapModId
+
 // Socket
 const socket = createTosuWsSocket()
 let socketData
@@ -111,6 +122,14 @@ socket.onmessage = event => {
             checkedWinner === true
         }
     }
+
+    // Mappool Map Found
+    const currentBeatmap = allBeatmaps.find(beatmap => Number(beatmap.beatmap_id) === Number(socketData.beatmap.id))
+    if (currentBeatmap) {
+        mappoolMapFound = true
+        mappoolMapModId = `${currentBeatmap.mod.toUpperCase()}${currentBeatmap.order}`
+    }
+
     console.log(socketData)
 }
 
@@ -120,7 +139,13 @@ setInterval(() => {
         tosuData: socketData,
         maxHp: maxHp,
         playerData: playerData,
-        roundName: roundName
+        roundName: roundName,
+        mappoolInfo: {
+            mappoolMapFound: mappoolMapFound,
+            mappoolMapModId: mappoolMapModId,
+            currentPicker: currentPicker,
+            currentBeatmap: currentBeatmap
+        }
     }
 
     localStorage.setItem("data", JSON.stringify(savedInfo))

@@ -241,7 +241,10 @@
     color: white;
     font-family: "Helvetica Neue";
     font-weight: 700;
-    text-align: center;
+    width: 330px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .now-playing-artist-title { top: var(--now-playing-metadata-y); }
 .now-playing-version { bottom: var(--now-playing-metadata-y); }

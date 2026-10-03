@@ -1,4 +1,5 @@
 import { constants } from "../_shared/js/constants.js";
+import { delay, getModDetails } from "../_shared/core/utils.js"
 
 function truncateSVGTexts(element, maxWidth) {
     const originalText = element.textContent.trim()
@@ -62,7 +63,18 @@ const teamNameLeftEl = document.getElementById("team-name-left")
 const teamNameRightEl = document.getElementById("team-name-right")
 let currentTeamNameLeft, currentTeamNameRight
 
-function getData() {
+// Now Playing Info
+const nowPlayingBackgroundEl = document.getElementById("now-playing-background")
+const nowPlayingModEl = document.getElementById("now-playing-mod")
+const nowPlayingArtistTitleEl = document.getElementById("now-playing-artist-title")
+const nowPlayingVersionEl = document.getElementById("now-playing-version")
+const nowPlayingStatsCsEl = document.getElementById("now-playing-stats-cs")
+const nowPlayingStatsArEl = document.getElementById("now-playing-stats-ar")
+const nowPlayingStatsOdEl = document.getElementById("now-playing-stats-od")
+const nowPlayingStatsSrEl = document.getElementById("now-playing-stats-sr")
+let currentId, currentChecksum, updateStats = false
+
+async function getData() {
     const data = JSON.parse(localStorage.getItem("data"))
     console.log(data)
     
@@ -92,7 +104,10 @@ function getData() {
         const currentLeftHp = 
             currentPlayerData.player1.currentMaxHp +
             currentPlayerData.player2.currentMaxHp +
-            currentPlayerData.player3.currentMaxHp
+            currentPlayerData.player3.currentMaxHp - 
+            currentPlayerData.player1.scoreAgainst -
+            currentPlayerData.player2.scoreAgainst -
+            currentPlayerData.player3.scoreAgainst 
         animation.hpLeft.update(currentLeftHp)
         teamLeftHpBarEl.style.width = `${currentLeftHp / (currentMaxHp * 3) * MAX_HP_BAR_WIDTH}px`
 
@@ -100,7 +115,10 @@ function getData() {
         const currentRightHp =
             currentPlayerData.player4.currentMaxHp +
             currentPlayerData.player5.currentMaxHp +
-            currentPlayerData.player6.currentMaxHp
+            currentPlayerData.player6.currentMaxHp - 
+            currentPlayerData.player1.scoreAgainst -
+            currentPlayerData.player2.scoreAgainst -
+            currentPlayerData.player3.scoreAgainst
         animation.hpRight.update(currentRightHp)
         teamRightHpBarEl.style.width = `${currentRightHp / (currentMaxHp * 3) * MAX_HP_BAR_WIDTH}px`
     }
@@ -112,13 +130,67 @@ function getData() {
     animation.scoreRight.update(currentPlayerData.player4.currentScore + currentPlayerData.player5.currentScore + currentPlayerData.player6.currentScore)
 
     // Team Name
-    if (currentTeamNameLeft !== data.tosuData.tourney.team.left) {
-        currentTeamNameLeft = data.tosuData.tourney.team.left
+    const tosuData = data.tosuData
+    const teamNames = tosuData.tourney.team
+    if (currentTeamNameLeft !== teamNames.left) {
+        currentTeamNameLeft = teamNames.left
         teamNameLeftEl.textContent = currentTeamNameLeft
     }
-    if (currentTeamNameRight !== data.tosuData.tourney.team.right) {
-        currentTeamNameRight = data.tosuData.tourney.team.right
+    if (currentTeamNameRight !== teamNames.right) {
+        currentTeamNameRight = teamNames.right
         teamNameRightEl.textContent = currentTeamNameRight
+    }
+
+    // Now Playing Information
+    const beatmapData = tosuData.beatmap
+    const mappoolInfo = data.mappoolInfo
+    if (currentId !== beatmapData.id || currentChecksum !== beatmapData.checksum) {
+        currentId = beatmapData.id
+        currentChecksum = beatmapData.checksum
+
+        // Metadata
+        const url = `${window.location.origin}/Songs/${tosuData.directPath.beatmapBackground}`
+        const fixedUrl = encodeURI(url.replaceAll("\\", "/"));
+        nowPlayingBackgroundEl.style.backgroundImage = `url("${fixedUrl}")`
+        nowPlayingArtistTitleEl.textContent = `${beatmapData.artist} - ${beatmapData.title}`
+        nowPlayingVersionEl.textContent = `[${beatmapData.version}]`
+
+        // Mod info
+        if (mappoolInfo.mappoolMapFound) {
+            nowPlayingModEl.style.backgroundColor = `var(--${mappoolInfo.currentPicker}-team-colour)`
+            nowPlayingModEl.textContent = mappoolInfo.mappoolMapModId
+
+            const currentBeatmap = mappoolInfo.currentBeatmap
+            const getStats = getModDetails(
+                currentBeatmap.diff_size,
+                currentBeatmap.diff_approach,
+                currentBeatmap.diff_overall,
+                currentBeatmap.bpm,
+                currentBeatmap.total_length,
+                mappoolInfo.mappoolMapModId
+            )
+
+            nowPlayingStatsCsEl.textContent = `CS: ${Number(getStats.cs).toFixed(1)}`
+            nowPlayingStatsArEl.textContent = `AR: ${Number(getStats.ar).toFixed(1)}`
+            nowPlayingStatsOdEl.textContent = `OD: ${Number(getStats.od).toFixed(1)}`
+            nowPlayingStatsSrEl.textContent = `SR: ${Number(currentBeatmap.difficultyrating).toFixed(2)}`
+            updateStats = false
+        } else {
+            nowPlayingModEl.style.backgroundColor = `gray`
+            nowPlayingModEl.textContent = ""
+
+            await delay(250)
+            updateStats = true
+        }
+    }
+
+    if (updateStats) {
+        const tosuStats = tosuData.beatmap.stats
+        updateStats = false
+        nowPlayingStatsCsEl.textContent = `CS: ${Number(tosuStats.cs.converted).toFixed(1)}`
+        nowPlayingStatsArEl.textContent = `AR: ${Number(tosuStats.ar.converted).toFixed(1)}`
+        nowPlayingStatsOdEl.textContent = `OD: ${Number(tosuStats.od.converted).toFixed(1)}`
+        nowPlayingStatsSrEl.textContent = `SR: ${Number(tosuStats.stars.total).toFixed(2)}`
     }
 }
 
