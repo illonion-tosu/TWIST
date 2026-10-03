@@ -13,6 +13,71 @@
 <body>
     <div class="main">
         <div class="greenscreen"></div>
+
+        <!-- Round Name-->
+        <svg
+            class="round-name-container"
+            xmlns="http://www.w3.org/2000/svg"
+            width="420"
+            height="120"
+            viewBox="0 0 420 120"
+        >
+            <defs>
+                <filter id="round-name-outline" x="-10%" y="-100%" width="120%" height="300%">
+                    <!-- Outer white ring -->
+                    <feMorphology in="SourceAlpha" operator="dilate" radius="6" result="white-dilate" />
+                    <feGaussianBlur in="white-dilate" stdDeviation="2.5" result="white-blur" />
+                    <feColorMatrix
+                        in="white-blur"
+                        type="matrix"
+                        values="0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 25 -8"
+                        result="white-round"
+                    />
+                    <feFlood flood-color="white" result="white-color" />
+                    <feComposite in="white-color" in2="white-round" operator="in" result="white-layer" />
+                
+                    <!-- Inner black ring -->
+                    <feMorphology in="SourceAlpha" operator="dilate" radius="3.5" result="black-dilate" />
+                    <feGaussianBlur in="black-dilate" stdDeviation="1.2" result="black-blur" />
+                    <feColorMatrix
+                        in="black-blur"
+                        type="matrix"
+                        values="0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 0 0
+                                0 0 0 25 -8"
+                        result="black-round"
+                    />
+                    <feFlood flood-color="black" result="black-color" />
+                    <feComposite in="black-color" in2="black-round" operator="in" result="black-layer" />
+                
+                    <!-- Stack: white ring (bottom) -> black ring -> actual text fill (top) -->
+                    <feMerge>
+                        <feMergeNode in="white-layer" />
+                        <feMergeNode in="black-layer" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+            </defs>
+        
+            <text
+                x="210"
+                y="50"
+                text-anchor="middle"
+                font-size="50px"
+                letter-spacing="-4"
+                font-family="Super Mario Galaxy"
+                fill="white"
+                class="round-name-text"
+                id="round-name"
+                filter="url(#round-name-outline)"
+            >ROUND NAME HERE</text>
+        </svg>
     </div>
+
+    <script src="index.js" type="module"></script>
 </body>
 </html>

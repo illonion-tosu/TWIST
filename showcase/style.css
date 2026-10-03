@@ -9,3 +9,10 @@
     width: 1497px;
     height: 842px;
 }
+
+/* Round Name Container */
+.round-name-container {
+    position: absolute;
+    top: 36px;
+    right: 0;
+}
