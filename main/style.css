@@ -150,7 +150,7 @@
     flex-direction: column;
     justify-content: flex-end;
     overflow-y: scroll;
-    font-family: "Helvetica Neue";
+    font-family: "Helvetica Neue", sans-serif;
     font-weight: 700;
     font-size: 1.25rem;
     margin: 15px;
@@ -290,7 +290,7 @@
     font-size: 24px;
     letter-spacing: -2px;
     color: white;
-    font-family: "Helvetica Neue";
+    font-family: "Helvetica Neue", sans-serif;
     font-weight: 700;
     width: 330px;
     white-space: nowrap;
@@ -310,7 +310,7 @@
     font-size: 20px;
     letter-spacing: -2px;
     color: white;
-    font-family: "Helvetica Neue";
+    font-family: "Helvetica Neue", sans-serif;
     font-weight: 700;
     display: flex;
     flex-wrap: wrap;
@@ -326,7 +326,7 @@
     bottom: 0;
     width: 338px;
     height: 190px;
-    font-family: "Super Mario Galaxy";
+    font-family: "Super Mario Galaxy", sans-serif;
     font-size: 40px;
     -webkit-text-stroke: 6px black;
     paint-order: stroke fill;
