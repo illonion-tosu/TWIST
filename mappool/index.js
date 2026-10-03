@@ -1,6 +1,5 @@
 import { updateChat } from "../_shared/core/chat.js";
 import { constants } from "../_shared/js/constants.js";
-import { delay, getModDetails } from "../_shared/core/utils.js"
 
 function truncateSVGTexts(element, maxWidth) {
     const originalText = element.textContent.trim()
@@ -47,16 +46,9 @@ let previousMaxHp, currentMaxHp
 let previousPlayerData, currentPlayerData
 let setHpInfo = false
 
-// Score related info
-const teamScoreLeftEl = document.getElementById("team-score-left")
-const teamScoreRightEl = document.getElementById("team-score-right")
-let currentLeftScore = 0, currentRightScore = 0
-
 const animation = {
     hpLeft: new CountUp(teamTotalHpLeftEl, 0, 0, 0, 0.2, { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: ""}),
     hpRight: new CountUp(teamTotalHpRightEl, 0, 0, 0, 0.2, { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: ""}),
-    scoreLeft: new CountUp(teamScoreLeftEl, 0, 0, 0, 0.2, { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: ""}),
-    scoreRight: new CountUp(teamScoreRightEl, 0, 0, 0, 0.2, { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: ""})
 }
 
 // Team Name

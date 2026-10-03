@@ -69,6 +69,7 @@ input[type="checkbox"] {
     width: 50%;
     border-right: 2px solid gray;
 }
+
 .match-details {
     font-size: 1.25rem;
     width: calc(100% - 20px);
