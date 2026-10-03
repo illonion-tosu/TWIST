@@ -53,3 +53,11 @@
     right: 417px;
     height: 136px;
 }
+
+/* Character Bottom */
+.character-bottom {
+position: absolute;
+    bottom: 0;
+    right: 527px;
+    width: 388px;
+}
