@@ -54,7 +54,7 @@ input[type="checkbox"] {
 .team-blue-colour { color: var(--team-blue-colour); }
 
 /* Line 2 */
-.line-two, .line-three {
+.line-two, .line-three, .mappool-select-section {
     font-family: "Helvetica Neue", sans-serif;
     margin: 0 20px 20px;
     font-weight: 700;
@@ -184,4 +184,10 @@ input::-webkit-inner-spin-button {
 
 .mappool-select-button:hover {
     background-color: rgb(64 64 64);
+}
+
+p {
+    text-align: center;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
 }
