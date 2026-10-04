@@ -30,12 +30,6 @@
 
 .mappool-map-container { mask-image: url("static/mappool-map/mask.svg"); }
 
-.mappool-map-mod-nm { background-color: #4BC43B; }
-.mappool-map-mod-hd { background-color: #DB6D45; }
-.mappool-map-mod-hr { background-color: #C43B3B; }
-.mappool-map-mod-dt { background-color: #B540DB; }
-.mappool-map-mod-fm { background-color: #F5EB46; }
-
 /* Pick / Ban label */
 .mappool-map-pick-ban {
     position: absolute;

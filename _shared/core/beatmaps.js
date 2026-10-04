@@ -17,6 +17,10 @@ let showcaseBeatmaps = []
 // Load showcase beatmaps
 export async function loadShowcaseBeatmaps() {
     const response = await axios.get("../_data/showcase-beatmaps.json")
-    allBeatmaps = response.data
-    return allBeatmaps
+    showcaseBeatmaps = response.data
+    return showcaseBeatmaps
+}
+
+export function findShowcaseBeatmap(songName, difficultyName, mapper) {
+    return showcaseBeatmaps.beatmaps.find(beatmap => beatmap.songName === songName && beatmap.difficultyName === difficultyName && beatmap.mapper === mapper)
 }

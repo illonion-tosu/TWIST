@@ -149,6 +149,11 @@
     paint-order: stroke fill;
     clip-path: polygon( 0 0, 100% 0, 100% 100%, 0 100% );
 }
+.now-playing-mod-nm { background-color: var(--nm-colour); }
+.now-playing-mod-hd { background-color: var(--hd-colour); }
+.now-playing-mod-hr { background-color: var(--hr-colour); }
+.now-playing-mod-dt { background-color: var(--dt-colour); }
+.now-playing-mod-fm { background-color: var(--fm-colour); }
 
 .now-playing-metadata {
     position: absolute;
@@ -165,14 +170,8 @@
     -webkit-text-stroke: 2px var(--black);
     paint-order: stroke fill;
 }
-
-.now-playing-artist-title {
-    top: 57px;
-}
-
-.now-playing-version {
-    top: 90px;
-}
+.now-playing-artist-title { top: 57px; }
+.now-playing-version { top: 90px; }
 
 .now-playing-stats-container {
     position: absolute;
@@ -192,14 +191,8 @@
     -webkit-text-stroke: 2px var(--black);
     paint-order: stroke fill;
 }
-
-.now-playing-stats-container > * {
-    width: 129px;
-}
-
-.now-playing-stats-star {
-    color: gold;
-}
+.now-playing-stats-container > * { width: 129px; }
+.now-playing-stats-star { color: gold; }
 
 /* Chatbox CSS */
 .chatbox-container {
