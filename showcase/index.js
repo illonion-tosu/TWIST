@@ -1,3 +1,5 @@
+import { loadShowcaseBeatmaps } from "../_shared/core/beatmaps.js"
+
 function setRoundName(name) {
     const text = document.getElementById("round-name")
 
@@ -53,4 +55,9 @@ function setRoundName(name) {
     })
 }
 
-setRoundName("QUARTER FINALS")
+// Load beatmaps
+let allBeatmaps = []
+loadShowcaseBeatmaps().then(beatmaps => {
+    setRoundName(beatmaps.roundName)
+})
+
