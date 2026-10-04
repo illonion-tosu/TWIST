@@ -16,8 +16,16 @@
     text-anchor: middle;
     stroke-linejoin: round;
 }
-.timer-text-outer { stroke: white; stroke-width: 50px; }
-.timer-text-inner { stroke: black; stroke-width: 17.5px; }
+
+.timer-text-outer {
+    stroke: white;
+    stroke-width: 50px;
+}
+
+.timer-text-inner {
+    stroke: black;
+    stroke-width: 17.5px;
+}
 
 .timer-minutes,
 .timer-colon { fill: #EC7A95; }
@@ -88,27 +96,5 @@
 
 .sidebar-button:active {
     background-color: white;
-    color: var(--main-text);
-}
-
-/*
- * NOTE: --love-fumes-colour, --main-text and --book-background-colour are not defined
- * anywhere, so the rules below (and the :active colour above) currently fall back to
- * inherited/default values.
- */
-.light-pink-button {
-    border-color: var(--love-fumes-colour);
-    color: var(--love-fumes-colour);
-}
-
-.light-pink-button:active {
-    background-color: var(--love-fumes-colour);
-    color: var(--book-background-colour);
-}
-
-.timer-error-message {
-    display: none;
-    margin-top: 10px;
-    margin-right: 20px;
-    color: var(--love-fumes-colour);
+    color: var(--solid-graphite-colour);
 }
