@@ -1,0 +1,278 @@
+/*
+ * Styles shared by the stream overlays that use the gameplay layout
+ * (main/ and mappool/): team names, HP bars, chat, cameras and map cards.
+ * Page-specific values (background, mask image, positions) stay in each page's style.css.
+ */
+
+:root {
+    --hp-bar-container-x: 37px;
+    --hp-bar-container-skew: 5deg;
+    --hp-bar-x: 6px;
+    --camera-x: 0px;
+    --map-metadata-y: 20px;
+}
+
+/* Team Names */
+.team-name-container { position: absolute; }
+.team-name-container-left { left: 0; }
+.team-name-container-right { right: 0; }
+
+/* HP Bar Container */
+.hp-bar-container {
+    position: absolute;
+    top: 100px;
+    width: 250px;
+    height: 39px;
+    background-color: white;
+    border-radius: 3px;
+}
+
+.hp-bar-container::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border: 3px solid black;
+    border-radius: 3px;
+    pointer-events: none;
+}
+
+.team-left-hp-bar-container {
+    left: var(--hp-bar-container-x);
+    transform: skewX(calc(-1 * var(--hp-bar-container-skew)));
+}
+
+.team-right-hp-bar-container {
+    right: var(--hp-bar-container-x);
+    transform: skewX(var(--hp-bar-container-skew));
+}
+
+/* HP Bar */
+.hp-bar {
+    position: absolute;
+    top: 6px;
+    width: 238px;
+    height: 27px;
+    transition: 200ms ease-in-out;
+}
+
+.team-left-hp-bar {
+    left: var(--hp-bar-x);
+    background-color: var(--team-red-colour);
+}
+
+.team-right-hp-bar {
+    right: var(--hp-bar-x);
+    background-color: var(--team-blue-colour);
+}
+
+/* HP Numbers */
+.team-hp-number {
+    position: absolute;
+    top: 54px;
+}
+.team-left-hp-number { left: 258px; }
+.team-right-hp-number { right: 258px; }
+
+/* Round Name */
+.round-name-container {
+    position: absolute;
+    top: 135px;
+}
+
+/* Chatbox */
+.chatbox-chat-text {
+    position: absolute;
+    bottom: 195px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+}
+
+.chatbox-background {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 900px;
+}
+
+.chatbox-jupiter {
+    position: absolute;
+    left: 400px;
+    bottom: 10px;
+    width: 187px;
+    z-index: 1;
+}
+
+.chatbox-uranus {
+    position: absolute;
+    right: 450px;
+    bottom: 134px;
+    width: 145px;
+    z-index: 1;
+}
+
+.chatbox-container {
+    position: absolute;
+    bottom: 0;
+    left: 955px;
+    transform: translateX(-50%);
+    width: 833px;
+    height: 190px;
+    margin: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow-y: scroll;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+.chatbox-container::-webkit-scrollbar { display: none; }
+
+/* Chat Messages (created in _shared/core/chat.js) */
+.chatbox-message {
+    display: flex;
+    width: inherit;
+    color: black;
+    line-height: 27px;
+}
+
+.chatbox-name {
+    margin-right: 10px;
+    white-space: nowrap;
+}
+
+.chatbox-content { width: 100%; }
+
+.left { color: var(--team-red-colour); }
+.right { color: var(--team-blue-colour); }
+.bot { color: purple; }
+.unknown { color: green; }
+
+/* Map Cards (now playing on main/, pool maps on mappool/) */
+.now-playing-border,
+.mappool-map-border {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.now-playing-container,
+.mappool-map-container {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    mask-mode: alpha;
+    -webkit-mask-mode: alpha;
+    mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+    overflow: hidden;
+}
+
+.now-playing-background,
+.mappool-map-background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("https://assets.ppy.sh/beatmaps/1/covers/cover.jpg");
+}
+
+.now-playing-background-overlay,
+.mappool-map-background-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    opacity: 0.5;
+}
+
+.now-playing-mod,
+.mappool-map-mod {
+    position: absolute;
+    width: 133px;
+    height: 92px;
+    border-right: 3px solid black;
+    text-align: center;
+    color: white;
+    font-family: "Super Mario Galaxy", sans-serif;
+    font-size: 43px;
+    line-height: 92px;
+    -webkit-text-stroke: 6px black;
+    paint-order: stroke fill;
+}
+
+.now-playing-metadata,
+.mappool-map-metadata {
+    position: absolute;
+    left: 146px;
+    width: 330px;
+    color: white;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    font-size: 24px;
+    letter-spacing: -2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.now-playing-artist-title,
+.mappool-map-artist-title { top: var(--map-metadata-y); }
+
+.now-playing-version,
+.mappool-map-version { bottom: var(--map-metadata-y); }
+
+.now-playing-stats-container,
+.mappool-map-stats-container {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    width: 180px;
+    transform: translateY(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: 5px;
+    text-align: right;
+    color: white;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -2px;
+}
+.now-playing-stats-container > *,
+.mappool-map-stats-container > * { width: 90px; }
+
+.now-playing-stats-star,
+.mappool-map-stats-star { color: gold; }
+
+/* Cameras */
+.camera {
+    position: absolute;
+    bottom: 0;
+    width: 338px;
+    height: 190px;
+    color: white;
+    font-family: "Super Mario Galaxy", sans-serif;
+    font-size: 40px;
+    line-height: 190px;
+    text-align: center;
+    -webkit-text-stroke: 6px black;
+    paint-order: stroke fill;
+}
+
+.camera-left {
+    left: var(--camera-x);
+    background-color: var(--team-red-colour);
+}
+
+.camera-right {
+    right: var(--camera-x);
+    background-color: var(--team-blue-colour);
+}

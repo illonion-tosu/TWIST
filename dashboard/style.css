@@ -1,28 +1,47 @@
-body {
-    color: lightgray;
-    background-color: var(--solid-graphite-colour);
+:root {
+    --hover-colour: rgb(64 64 64);
 }
 
-/* Dashboard Section */
+body {
+    background-color: var(--solid-graphite-colour);
+    color: lightgray;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+}
+
+h1 {
+    font-family: "Super Mario Galaxy", sans-serif;
+    font-size: 2rem;
+    text-align: center;
+}
+
+p { text-align: center; }
+
+.team-red-colour { color: var(--team-red-colour); }
+.team-blue-colour { color: var(--team-blue-colour); }
+
+/* Page sections */
 .dashboard-section {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin: 0 20px;
-    font-family: "Helvetica Neue", sans-serif;
-    font-weight: 700;
+    margin: 10px 20px 20px;
     padding-bottom: 20px;
     border-bottom: 2px solid gray;
-    margin-top: 10px;
-    margin-bottom: 20px;
 }
 
-h1 {
-    text-align: center;
-    font-family: "Super Mario Galaxy", sans-serif;
-    font-size: 2rem;
+.line-two,
+.line-three,
+.line-four,
+.mappool-select-section {
+    display: flex;
+    margin: 0 20px 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid gray;
 }
+.mappool-select-section { margin-bottom: 0; }
 
+/* Automation toggles */
 .auto-section {
     display: flex;
     flex-direction: column;
@@ -30,71 +49,44 @@ h1 {
 }
 
 .auto-labels {
-    padding: 10px;
-    border: 1px solid gray;
-    border-radius: 5px;
     display: flex;
     align-items: center;
     gap: 5px;
-    color: lightgray;
-}
-
-.auto-labels:hover {
-    background-color: rgb(64 64 64);
+    padding: 10px;
+    border: 1px solid gray;
+    border-radius: 5px;
 }
 
 input[type="checkbox"] {
-    background-color: transparent;
-    accent-color: red;
     width: 20px;
     height: 20px;
+    background-color: transparent;
+    accent-color: red;
 }
 
-.team-red-colour { color: var(--team-red-colour); }
-.team-blue-colour { color: var(--team-blue-colour); }
-
-/* Line 2 */
-.line-two, .line-three, .mappool-select-section, .mappool-select-bottom-section, .line-four {
-    font-family: "Helvetica Neue", sans-serif;
-    margin: 0 20px 20px;
-    font-weight: 700;
-    display: flex;
-    padding-bottom: 20px;
-    border-bottom: 2px solid gray;
-    margin-bottom: 20px;
-}
-
-/* Match Details Section */
-.match-details-section, .class-activation-container, .mappool-select-bans {
+/* Left half of a section */
+.match-details-section,
+.class-activation-container {
     width: 50%;
     border-right: 2px solid gray;
 }
 
 .match-details {
-    font-size: 1.25rem;
     width: calc(100% - 20px);
-    justify-content: space-around;
+    font-size: 1.25rem;
     white-space: nowrap;
     overflow: hidden;
 }
 
-/* Points Container */
-.hp-container, .targeting-container {
+/* Right half of a section */
+.hp-container,
+.targeting-container {
     width: 50%;
-    text-align: center;
-    font-family: "Helvetica Neue", sans-serif;
-    font-weight: 700;
     font-size: 1.2rem;
+    text-align: center;
 }
 
-.team-hp-container {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 5px;
-}
-
-/* Wrapper */
+/* Per-player rows (HP inputs and target selects) */
 .team-hp-wrapper {
     display: flex;
     justify-content: center;
@@ -106,27 +98,31 @@ input[type="checkbox"] {
     flex-direction: column;
 }
 
+.team-hp-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 5px;
+}
+
 .team-hp {
     width: max-content;
-    white-space: nowrap;
-    text-align: left;
     margin-left: 20px;
+    text-align: left;
+    white-space: nowrap;
 }
 
-input[type="number"], select {
-    background-color: transparent;
-    border: 1px solid gray;
-    text-align: center;
-    color: lightgray;
-    font-family: "Helvetica Neue", sans-serif;
-    font-weight: 700;
-    font-size: 1.25rem;
-    border-radius: 5px;
+/* Form controls */
+input[type="number"],
+select {
     width: calc(100% - 20px);
-}
-
-input[type="number"]:focus, select:focus {
-    background-color: rgb(64 64 64);
+    border: 1px solid gray;
+    border-radius: 5px;
+    background-color: transparent;
+    color: lightgray;
+    font: inherit;
+    font-size: 1.25rem;
+    text-align: center;
 }
 
 input::-webkit-outer-spin-button,
@@ -135,84 +131,58 @@ input::-webkit-inner-spin-button {
     margin: 0;
 }
 
+button {
+    border: 1px solid gray;
+    border-radius: 5px;
+    background-color: transparent;
+    color: lightgray;
+    font: inherit;
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
 .team-hp-button {
     align-self: end;
     width: 120px;
     height: 180px;
-    background-color: transparent;
-    border: 1px solid gray;
-    color: lightgray;
-    border-radius: 5px;
-    font-family: "Helvetica Neue", sans-serif;
-    font-weight: 700;
-    font-size: 1.25rem;
-    cursor: pointer;
     transition: 200ms ease-in-out;
 }
 
-.team-hp-button:hover {
-    background-color:rgb(64 64 64);
-}
-
-/* Mappool Select Section */
-.mappool-select-section {
-    margin: 0 20px;
-}
-
-.mappool-select-container {
+.select-next-picker-button,
+.mappool-select-button {
     display: flex;
-    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    padding: 10px;
+}
+.select-next-picker-button { width: 90px; }
+.mappool-select-button { width: 65px; }
+
+/* Hover / focus highlight */
+.auto-labels:hover,
+input[type="number"]:focus,
+select:focus,
+.team-hp-button:hover,
+.select-next-picker-button:hover,
+.mappool-select-button:hover {
+    background-color: var(--hover-colour);
+}
+
+/* Next picker */
+.select-next-picker { width: 100%; }
+.select-next-picker .current { font-size: 1.25rem; }
+
+.select-next-picker-button-container {
+    display: flex;
     justify-content: center;
     gap: 10px;
 }
 
-.select-next-picker-button {
-    padding: 10px;
-    border: 1px solid gray;
-    border-radius: 5px;
+/* Mappool select */
+.mappool-select-container {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-    color: lightgray;
-    background-color: transparent;
-    font-family: "Helvetica Neue", sans-serif;
-    font-weight: 700;
-    font-size: 1.25rem;
-    cursor: pointer;
-    width: 90px;
-    text-align: center;
-}
-
-.mappool-select-button {
-    padding: 10px;
-    border: 1px solid gray;
-    border-radius: 5px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-    color: lightgray;
-    background-color: transparent;
-    font-family: "Helvetica Neue", sans-serif;
-    font-weight: 700;
-    font-size: 1.25rem;
-    cursor: pointer;
-    width: 65px;
-}
-
-.mappool-select-button:hover, .select-next-picker-button:hover {
-    background-color: rgb(64 64 64);
-}
-
-p {
-    text-align: center;
-    font-family: "Helvetica Neue", sans-serif;
-    font-weight: 700;
-}
-
-.select-next-picker-button-container {
-    display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
 }

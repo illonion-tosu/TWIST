@@ -10,49 +10,24 @@
 </head>
 <body>
     <div class="main">
-        <svg
-            class="timer"
-            xmlns="http://www.w3.org/2000/svg"
-            width="945"
-            height="350"
-            viewBox="-50 0 865 350"
-        >
+        <svg class="timer" xmlns="http://www.w3.org/2000/svg" width="945" height="350" viewBox="-50 0 865 350">
             <!-- White outer stroke -->
-            <text
-                x="397.5"
-                y="300"
-                text-anchor="middle"
-                font-size="285px"
-                letter-spacing="-14px"
-                font-family="Super Mario Galaxy"
-                stroke="white"
-                stroke-width="50px"
-                stroke-linejoin="round"
-            >
-                <tspan class="timer-minutes" fill="#ec7a95">44</tspan><tspan fill="#ec7a95">:</tspan><tspan class="timer-seconds" fill="#F5D49C">44</tspan>
+            <text class="timer-text timer-text-outer" x="397.5" y="300">
+                <tspan class="timer-minutes">44</tspan><tspan class="timer-colon">:</tspan><tspan class="timer-seconds">44</tspan>
             </text>
-        
+
             <!-- Black inner stroke -->
-            <text
-                x="397.5"
-                y="300"
-                text-anchor="middle"
-                font-size="285px"
-                letter-spacing="-14px"
-                font-family="Super Mario Galaxy"
-                stroke="black"
-                stroke-width="17.5px"
-                stroke-linejoin="round"
-            >
-                <tspan class="timer-minutes" fill="#ec7a95">44</tspan><tspan fill="#ec7a95">:</tspan><tspan class="timer-seconds" fill="#F5D49C">44</tspan>
+            <text class="timer-text timer-text-inner" x="397.5" y="300">
+                <tspan class="timer-minutes">44</tspan><tspan class="timer-colon">:</tspan><tspan class="timer-seconds">44</tspan>
             </text>
         </svg>
     </div>
 
-    <!-- Sidebar -->
+    <!-- Sidebar (positioned off-screen, only visible in the OBS dock) -->
     <section class="sidebar">
         <div class="sidebar-timer">
             <div class="sidebar-title">Timer</div>
+
             <section id="normal-timer">
                 <div class="sidebar-text">Set timer for: </div>
                 <input id="minutes-number" class="sidebar-input" type="number"> minutes<br>
@@ -62,6 +37,7 @@
                 <button class="sidebar-button" onclick="startTimer()">Start Timer Only</button>
                 <div class="sidebar-text timer-error-message" id="timer1-error-message">Make sure your timer is positive!</div>
             </section>
+
             <section id="utc-timer">
                 <div class="sidebar-text">or... set timer for: </div>
                 <div>
@@ -71,6 +47,7 @@
                 <button class="sidebar-button" onclick="startUTCTimer()">Start Timer</button>
                 <div class="sidebar-text timer-error-message" id="timer2-error-message">Make sure your hours and minutes are over 0!</div>
             </section>
+
             <button class="sidebar-button light-pink-button" onclick="stopTimer()">Stop Timer</button>
             <button class="sidebar-button light-pink-button" onclick="resetTimer()">Reset Timer</button>
         </div>

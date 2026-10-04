@@ -3,96 +3,18 @@
     --greenscreen-width: 480px;
     --greenscreen-height: 360px;
     --team-score-container-x: 941px;
-    --now-playing-metadata-y: 20px;
-    --hp-bar-container-x: 37px;
-    --hp-bar-container-skew: 5deg;
-    --hp-bar-x: 6px;
-    --camera-x: 0px;
 }
 
 /* Whole Page */
 .main { background-image: url("static/background.png"); }
 
-/* Team Names */
-.team-name-container { position: absolute; }
-.team-name-container-left { left: 0; }
-.team-name-container-right { right: 0; }
-
-/* HP Bar Container */
-.hp-bar-container {
-    position: absolute;
-    top: 100px;
-    width: 250px;
-    height: 39px;
-    background-color: white;
-    border-radius: 3px;
-}
-
-.team-left-hp-bar-container {
-    left: var(--hp-bar-container-x);
-    transform: skewX(calc(-1 * var(--hp-bar-container-skew)));
-}
-
-.team-right-hp-bar-container {
-    right: var(--hp-bar-container-x);
-    transform: skewX(var(--hp-bar-container-skew));
-}
-
-.hp-bar-container::after {
-    content: "";
-    position: absolute;
-    inset: 3px;                
-    border: 3px solid black; 
-    border-radius: 3px;
-    pointer-events: none;      
-}
-
-/* HP Bar */
-.hp-bar {
-    position: absolute;
-    top: 6px;
-    width: 238px;
-    height: 27px;
-    transition: 200ms ease-in-out;
-}
-
-.team-left-hp-bar {
-    left: var(--hp-bar-x);
-    background-color: var(--team-red-colour);
-}
-
-.team-right-hp-bar {
-    right: var(--hp-bar-x);
-    background-color: var(--team-blue-colour);
-}
-
-/* Team Names */
-.team-hp-number {
-    position: absolute;
-    top: 54px;
-}
-
-.team-left-hp-number {
-    left: 258px;
-}
-
-.team-right-hp-number {
-    right: 258px;
-}
-
-/* Round Name */
-.round-name-container {
-    position: absolute;
-    top: 135px;
-}
-
 /* Green Screens */
 .greenscreen {
     position: absolute;
     left: 0;
-    background-color: #0F0;
     width: var(--greenscreen-width);
     height: var(--greenscreen-height);
+    background-color: #0F0;
 }
 .greenscreen-top { top: var(--greenscreen-top-y); }
 .greenscreen-bottom { top: calc(var(--greenscreen-height) + var(--greenscreen-top-y)); }
@@ -101,80 +23,11 @@
 .greenscreen-x-3 { left: calc(var(--greenscreen-width) * 2); }
 .greenscreen-x-4 { left: calc(var(--greenscreen-width) * 3); }
 
-/* Chatbox */
+/* Chat is hidden while scores are visible (toggled from index.js) */
 .chat-container {
     opacity: 0;
     transition: 500ms ease-in-out;
 }
-
-.chatbox-chat-text {
-    position: absolute;
-    bottom: 195px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 200px;
-}
-
-.chatbox-background {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 900px;
-}
-
-.chatbox-jupiter {
-    position: absolute;
-    left: 400px;
-    bottom: 10px;
-    width: 187px;
-    z-index: 1;
-}
-
-.chatbox-uranus {
-    position: absolute;
-    right: 450px;
-    bottom: 134px;
-    width: 145px;
-    z-index: 1;
-}
-
-.chatbox-container {
-    position: absolute;
-    bottom: 0;
-    left: 955px;
-    transform: translateX(-50%);
-    width: 833px;
-    height: 190px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    overflow-y: scroll;
-    font-family: "Helvetica Neue", sans-serif;
-    font-weight: 700;
-    font-size: 1.25rem;
-    margin: 15px;
-}
-.chatbox-container::-webkit-scrollbar { display: none;}
-
-/* Chat Display Message */
-.chatbox-message {
-    display: flex;
-    width: inherit;
-    color: black;
-    line-height: 27px;
-}
-
-.chatbox-name {
-    margin-right: 10px;
-    white-space: nowrap;
-}
-
-.chatbox-content { width: 100%; }
-.left { color: var(--team-red-colour); }
-.right { color: var(--team-blue-colour); }
-.bot { color: purple; }
-.unknown { color: green; }
 
 /* Scores */
 .scores-now-playing {
@@ -190,7 +43,6 @@
     width: 175px;
 }
 
-/* Team Score Container */
 .team-score-container {
     position: absolute;
     bottom: 84px;
@@ -199,7 +51,7 @@
 .team-left-score-container { right: var(--team-score-container-x); }
 .team-right-score-container { left: var(--team-score-container-x); }
 
-/* Now Playing Earth */
+/* Now Playing */
 .now-playing-earth {
     position: absolute;
     right: 481px;
@@ -222,120 +74,7 @@
     height: 91px;
 }
 
-.now-playing-border {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-    z-index: 1;
-    pointer-events: none;
-}
+.now-playing-container { mask-image: url("static/now-playing/mask.svg"); }
 
-.now-playing-container {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    width: 100%;
-    height: 100%;
-    mask-image: url("static/now-playing/mask.svg");
-    -webkit-mask-mode: alpha;
-    mask-mode: alpha;
-    mask-size: 100% 100%;
-    mask-repeat: no-repeat;
-    overflow: hidden;
-}
-
-/* Now Playing Background */
-.now-playing-background {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-image: url("https://assets.ppy.sh/beatmaps/1/covers/cover.jpg");
-}
-
-.now-playing-background-overlay {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-color: black;
-    opacity: 0.5;
-}
-
-/* Now Playing Mod */
-.now-playing-mod {
-    position: absolute;
-    width: 133px;
-    height: 92px;
-    background-color: #3b7cc4;
-    border-right: 3px solid black;
-    text-align: center;
-    color: white;
-    font-family: "Super Mario Galaxy", sans-serif;
-    font-size: 43px;
-    line-height: 92px;
-    -webkit-text-stroke: 6px black;
-    paint-order: stroke fill;
-}
-
-/* Metadata */
-.now-playing-metadata {
-    position: absolute;
-    left: 146px;
-    font-size: 24px;
-    letter-spacing: -2px;
-    color: white;
-    font-family: "Helvetica Neue", sans-serif;
-    font-weight: 700;
-    width: 330px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.now-playing-artist-title { top: var(--now-playing-metadata-y); }
-.now-playing-version { bottom: var(--now-playing-metadata-y); }
-
-/* Stats */
-.now-playing-stats-container {
-    position: absolute;
-    top: 50%;
-    right: 10px;
-    width: 180px;
-    transform: translateY(-50%);
-    font-size: 20px;
-    letter-spacing: -2px;
-    color: white;
-    font-family: "Helvetica Neue", sans-serif;
-    font-weight: 700;
-    display: flex;
-    flex-wrap: wrap;
-    text-align: right;
-    row-gap: 5px;    
-}
-.now-playing-stats-container > * { width: 90px; }
-.now-playing-stats-star { color: gold; }
-
-/* Cameras */
-.camera {
-    position: absolute;
-    bottom: 0;
-    width: 338px;
-    height: 190px;
-    font-family: "Super Mario Galaxy", sans-serif;
-    font-size: 40px;
-    -webkit-text-stroke: 6px black;
-    paint-order: stroke fill;
-    color: white;
-    line-height: 190px;
-    text-align: center;
-}
-
-.camera-left {
-    left: var(--camera-x);
-    background-color: var(--team-red-colour);
-}
-
-.camera-right {
-    right: var(--camera-x);
-    background-color: var(--team-blue-colour);
-}
+/* Mod colour is set from index.js */
+.now-playing-mod { background-color: #3b7cc4; }
