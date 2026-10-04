@@ -112,10 +112,7 @@
     height: 100%;
     overflow: hidden;
     mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 977 177'><path d='M 0,22.38 L 185.35,3.90 C 185.35,3.90 408.06,34.08 408.06,34.08 L 677.46,2.92 L 977,36.02 L 969.81,176.05 L 0,157.57 Z' fill='black'/></svg>");
-    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 977 177'><path d='M 0,22.38 L 185.35,3.90 C 185.35,3.90 408.06,34.08 408.06,34.08 L 677.46,2.92 L 977,36.02 L 969.81,176.05 L 0,157.57 Z' fill='black'/></svg>");
     mask-size: 100% 100%;
-    mask-size: 100% 100%;
-    mask-repeat: no-repeat;
     mask-repeat: no-repeat;
 }
 
