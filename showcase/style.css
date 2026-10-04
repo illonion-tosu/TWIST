@@ -1,5 +1,19 @@
+:root {
+    --greenscreen-height: 842px;
+}
+
 /* Whole Page */
 .main { background-image: url("static/background.png"); }
+
+/* White Strip */
+.white-strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: white;
+    width: 3px;
+    height: var(--greenscreen-height);
+}
 
 /* Greenscreen */
 .greenscreen {
@@ -7,7 +21,7 @@
     left: 3px;
     background-color: #0F0;
     width: 1497px;
-    height: 842px;
+    height: var(--greenscreen-height);
 }
 
 /* Round Name Container */
@@ -60,4 +74,128 @@ position: absolute;
     bottom: 0;
     right: 527px;
     width: 388px;
+}
+
+.now-playing-wrapper {
+    position: absolute;
+    bottom: 33px;
+    left: 31px;
+    width: 977px;
+    height: 177px;
+}
+
+.now-playing-border {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.now-playing-container {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    /* Apply inline SVG path masking scaled to 977x177 */
+    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 977 177'><path d='M 0,22.38 L 185.35,3.90 C 185.35,3.90 408.06,34.08 408.06,34.08 L 677.46,2.92 L 977,36.02 L 969.81,176.05 L 0,157.57 Z' fill='black'/></svg>");
+    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 977 177'><path d='M 0,22.38 L 185.35,3.90 C 185.35,3.90 408.06,34.08 408.06,34.08 L 677.46,2.92 L 977,36.02 L 969.81,176.05 L 0,157.57 Z' fill='black'/></svg>");
+    mask-size: 100% 100%;
+    -webkit-mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    overflow: hidden;
+}
+
+/* Now Playing Background */
+.now-playing-background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url("https://assets.ppy.sh/beatmaps/1/covers/cover.jpg");
+    background-size: cover;
+    background-position: center;
+}
+
+.now-playing-background-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    opacity: 0.5;
+}
+
+/* Now Playing Mod */
+.now-playing-mod {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 164px;
+    height: 100%;
+    background-color: #3b7cc4;
+    border-right: 6px solid black;
+    text-align: center;
+    color: white;
+    font-family: "Super Mario Galaxy", sans-serif;
+    font-size: 55px;
+    line-height: 177px;
+    -webkit-text-stroke: 11px black;
+    paint-order: stroke fill;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* Metadata */
+.now-playing-metadata {
+    position: absolute;
+    left: 185px;
+    font-size: 32px;
+    letter-spacing: -1.5px;
+    color: white;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    width: 485px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -webkit-text-stroke: 2px black;
+    paint-order: stroke fill;
+}
+
+.now-playing-artist-title {
+    top: 57px;
+}
+
+.now-playing-version {
+    top: 90px;
+}
+
+/* Stats */
+.now-playing-stats-container {
+    position: absolute;
+    top: 96.5px;
+    right: 21px;
+    width: 258px;
+    transform: translateY(-50%);
+    font-size: 26px;
+    letter-spacing: -1.5px;
+    color: white;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    display: flex;
+    flex-wrap: wrap;
+    text-align: right;
+    row-gap: 6px;
+    -webkit-text-stroke: 2px black;
+    paint-order: stroke fill;
+}
+
+.now-playing-stats-container > * {
+    width: 129px;
+}
+
+.now-playing-stats-star {
+    color: gold;
 }

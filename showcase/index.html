@@ -12,6 +12,7 @@
 </head>
 <body>
     <div class="main">
+        <div class="white-strip"></div>
         <div class="greenscreen"></div>
 
         <!-- Round Name-->
@@ -88,6 +89,47 @@
 
         <!-- Character Bottom -->
         <img class="character-bottom" src="static/character-bottom.png">
+
+        <!-- Now Playing Wrapper -->
+        <div class="now-playing-wrapper">
+            <svg class="now-playing-border" viewBox="0 0 977 177" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <!-- A clip region that excludes everything INSIDE the border shape, 
+                         leaving only the area outside it (where the white should flare outward into) -->
+                    <clipPath id="outer-border-clip" clipPathUnits="userSpaceOnUse">
+                        <path 
+                            fill-rule="evenodd"
+                            d="M -50,-50 L 1050,-50 L 1050,250 L -50,250 Z
+                               M 0,22.38 L 185.35,3.90 C 185.35,3.90 408.06,34.08 408.06,34.08 L 677.46,2.92 L 977,36.02 L 969.81,176.05 L 0,157.57 Z"
+                        />
+                    </clipPath>
+                </defs>
+                
+                <!-- Outer White Border/Glow — clipped so only the OUTER half of the stroke shows -->
+                <path d="M -0.35,18.9 C -0.35,18.9 185,0.42 185,0.42 C 185.27,0.39 185.55,0.39 185.82,0.43 C 185.82,0.43 408.09,30.55 408.09,30.55 C 408.09,30.55 677.06,-0.56 677.06,-0.56 C 677.32,-0.59 677.58,-0.59 677.84,-0.56 C 677.84,-0.56 977.38,32.54 977.38,32.54 C 979.23,32.74 980.59,34.35 980.5,36.2 C 980.5,36.2 973.31,176.23 973.31,176.23 C 973.21,178.12 971.63,179.59 969.74,179.55 C 969.74,179.55 -0.07,161.07 -0.07,161.07 C -1.97,161.03 -3.5,159.48 -3.5,157.57 L -3.5,22.38 C -3.5,20.58 -2.14,19.08 -0.35,18.9 Z" 
+                      fill="none" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+                
+                <!-- Inner Black Border Edge — left straddling the path as before -->
+                <path d="M 0,22.38 L 185.35,3.90 C 185.35,3.90 408.06,34.08 408.06,34.08 L 677.46,2.92 L 977,36.02 L 969.81,176.05 L 0,157.57 Z" 
+                      fill="none" stroke="black" stroke-width="5" 
+                      stroke-linejoin="round" stroke-linecap="round"/>
+            </svg>
+        
+            <div class="now-playing-container">
+                <div class="now-playing-background" id="now-playing-background">
+                    <div class="now-playing-background-overlay"></div>
+                </div>
+                <div class="now-playing-mod" id="now-playing-mod">DT2</div>
+                <div class="now-playing-metadata now-playing-artist-title" id="now-playing-artist-title">STAYC - SO BAR</div>
+                <div class="now-playing-metadata now-playing-version" id="now-playing-version">[Desperation (Buffed Ver.)]</div>
+                <div class="now-playing-stats-container">
+                    <div id="now-playing-stats-cs">CS: 10.55</div>
+                    <div id="now-playing-stats-ar">AR: 10.55</div>
+                    <div id="now-playing-stats-od">OD: 10.55</div>
+                    <div class="now-playing-stats-star" id="now-playing-stats-sr">SR: 10.55</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="index.js" type="module"></script>
