@@ -94,9 +94,6 @@
     height: var(--now-playing-height);
 }
 
-
-/* ---------- Border ---------- */
-
 .now-playing-border {
     position: absolute;
     inset: 0;
