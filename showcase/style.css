@@ -200,3 +200,36 @@
 .now-playing-stats-star {
     color: gold;
 }
+
+/* Chatbox CSS */
+.chatbox-container {
+    position: absolute;
+    bottom: 47px;
+    right: 60px;
+    width: 385px;
+    height: 487px;
+    margin: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow-y: scroll;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    clip-path: polygon(0 0, 0 92%, 100% 100%, 100% 1%, 88% 1%);
+}
+.chatbox-container::-webkit-scrollbar { display: none; }
+
+.chatbox-message {
+    display: flex;
+    width: inherit;
+    color: black;
+    line-height: 27px;
+}
+
+.chatbox-name {
+    margin-right: 10px;
+    white-space: nowrap;
+}
+
+.chatbox-content { width: 100%; }
