@@ -246,6 +246,7 @@
     font-size: 20px;
     letter-spacing: -2px;
 }
+
 .now-playing-stats-container > *,
 .mappool-map-stats-container > * { width: 90px; }
 
