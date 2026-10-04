@@ -1,0 +1,202 @@
+:root {
+    /* Canvas */
+    --greenscreen-height: 842px;
+
+    /* Now Playing */
+    --now-playing-width: 977px;
+    --now-playing-height: 177px;
+
+    /* Colours */
+    --green-screen: #0f0;
+    --now-playing-mod: #3b7cc4;
+    --white: #fff;
+    --black: #000;
+}
+
+/* Whole Page */
+.main { background-image: url("static/background.png"); }
+
+/* White Strip */
+.white-strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: var(--greenscreen-height);
+    background-color: var(--white);
+}
+
+/* Greenscreen */
+.greenscreen {
+    position: absolute;
+    top: 0;
+    left: 3px;
+    width: 1497px;
+    height: var(--greenscreen-height);
+    background-color: var(--green-screen);
+}
+
+.round-name-container {
+    position: absolute;
+    top: 36px;
+    right: 0;
+}
+
+.character-right {
+    position: absolute;
+    top: 185px;
+    right: 35px;
+    height: 471px;
+}
+
+.character-bottom {
+    position: absolute;
+    right: 527px;
+    bottom: 0;
+    width: 388px;
+}
+
+/* Chat */
+.chat-image {
+    position: absolute;
+    right: 52px;
+    bottom: 40px;
+    height: 535px;
+}
+
+.chat-text {
+    position: absolute;
+    right: 254px;
+    bottom: 528px;
+    width: 196px;
+}
+
+.uranus {
+    position: absolute;
+    right: 5px;
+    bottom: 400px;
+    width: 110px;
+}
+
+.jupiter {
+    position: absolute;
+    right: 417px;
+    bottom: 142px;
+    height: 136px;
+}
+
+/* Now Playing */
+.now-playing-wrapper {
+    position: absolute;
+    bottom: 33px;
+    left: 31px;
+    width: var(--now-playing-width);
+    height: var(--now-playing-height);
+}
+
+.now-playing-border {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.now-playing-container {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 977 177'><path d='M 0,22.38 L 185.35,3.90 C 185.35,3.90 408.06,34.08 408.06,34.08 L 677.46,2.92 L 977,36.02 L 969.81,176.05 L 0,157.57 Z' fill='black'/></svg>");
+    mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+}
+
+.now-playing-background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: center / cover;
+    background-image: url("https://assets.ppy.sh/beatmaps/1/covers/cover.jpg");
+}
+
+.now-playing-background-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: var(--black);
+    opacity: 0.5;
+}
+
+.now-playing-mod {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 164px;
+    height: 100%;
+    border-right: 6px solid var(--black);
+    background-color: var(--now-playing-mod);
+    color: var(--white);
+    font-family: "Super Mario Galaxy", sans-serif;
+    font-size: 55px;
+    line-height: 177px;
+    text-align: center;
+    -webkit-text-stroke: 11px var(--black);
+    paint-order: stroke fill;
+    clip-path: polygon( 0 0, 100% 0, 100% 100%, 0 100% );
+}
+
+.now-playing-metadata {
+    position: absolute;
+    left: 185px;
+    width: 485px;
+    overflow: hidden;
+    color: var(--white);
+    font-family: "Helvetica Neue", sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    -webkit-text-stroke: 2px var(--black);
+    paint-order: stroke fill;
+}
+
+.now-playing-artist-title {
+    top: 57px;
+}
+
+.now-playing-version {
+    top: 90px;
+}
+
+.now-playing-stats-container {
+    position: absolute;
+    top: 96.5px;
+    right: 21px;
+    width: 258px;
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: 6px;
+    transform: translateY(-50%);
+    color: var(--white);
+    font-family: "Helvetica Neue", sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    text-align: right;
+    -webkit-text-stroke: 2px var(--black);
+    paint-order: stroke fill;
+}
+
+.now-playing-stats-container > * {
+    width: 129px;
+}
+
+.now-playing-stats-star {
+    color: gold;
+}
