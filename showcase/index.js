@@ -34,8 +34,6 @@ function setRoundName(name) {
     // Rebuild the text using tspans.
     text.textContent = ""
 
-    const lineHeight = 45
-
     const lineYs = {
         1: [62.5],
         2: [45, 80],
