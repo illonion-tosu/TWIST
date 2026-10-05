@@ -198,6 +198,7 @@ function createBorder(borderColor) {
 }
 
 function createMapCard({
+    beatmap_id = "",
     mod = "",
     order = "",
     artist = "",
@@ -211,6 +212,7 @@ function createMapCard({
     borderColor = "red",
 } = {}) {
     const wrapper = el("div", "mappool-map-wrapper")
+    wrapper.setAttribute("id", beatmap_id)
     const container = el("div", "mappool-map-container")
 
     const bg = el("div", "mappool-map-background")

@@ -64,6 +64,9 @@ let playerData = {
     },
 }
 
+// Mappool Select Container
+const mappoolSelectContainerEl = document.getElementById("mappool-select-container")
+
 loadBeatmaps().then(beatmaps => {
     // Set Round Name
     roundName = beatmaps.roundName
@@ -90,7 +93,66 @@ loadBeatmaps().then(beatmaps => {
     for (const key in playerData) {
         playerData[key].currentMaxHp = maxHp
     }
+
+    mappoolSelectContainerEl.innerHTML = ""
+    allBeatmaps.map(beatmap => {
+        const button = document.createElement("button")
+        button.classList.add("mappool-select-button")
+        button.textContent = `${beatmap.mod}${beatmap.order}`
+        button.setAttribute("id", beatmap.beatmap_id)
+        button.addEventListener("mousedown", mapClickEvent)
+        button.addEventListener("contextmenu", event => event.preventDefault())
+        mappoolSelectContainerEl.append(button)
+    })
 })
+
+// Map Click Event
+let redBan = []
+let redPick = []
+let blueBan = []
+let bluePick = []
+function mapClickEvent(event) {
+    // Team
+    let team
+    if (event.button === 0) team = "red"
+    else if (event.button === 2) team = "blue"
+    if (!team) return
+
+    // Action
+    let action = "pick"
+    if (event.ctrlKey) action = "ban"
+    if (event.shiftKey) action = "clear"
+
+    // Filter it out of everything first
+    redBan = redBan.filter(id => id !== this.getAttribute("id"))
+    redPick = redPick.filter(id => id !== this.getAttribute("id"))
+    blueBan = blueBan.filter(id => id !== this.getAttribute("id"))
+    bluePick = bluePick.filter(id => id !== this.getAttribute("id"))
+
+    // Remove all related classes to it
+    this.classList.remove("mappool-select-button-red-ban")
+    this.classList.remove("mappool-select-button-blue-ban")
+    this.classList.remove("mappool-select-button-red-pick")
+    this.classList.remove("mappool-select-button-blue-pick")
+
+    // Add elements + classes
+    if (team === "red" && action === "ban") {
+        redBan.push(this.getAttribute("id"))
+        this.classList.add("mappool-select-button-red-ban")
+    }
+    if (team === "red" && action === "pick") {
+        redPick.push(this.getAttribute("id"))
+        this.classList.add("mappool-select-button-red-pick")
+    }
+    if (team === "blue" && action === "ban") {
+        blueBan.push(this.getAttribute("id"))
+        this.classList.add("mappool-select-button-blue-ban")
+    }
+    if (team === "blue" && action === "pick") {
+        bluePick.push(this.getAttribute("id"))
+        this.classList.add("mappool-select-button-blue-pick")
+    }
+}
 
 // IPC State
 let previousIpcState, currentIpcState

@@ -159,6 +159,30 @@ button {
 .select-next-picker-button { width: 90px; }
 .mappool-select-button { width: 65px; }
 
+.mappool-select-button-red-ban {
+    background-color: darkred;
+    color: lightgray;
+    border: 2px solid lightgray;
+}
+
+.mappool-select-button-blue-ban {
+    background-color: darkblue;
+    color: lightgray;
+    border: 2px solid lightgray;
+}
+
+.mappool-select-button-red-pick {
+    background-color: var(--team-red-colour);
+    color: white;
+    border: 2px solid white;
+}
+
+.mappool-select-button-blue-pick {
+    background-color: var(--team-blue-colour);
+    color: white;
+    border: 2px solid white;
+}
+
 /* Hover / focus highlight */
 .auto-labels:hover,
 input[type="number"]:focus,
