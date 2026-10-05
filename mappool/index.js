@@ -136,7 +136,7 @@ async function getData() {
         allBeatmaps = data.allBeatmaps
 
         for (let i = 0; i < allBeatmaps.length; i++) {
-            const container =  document.getElementById(`mappool-${allBeatmaps[i].mod.toLowerCase()}-mod-container`)
+            const container = document.getElementById(`mappool-${allBeatmaps[i].mod.toLowerCase()}-mod-container`)
             container.append(createMapCard(allBeatmaps[i]))
         }
     }
