@@ -99,13 +99,13 @@ ComfyJS.onChat = ( user, message, flags, self, extra ) => {
 }
 
 // Delete message
-ComfyJS.onMessageDeleted = (id, extra) => document.getElementById(id).remove()
+ComfyJS.onMessageDeleted = (id) => document.getElementById(id).remove()
 
 // Timeout
-ComfyJS.onTimeout = ( timedOutUsername, durationInSeconds, extra ) => deleteAllMessagesFromUser(extra.timedOutUserId)
+ComfyJS.onTimeout = (extra) => deleteAllMessagesFromUser(extra.timedOutUserId)
 
 // Ban
-ComfyJS.onBan = (bannedUsername, extra) => deleteAllMessagesFromUser(extra.bannedUserId)
+ComfyJS.onBan = (extra) => deleteAllMessagesFromUser(extra.bannedUserId)
 
 // Delete all messages from user
 function deleteAllMessagesFromUser(twitchId) {
