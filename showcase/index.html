@@ -8,7 +8,9 @@
     <link rel="stylesheet" href="../_shared/css/style.css">
     <link rel="stylesheet" href="style.css">
 
-    <script src="../_shared/deps/countUp.js"></script>
+    <script src="../_shared/deps/reconnecting-websocket.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
 </head>
 <body>
     <div class="main">
@@ -75,7 +77,9 @@
                 class="round-name-text"
                 id="round-name"
                 filter="url(#round-name-outline)"
-            >ROUND NAME HERE</text>
+            >
+                ROUND NAME HERE
+            </text>
         </svg>
 
         <!-- Character Right -->
@@ -83,6 +87,7 @@
 
         <!-- Chat Container -->
         <img class="chat-image" src="static/chat-image.png">
+        <div class="chatbox-container" id="chatbox-container"></div>
         <img class="uranus" src="static/uranus.png">
         <img class="jupiter" src="static/jupiter.png">
         <img class="chat-text" src="static/chat-text.png">
