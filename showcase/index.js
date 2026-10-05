@@ -63,7 +63,7 @@ loadShowcaseBeatmaps().then(beatmaps => {
     setRoundName(beatmaps.roundName)
 })
 
-ComfyJS.Init( "osuANZT", null, "osuANZT" )
+ComfyJS.Init( "purlstournaments", null, "purlstournaments" )
 
 // Twitch Chat
 const twitchChatContainer = document.getElementById("chatbox-container")
