@@ -186,3 +186,27 @@ select:focus,
     justify-content: center;
     gap: 10px;
 }
+
+@media screen and (max-width: 1000px) {
+    .line-two,
+    .line-three,
+    .line-four,
+    .mappool-select-section {
+        flex-direction: column;
+    }
+
+    .match-details-section,
+    .class-activation-container {
+        width: 100%;
+        border-right: none;
+        border-bottom: 2px solid gray;
+        padding-bottom: 20px;
+    }
+
+    .hp-container,
+    .targeting-container {
+        width: 100%;
+        font-size: 1.2rem;
+        text-align: center;
+    }
+}

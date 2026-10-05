@@ -208,6 +208,12 @@
     paint-order: stroke fill;
 }
 
+.mappool-map-mod-nm { background-color: var(--nm-colour); }
+.mappool-map-mod-hd { background-color: var(--hd-colour); }
+.mappool-map-mod-hr { background-color: var(--hr-colour); }
+.mappool-map-mod-dt { background-color: var(--dt-colour); }
+.mappool-map-mod-fm { background-color: var(--fm-colour); }
+
 .now-playing-metadata,
 .mappool-map-metadata {
     position: absolute;
