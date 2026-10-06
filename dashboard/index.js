@@ -163,11 +163,20 @@ let mappoolMapFound = false
 let mappoolMapModId
 let currentBeatmap
 
+// Team Names
+const teamRedNameEl = document.getElementById("team-red-name")
+const teamBlueNameEl = document.getElementById("team-blue-name")
+let redTeamName, blueTeamName
+
 // Socket
 const socket = createTosuWsSocket()
 let socketData
 socket.onmessage = event => {
     socketData = JSON.parse(event.data)
+
+    // Team Names
+    redTeamName = socketData.tourney.team.left
+    blueTeamName = socketData.tourney.team.right
 
     // Set score against information
     if (currentIpcState !== socketData.tourney.ipcState) {
@@ -197,12 +206,19 @@ socket.onmessage = event => {
 }
 
 setInterval(() => {
+    teamRedNameEl.textContent = redTeamName
+    teamBlueNameEl.textContent = blueTeamName
+
     // Save information
     const savedInfo = {
         tosuData: socketData,
         maxHp: maxHp,
         playerData: playerData,
         roundName: roundName,
+        teamName: {
+            redTeamName: redTeamName,
+            blueTeamName: blueTeamName
+        },
         mappoolInfo: {
             mappoolMapFound: mappoolMapFound,
             mappoolMapModId: mappoolMapModId,

@@ -16,11 +16,6 @@ function truncateSVGTexts(element, maxWidth) {
     }
 }
 
-truncateSVGTexts(document.getElementsByClassName("team-name-left")[0], constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
-truncateSVGTexts(document.getElementsByClassName("team-name-left")[1], constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
-truncateSVGTexts(document.getElementsByClassName("team-name-right")[0], constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
-truncateSVGTexts(document.getElementsByClassName("team-name-right")[1], constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
-
 function schedule() {
     const now = Date.now()
     const delay = 100 - (now % 100)
@@ -142,14 +137,15 @@ async function getData() {
     // Team Name
     const tosuData = data.tosuData
     const tourneyData = tosuData.tourney
-    const teamNames = tourneyData.team
-    if (currentTeamNameLeft !== teamNames.left) {
-        currentTeamNameLeft = teamNames.left
+    if (currentTeamNameLeft !== data.teamName.redTeamName) {
+        currentTeamNameLeft = data.teamName.redTeamName
         teamNameLeftEl.textContent = currentTeamNameLeft
+        truncateSVGTexts(document.getElementsByClassName("team-name-left")[0], constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
     }
-    if (currentTeamNameRight !== teamNames.right) {
-        currentTeamNameRight = teamNames.right
+    if (currentTeamNameRight !== data.teamName.blueTeamName) {
+        currentTeamNameRight = data.teamName.blueTeamName
         teamNameRightEl.textContent = currentTeamNameRight
+        truncateSVGTexts(document.getElementsByClassName("team-name-right")[0], constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
     }
 
     // Now Playing Information
