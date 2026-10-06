@@ -209,7 +209,13 @@ setInterval(() => {
             currentPicker: currentPicker,
             currentBeatmap: currentBeatmap
         },
-        allBeatmaps: allBeatmaps
+        allBeatmaps: allBeatmaps,
+        pickBanInfo: {
+            redBan: redBan,
+            redPick: redPick,
+            blueBan: blueBan,
+            bluePick: bluePick
+        }
     }
 
     localStorage.setItem("data", JSON.stringify(savedInfo))
