@@ -63,6 +63,10 @@ let chatLen
 // All beatmaps
 let allBeatmaps
 
+// Mappool elements
+const mappoolMapWrapperEls = document.getElementsByClassName("mappool-map-wrapper")
+let currentRedBan, currentBlueBan, currentRedPick, currentBluePick
+
 async function getData() {
     const data = JSON.parse(localStorage.getItem("data"))
     console.log(data)
@@ -136,8 +140,49 @@ async function getData() {
         allBeatmaps = data.allBeatmaps
 
         for (let i = 0; i < allBeatmaps.length; i++) {
-            const container =  document.getElementById(`mappool-${allBeatmaps[i].mod.toLowerCase()}-mod-container`)
+            const container = document.getElementById(`mappool-${allBeatmaps[i].mod.toLowerCase()}-mod-container`)
             container.append(createMapCard(allBeatmaps[i]))
+        }
+    }
+
+    const pickInfo = data.pickBanInfo
+    if (
+        !deepEqual(currentRedBan, pickInfo.redBan) ||
+        !deepEqual(currentBlueBan, pickInfo.blueBan) ||
+        !deepEqual(currentRedPick, pickInfo.redPick) ||
+        !deepEqual(currentBluePick, pickInfo.bluePick)
+    ) {
+        currentRedBan = pickInfo.redBan
+        currentBlueBan = pickInfo.blueBan
+        currentRedPick = pickInfo.redPick
+        currentBluePick = pickInfo.bluePick
+
+        for (const element of mappoolMapWrapperEls) {
+            const pickBanElement = element.children[1].children[5]
+            const mapId = element.getAttribute("id")
+
+            let text
+            let isRight = false
+
+            if (currentRedBan.includes(mapId)) {
+                text = "BANNED BY TEAM RED"
+            } else if (currentBlueBan.includes(mapId)) {
+                text = "BANNED BY TEAM BLUE"
+                isRight = true
+            } else if (currentRedPick.includes(mapId)) {
+                text = "PICKED BY TEAM RED"
+            } else if (currentBluePick.includes(mapId)) {
+                text = "PICKED BY TEAM BLUE"
+                isRight = true
+            }
+
+            pickBanElement.style.display = text ? "block" : "none"
+
+            if (text) {
+                pickBanElement.classList.toggle("mappool-map-pick-ban-left", !isRight)
+                pickBanElement.classList.toggle("mappool-map-pick-ban-right", isRight)
+                pickBanElement.textContent = text
+            }
         }
     }
 }
@@ -198,6 +243,7 @@ function createBorder(borderColor) {
 }
 
 function createMapCard({
+    beatmap_id = "",
     mod = "",
     order = "",
     artist = "",
@@ -211,6 +257,7 @@ function createMapCard({
     borderColor = "red",
 } = {}) {
     const wrapper = el("div", "mappool-map-wrapper")
+    wrapper.setAttribute("id", beatmap_id)
     const container = el("div", "mappool-map-container")
 
     const bg = el("div", "mappool-map-background")

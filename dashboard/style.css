@@ -159,6 +159,30 @@ button {
 .select-next-picker-button { width: 90px; }
 .mappool-select-button { width: 65px; }
 
+.mappool-select-button-red-ban {
+    background-color: darkred;
+    color: lightgray;
+    border: 2px solid lightgray;
+}
+
+.mappool-select-button-blue-ban {
+    background-color: darkblue;
+    color: lightgray;
+    border: 2px solid lightgray;
+}
+
+.mappool-select-button-red-pick {
+    background-color: var(--team-red-colour);
+    color: white;
+    border: 2px solid white;
+}
+
+.mappool-select-button-blue-pick {
+    background-color: var(--team-blue-colour);
+    color: white;
+    border: 2px solid white;
+}
+
 /* Hover / focus highlight */
 .auto-labels:hover,
 input[type="number"]:focus,
@@ -185,4 +209,28 @@ select:focus,
     flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
+}
+
+@media screen and (width <= 1000px) {
+    .line-two,
+    .line-three,
+    .line-four,
+    .mappool-select-section {
+        flex-direction: column;
+    }
+
+    .match-details-section,
+    .class-activation-container {
+        width: 100%;
+        border-right: none;
+        border-bottom: 2px solid gray;
+        padding-bottom: 20px;
+    }
+
+    .hp-container,
+    .targeting-container {
+        width: 100%;
+        font-size: 1.2rem;
+        text-align: center;
+    }
 }
