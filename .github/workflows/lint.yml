@@ -12,6 +12,10 @@ jobs:
     lint:
         runs-on: ubuntu-latest
 
+        env:
+            HEAD_REF: ${{ github.head_ref }}
+            FIX_BRANCH: lint-fixes/${{ github.head_ref }}
+
         steps:
             - name: Checkout PR branch
               uses: actions/checkout@v4
@@ -73,79 +77,40 @@ jobs:
                       echo "changed=false" >> "$GITHUB_OUTPUT"
                   fi
 
-            - name: Prepare fix branch name
-              id: branch_name
+            - name: Delete previous fix branch if it exists
               if: steps.changes.outputs.changed == 'true'
               run: |
-                  echo "name=lint-fixes/${{ github.head_ref }}" >> "$GITHUB_OUTPUT"
-
-            - name: Check if fix branch exists remotely
-              id: branch_check
-              if: steps.changes.outputs.changed == 'true'
-              env:
-                  BRANCH_NAME: lint-fixes/${{ github.head_ref }}
-              run: |
-                  if git ls-remote --exit-code --heads origin "$BRANCH_NAME" >/dev/null 2>&1; then
-                      echo "exists=true" >> "$GITHUB_OUTPUT"
+                  if git ls-remote --exit-code --heads origin "$FIX_BRANCH" >/dev/null 2>&1; then
+                      echo "Deleting existing remote branch $FIX_BRANCH"
+                      git push origin --delete "$FIX_BRANCH"
                   else
-                      echo "exists=false" >> "$GITHUB_OUTPUT"
+                      echo "No existing fix branch to delete"
                   fi
 
-            - name: Create or reset fix branch locally
+            - name: Create fix branch and commit
               if: steps.changes.outputs.changed == 'true'
               run: |
-                  branch_name="lint-fixes/${{ github.head_ref }}"
-
                   git config user.name "github-actions[bot]"
                   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-                  if [ "${{ steps.branch_check.outputs.exists }}" = "true" ]; then
-                      git fetch origin "$branch_name":"$branch_name"
-                      git checkout "$branch_name"
-                      git reset --hard HEAD
-                  else
-                      git checkout -b "$branch_name"
-                  fi
-
+                  git checkout -b "$FIX_BRANCH"
                   git add -A
-                  git commit -m "lint: auto-fix style issues" || echo "No new commit to create"
+                  git commit -m "lint: auto-fix style issues"
 
             - name: Push fix branch
               if: steps.changes.outputs.changed == 'true'
               run: |
-                  branch_name="lint-fixes/${{ github.head_ref }}"
-                  git push --force-with-lease origin "$branch_name"
+                  git push origin "$FIX_BRANCH"
 
-            - name: Check existing PR state
+            - name: Create new PR
               if: steps.changes.outputs.changed == 'true'
-              id: pr_check
-              env:
-                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  BRANCH_NAME: lint-fixes/${{ github.head_ref }}
-              run: |
-                  pr_state=$(gh pr list \
-                    --head "$BRANCH_NAME" \
-                    --base "${{ github.head_ref }}" \
-                    --json state \
-                    --jq '.[0].state // empty')
-
-                  if [ -z "$pr_state" ]; then
-                      echo "state=none" >> "$GITHUB_OUTPUT"
-                  else
-                      echo "state=$pr_state" >> "$GITHUB_OUTPUT"
-                  fi
-
-            - name: Create new PR if none or closed
-              if: steps.changes.outputs.changed == 'true' && steps.pr_check.outputs.state != 'OPEN'
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
-                  branch_name="lint-fixes/${{ github.head_ref }}"
-
                   gh pr create \
-                    --base "${{ github.head_ref }}" \
-                    --head "$branch_name" \
-                    --title "Automated lint fixes for ${{ github.head_ref }}" \
+                    --base "$HEAD_REF" \
+                    --head "$FIX_BRANCH" \
+                    --title "Automated lint fixes for $HEAD_REF" \
                     --body "This PR was automatically created by GitHub Actions after running lint autofixes on the current PR branch.
 
                   Lint results:
