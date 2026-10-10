@@ -8,8 +8,19 @@ let roundName
 // Beatmaps
 let allBeatmaps = []
 
-// Current picker
+// Select next picker
+const autoPickButtonEl = document.getElementById("auto-pick-button")
+const currentPickerEl = document.getElementById("current-picker")
+const selectNextPickerButtonRedEl = document.getElementById("select-next-picker-button-red")
+const selectNextPickerButtonBlueEl = document.getElementById("select-next-picker-button-blue")
+const selectNextPickerButtonNoneEl = document.getElementById("select-next-picker-button-none")
 let currentPicker = "red"
+
+function setNextPicker(team) {
+    currentPickerEl.textContent = `Current: ${team}`
+    currentPicker = team.toLowerCase()
+}
+
 
 // Max HP
 let maxHp
@@ -159,6 +170,7 @@ let previousIpcState, currentIpcState
 let checkedWinner = false
 
 // Mappool Map Found
+let currentId, currentChecksum
 let mappoolMapFound = false
 let mappoolMapModId
 let currentBeatmap
@@ -195,14 +207,32 @@ socket.onmessage = event => {
         }
     }
 
-    // Mappool Map Found
-    currentBeatmap = allBeatmaps.find(beatmap => Number(beatmap.beatmap_id) === Number(socketData.beatmap.id))
-    if (currentBeatmap) {
-        mappoolMapFound = true
-        mappoolMapModId = `${currentBeatmap.mod.toUpperCase()}${currentBeatmap.order}`
-    }
 
-    console.log(socketData)
+    if ((currentId !== socketData.beatmap.id || currentChecksum !== socketData.beatmap.checksum) && allBeatmaps) {
+        currentId = socketData.beatmap.id
+        currentChecksum = socketData.beatmap.checksum
+
+        currentBeatmap = allBeatmaps.find(beatmap => Number(beatmap.beatmap_id) === Number(socketData.beatmap.id))
+
+        // Autopicking
+        if (currentBeatmap && autoPickButtonEl.checked && currentPicker !== "none") {
+            const targetElement = document.getElementById(`${currentId}`)
+            const event = new MouseEvent('mousedown', {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                button: currentPicker === "red" ? 0 : 2
+            })
+            targetElement.dispatchEvent(event)
+            setNextPicker(currentPicker === "red" ? 'Blue' : 'Red')
+        }
+
+        // Mappool map found
+        if (currentBeatmap) {
+            mappoolMapFound = true
+            mappoolMapModId = `${currentBeatmap.mod.toUpperCase()}${currentBeatmap.order}`
+        }
+    }
 }
 
 setInterval(() => {
@@ -264,3 +294,9 @@ function updatePlayerData(playerData, data) {
             : 0
     })
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    selectNextPickerButtonRedEl.addEventListener("click", () => setNextPicker("Red"))
+    selectNextPickerButtonBlueEl.addEventListener("click", () => setNextPicker("Blue"))
+    selectNextPickerButtonNoneEl.addEventListener("click", () => setNextPicker("None"))
+})
