@@ -199,6 +199,10 @@ const teamRedNameEl = document.getElementById("team-red-name")
 const teamBlueNameEl = document.getElementById("team-blue-name")
 let redTeamName, blueTeamName
 
+// Current map info
+const currentMapEl = document.getElementById("current-map")
+const currentModIdEl = document.getElementById("current-mod-id")
+
 // Socket
 const socket = createTosuWsSocket()
 let socketData
@@ -222,7 +226,6 @@ socket.onmessage = event => {
             if (autoObsButtonEl.checked) {
                 changeScene("Gameplay")
             }
-            
         }
 
         // Reset information
@@ -241,6 +244,7 @@ socket.onmessage = event => {
         currentChecksum = socketData.beatmap.checksum
 
         currentBeatmap = allBeatmaps.find(beatmap => Number(beatmap.beatmap_id) === Number(socketData.beatmap.id))
+        currentMapEl.textContent = `${socketData.beatmap.artist} - ${socketData.beatmap.title}`
 
         // Autopicking
         if (currentBeatmap && autoPickButtonEl.checked && currentPicker !== "none") {
@@ -260,6 +264,9 @@ socket.onmessage = event => {
         if (currentBeatmap) {
             mappoolMapFound = true
             mappoolMapModId = `${currentBeatmap.mod.toUpperCase()}${currentBeatmap.order}`
+            currentModIdEl.textContent = mappoolMapModId
+        } else {
+            currentModIdEl.textContent = ""
         }
     }
 }
