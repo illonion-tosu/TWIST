@@ -10,6 +10,7 @@
 
     <script src="../_shared/deps/reconnecting-websocket.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/obs-websocket-js@5.0.8/dist/obs-ws.global.js"></script>
 </head>
 <body>
     <!-- Match header and automation toggles -->
@@ -32,6 +33,19 @@
                 <input type="checkbox" id="auto-api-button">
                 <span>Use API (autopilot hopefully)</span>
             </label>
+        </div>
+    </div>
+
+    <!-- Scene Control -->
+    <div class="scene-control">
+        <h1 style="align-self: center">Scene Control</h1>
+        <div class="scene-buttons" id="scene-buttons">
+            <button class="team-hp-button">
+                Gameplay
+            </button>
+            <button class="team-hp-button">
+                Gameplay
+            </button>
         </div>
     </div>
 

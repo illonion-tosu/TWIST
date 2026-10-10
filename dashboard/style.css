@@ -30,6 +30,7 @@ p { text-align: center; }
     border-bottom: 2px solid gray;
 }
 
+.scene-control,
 .line-two,
 .line-three,
 .line-four,
@@ -40,6 +41,10 @@ p { text-align: center; }
     border-bottom: 2px solid gray;
 }
 .mappool-select-section { margin-bottom: 0; }
+
+.scene-control {
+    justify-content: space-between;
+}
 
 /* Automation toggles */
 .auto-section {
@@ -211,7 +216,21 @@ select:focus,
     gap: 10px;
 }
 
+/* OBS Scenes */
+.scene-buttons {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+    justify-content: right;
+    flex-wrap: wrap;
+}
+
+.active-hp-button {
+    background-color: darkgreen;
+}
+
 @media screen and (width <= 1000px) {
+    .scene-control,
     .line-two,
     .line-three,
     .line-four,
@@ -232,5 +251,9 @@ select:focus,
         width: 100%;
         font-size: 1.2rem;
         text-align: center;
+    }
+
+    .scene-buttons {
+        justify-content: center;
     }
 }

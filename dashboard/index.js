@@ -321,3 +321,71 @@ document.addEventListener("DOMContentLoaded", () => {
     selectCurrentPickerButtonBlueEl.addEventListener("click", () => setCurrentPicker("Blue"))
     selectCurrentPickerButtonNoneEl.addEventListener("click", () => setCurrentPicker("None"))
 })
+
+// OBS stuff
+const obs = new OBSWebSocket()
+const OBS_ADDRESS = 'ws://127.0.0.1:4455'
+const sceneButtonsEl = document.getElementById('scene-buttons')
+
+// Connect to OBS WebSocket
+obs.connect(OBS_ADDRESS)
+    .then(() => {
+        refreshScenes()
+        setupListeners()
+    })
+    .catch(err => {
+        console.error('Connection failed:', err)
+    })
+
+// Fetch scenes and populate buttons
+async function refreshScenes() {
+    try {
+        // Request the full scene list from OBS
+        const response = await obs.call('GetSceneList')
+        const scenes = response.scenes
+        const currentProgramScene = response.currentProgramSceneName
+
+        // Clear any existing buttons
+        sceneButtonsEl.innerHTML = ''
+
+        // Generate a button for each scene (reversing order if you want it to match OBS layout top-to-bottom)
+        scenes.reverse().forEach(scene => {
+            const btn = document.createElement('button')
+            btn.className = 'team-hp-button'
+            btn.innerText = scene.sceneName
+                    
+            // Highlight the currently active scene
+            if (scene.sceneName === currentProgramScene) {
+                btn.classList.add('active')
+            }
+
+            // Click event to switch scene
+            btn.addEventListener("click", () => changeScene(scene.sceneName))
+            sceneButtonsEl.appendChild(btn)
+        })
+    } catch (error) {
+        console.error('Failed to grab scene list:', error)
+    }
+}
+
+// Send command to switch scene
+async function changeScene(sceneName) {
+    try {
+        await obs.call('SetCurrentProgramScene', { sceneName: sceneName })
+    } catch (error) {
+        console.error('Failed to change scene:', error)
+    }
+}
+
+// Listen for live events so the dock updates if things change inside OBS
+function setupListeners() {
+    // Update active button color when scene changes
+    obs.on('CurrentProgramSceneChanged', (data) => {
+        document.querySelectorAll('#scene-buttons .team-hp-button').forEach(btn => {
+            btn.classList.toggle('active-hp-button', btn.innerText === data.sceneName)
+        })
+    })
+
+    // Rebuild the buttons entirely if a scene is added, removed, or collection changes
+    obs.on('SceneListChanged', refreshScenes)
+}
