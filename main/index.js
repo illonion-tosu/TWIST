@@ -16,11 +16,6 @@ function truncateSVGTexts(element, maxWidth) {
     }
 }
 
-truncateSVGTexts(document.getElementsByClassName("team-name-left")[0], constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
-truncateSVGTexts(document.getElementsByClassName("team-name-left")[1], constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
-truncateSVGTexts(document.getElementsByClassName("team-name-right")[0], constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
-truncateSVGTexts(document.getElementsByClassName("team-name-right")[1], constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
-
 function schedule() {
     const now = Date.now()
     const delay = 100 - (now % 100)
@@ -84,6 +79,10 @@ let scoreVisible
 const chatboxContainerEl = document.getElementById("chatbox-container")
 let chatLen
 
+// Toggle HP
+const toggleHpEls = document.getElementsByClassName("toggle-hp")
+let currentToggleHp
+
 async function getData() {
     const data = JSON.parse(localStorage.getItem("data"))
     console.log(data)
@@ -142,14 +141,15 @@ async function getData() {
     // Team Name
     const tosuData = data.tosuData
     const tourneyData = tosuData.tourney
-    const teamNames = tourneyData.team
-    if (currentTeamNameLeft !== teamNames.left) {
-        currentTeamNameLeft = teamNames.left
+    if (currentTeamNameLeft !== data.teamName.redTeamName) {
+        currentTeamNameLeft = data.teamName.redTeamName
         teamNameLeftEl.textContent = currentTeamNameLeft
+        truncateSVGTexts(document.getElementsByClassName("team-name-left")[0], constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
     }
-    if (currentTeamNameRight !== teamNames.right) {
-        currentTeamNameRight = teamNames.right
+    if (currentTeamNameRight !== data.teamName.blueTeamName) {
+        currentTeamNameRight = data.teamName.blueTeamName
         teamNameRightEl.textContent = currentTeamNameRight
+        truncateSVGTexts(document.getElementsByClassName("team-name-right")[0], constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
     }
 
     // Now Playing Information
@@ -168,7 +168,7 @@ async function getData() {
 
         // Mod info
         if (mappoolInfo.mappoolMapFound) {
-            nowPlayingModEl.style.backgroundColor = `var(--${mappoolInfo.currentPicker}-team-colour)`
+            nowPlayingModEl.style.backgroundColor = `var(--team-${mappoolInfo.currentPicker}-colour)`
             nowPlayingModEl.textContent = mappoolInfo.mappoolMapModId
 
             const currentBeatmap = mappoolInfo.currentBeatmap
@@ -221,6 +221,20 @@ async function getData() {
     const chatData = tourneyData.chat
     if (chatLen !== chatData.length) {
         chatLen = updateChat(chatLen, chatData, chatboxContainerEl)
+    }
+
+    // Toggle HP
+    if (currentToggleHp !== data.toggleHp) {
+        currentToggleHp = data.toggleHp
+        if (currentToggleHp) {
+            for (let i = 0; i < toggleHpEls.length; i++) {
+                toggleHpEls[i].style.opacity = 1
+            }
+        } else {
+            for (let i = 0; i < toggleHpEls.length; i++) {
+                toggleHpEls[i].style.opacity = 0
+            }
+        }
     }
 }
 

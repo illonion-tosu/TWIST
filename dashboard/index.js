@@ -8,8 +8,36 @@ let roundName
 // Beatmaps
 let allBeatmaps = []
 
-// Current picker
-let currentPicker = "red"
+// Select next picker
+const autoPickButtonEl = document.getElementById("auto-pick-button")
+const nextPickerEl = document.getElementById("next-picker")
+const selectNextPickerButtonRedEl = document.getElementById("select-next-picker-button-red")
+const selectNextPickerButtonBlueEl = document.getElementById("select-next-picker-button-blue")
+const selectNextPickerButtonNoneEl = document.getElementById("select-next-picker-button-none")
+let nextPicker = "red"
+
+function setNextPicker(team) {
+    nextPickerEl.textContent = `Current: ${team}`
+    nextPicker = team.toLowerCase()
+}
+
+// current picker
+const currentPickerEl = document.getElementById("current-picker")
+const selectCurrentPickerButtonRedEl = document.getElementById("select-current-picker-button-red")
+const selectCurrentPickerButtonBlueEl = document.getElementById("select-current-picker-button-blue")
+const selectCurrentPickerButtonNoneEl = document.getElementById("select-current-picker-button-none")
+let currentPicker = "blue"
+
+function setCurrentPicker(team) {
+    currentPickerEl.textContent = `Current: ${team}`
+    currentPicker = team.toLowerCase()
+}
+
+// Toggle HP
+const toggleHpEl = document.getElementById("toggle-hp-button")
+
+// Auto OBS Button
+const autoObsButtonEl = document.getElementById("auto-obs-button")
 
 // Max HP
 let maxHp
@@ -143,6 +171,7 @@ function mapClickEvent(event) {
     if (team === "red" && action === "pick") {
         redPick.push(this.getAttribute("id"))
         this.classList.add("mappool-select-button-red-pick")
+        currentPicker = team
     }
     if (team === "blue" && action === "ban") {
         blueBan.push(this.getAttribute("id"))
@@ -151,6 +180,7 @@ function mapClickEvent(event) {
     if (team === "blue" && action === "pick") {
         bluePick.push(this.getAttribute("id"))
         this.classList.add("mappool-select-button-blue-pick")
+        currentPicker = team
     }
 }
 
@@ -159,15 +189,25 @@ let previousIpcState, currentIpcState
 let checkedWinner = false
 
 // Mappool Map Found
+let currentId, currentChecksum
 let mappoolMapFound = false
 let mappoolMapModId
 let currentBeatmap
+
+// Team Names
+const teamRedNameEl = document.getElementById("team-red-name")
+const teamBlueNameEl = document.getElementById("team-blue-name")
+let redTeamName, blueTeamName
 
 // Socket
 const socket = createTosuWsSocket()
 let socketData
 socket.onmessage = event => {
     socketData = JSON.parse(event.data)
+
+    // Team Names
+    redTeamName = socketData.tourney.team.left
+    blueTeamName = socketData.tourney.team.right
 
     // Set score against information
     if (currentIpcState !== socketData.tourney.ipcState) {
@@ -178,31 +218,66 @@ socket.onmessage = event => {
         if (currentIpcState === 2 || currentIpcState === 3 || currentIpcState === 4) {
             checkedWinner = false
             updatePlayerData(playerData, socketData)
+
+            if (autoObsButtonEl.checked) {
+                changeScene("Gameplay")
+            }
+            
         }
 
         // Reset information
         if (currentIpcState === 1 && previousIpcState === 4 && !checkedWinner) {
             checkedWinner === true
+
+            if (toggleHpEl.checked && autoObsButtonEl.checked) {
+                changeScene("Mappool")
+            }
         }
     }
 
-    // Mappool Map Found
-    currentBeatmap = allBeatmaps.find(beatmap => Number(beatmap.beatmap_id) === Number(socketData.beatmap.id))
-    if (currentBeatmap) {
-        mappoolMapFound = true
-        mappoolMapModId = `${currentBeatmap.mod.toUpperCase()}${currentBeatmap.order}`
-    }
 
-    console.log(socketData)
+    if ((currentId !== socketData.beatmap.id || currentChecksum !== socketData.beatmap.checksum) && allBeatmaps) {
+        currentId = socketData.beatmap.id
+        currentChecksum = socketData.beatmap.checksum
+
+        currentBeatmap = allBeatmaps.find(beatmap => Number(beatmap.beatmap_id) === Number(socketData.beatmap.id))
+
+        // Autopicking
+        if (currentBeatmap && autoPickButtonEl.checked && currentPicker !== "none") {
+            const targetElement = document.getElementById(`${currentId}`)
+            const event = new MouseEvent('mousedown', {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                button: nextPicker === "red" ? 0 : 2
+            })
+            targetElement.dispatchEvent(event)
+            setCurrentPicker(nextPicker)
+            setNextPicker(nextPicker === "red" ? 'Blue' : 'Red')
+        }
+
+        // Mappool map found
+        if (currentBeatmap) {
+            mappoolMapFound = true
+            mappoolMapModId = `${currentBeatmap.mod.toUpperCase()}${currentBeatmap.order}`
+        }
+    }
 }
 
 setInterval(() => {
+    teamRedNameEl.textContent = redTeamName
+    teamBlueNameEl.textContent = blueTeamName
+
     // Save information
     const savedInfo = {
         tosuData: socketData,
         maxHp: maxHp,
         playerData: playerData,
         roundName: roundName,
+        teamName: {
+            redTeamName: redTeamName,
+            blueTeamName: blueTeamName
+        },
         mappoolInfo: {
             mappoolMapFound: mappoolMapFound,
             mappoolMapModId: mappoolMapModId,
@@ -215,7 +290,8 @@ setInterval(() => {
             redPick: redPick,
             blueBan: blueBan,
             bluePick: bluePick
-        }
+        },
+        toggleHp: toggleHpEl.checked
     }
 
     localStorage.setItem("data", JSON.stringify(savedInfo))
@@ -247,4 +323,81 @@ function updatePlayerData(playerData, data) {
             ) / targeters.length
             : 0
     })
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    selectNextPickerButtonRedEl.addEventListener("click", () => setNextPicker("Red"))
+    selectNextPickerButtonBlueEl.addEventListener("click", () => setNextPicker("Blue"))
+    selectNextPickerButtonNoneEl.addEventListener("click", () => setNextPicker("None"))
+    selectCurrentPickerButtonRedEl.addEventListener("click", () => setCurrentPicker("Red"))
+    selectCurrentPickerButtonBlueEl.addEventListener("click", () => setCurrentPicker("Blue"))
+    selectCurrentPickerButtonNoneEl.addEventListener("click", () => setCurrentPicker("None"))
+})
+
+// OBS stuff
+const obs = new OBSWebSocket()
+const OBS_ADDRESS = 'ws://127.0.0.1:4455'
+const sceneButtonsEl = document.getElementById('scene-buttons')
+
+// Connect to OBS WebSocket
+obs.connect(OBS_ADDRESS)
+    .then(() => {
+        refreshScenes()
+        setupListeners()
+    })
+    .catch(err => {
+        console.error('Connection failed:', err)
+    })
+
+// Fetch scenes and populate buttons
+async function refreshScenes() {
+    try {
+        // Request the full scene list from OBS
+        const response = await obs.call('GetSceneList')
+        const scenes = response.scenes
+        const currentProgramScene = response.currentProgramSceneName
+
+        // Clear any existing buttons
+        sceneButtonsEl.innerHTML = ''
+
+        // Generate a button for each scene (reversing order if you want it to match OBS layout top-to-bottom)
+        scenes.reverse().forEach(scene => {
+            const btn = document.createElement('button')
+            btn.className = 'team-hp-button'
+            btn.innerText = scene.sceneName
+                    
+            // Highlight the currently active scene
+            if (scene.sceneName === currentProgramScene) {
+                btn.classList.add('active-hp-button')
+            }
+
+            // Click event to switch scene
+            btn.addEventListener("click", () => changeScene(scene.sceneName))
+            sceneButtonsEl.appendChild(btn)
+        })
+    } catch (error) {
+        console.error('Failed to grab scene list:', error)
+    }
+}
+
+// Send command to switch scene
+async function changeScene(sceneName) {
+    try {
+        await obs.call('SetCurrentProgramScene', { sceneName: sceneName })
+    } catch (error) {
+        console.error('Failed to change scene:', error)
+    }
+}
+
+// Listen for live events so the dock updates if things change inside OBS
+function setupListeners() {
+    // Update active button color when scene changes
+    obs.on('CurrentProgramSceneChanged', (data) => {
+        document.querySelectorAll('#scene-buttons .team-hp-button').forEach(btn => {
+            btn.classList.toggle('active-hp-button', btn.innerText === data.sceneName)
+        })
+    })
+
+    // Rebuild the buttons entirely if a scene is added, removed, or collection changes
+    obs.on('SceneListChanged', refreshScenes)
 }

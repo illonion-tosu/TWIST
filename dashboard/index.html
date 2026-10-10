@@ -10,28 +10,42 @@
 
     <script src="../_shared/deps/reconnecting-websocket.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/obs-websocket-js@5.0.8/dist/obs-ws.global.js"></script>
 </head>
 <body>
     <!-- Match header and automation toggles -->
     <div class="dashboard-section">
-        <h1>Match: <span class="team-red-colour">KIM HYUJIN</span> vs <span class="team-blue-colour">KIM HYUJIN</span></h1>
+        <h1>Match: <span class="team-red-colour" id="team-red-name">KIM HYUJIN</span> vs <span class="team-blue-colour" id="team-blue-name">KIM HYUJIN</span></h1>
         <div class="auto-section">
             <label class="auto-labels">
-                <input type="checkbox">
+                <input type="checkbox" id="auto-pick-button">
                 <span>Auto Pick</span>
             </label>
             <label class="auto-labels">
-                <input type="checkbox">
+                <input type="checkbox" id="toggle-hp-button" checked>
                 <span>Toggle HP</span>
             </label>
             <label class="auto-labels">
-                <input type="checkbox">
+                <input type="checkbox" id="auto-obs-button">
                 <span>Auto OBS Scenes</span>
             </label>
             <label class="auto-labels">
-                <input type="checkbox">
+                <input type="checkbox" id="auto-api-button">
                 <span>Use API (autopilot hopefully)</span>
             </label>
+        </div>
+    </div>
+
+    <!-- Scene Control -->
+    <div class="scene-control">
+        <h1 style="align-self: center">Scene Control</h1>
+        <div class="scene-buttons" id="scene-buttons">
+            <button class="team-hp-button">
+                Gameplay
+            </button>
+            <button class="team-hp-button">
+                Gameplay
+            </button>
         </div>
     </div>
 
@@ -152,11 +166,20 @@
     <div class="line-four">
         <div class="select-next-picker">
             <h1>Select Next Picker</h1>
-            <p class="current">Current: None</p>
+            <p class="current" id="next-picker">Current: None</p>
             <div class="select-next-picker-button-container">
-                <button class="select-next-picker-button">Red</button>
-                <button class="select-next-picker-button">Blue</button>
-                <button class="select-next-picker-button">None</button>
+                <button class="select-next-picker-button" id="select-next-picker-button-red">Red</button>
+                <button class="select-next-picker-button" id="select-next-picker-button-blue">Blue</button>
+                <button class="select-next-picker-button" id="select-next-picker-button-none">None</button>
+            </div>
+        </div>
+        <div class="select-next-picker">
+            <h1>Select Current Picker</h1>
+            <p class="current" id="current-picker">Current: None</p>
+            <div class="select-next-picker-button-container">
+                <button class="select-next-picker-button" id="select-current-picker-button-red">Red</button>
+                <button class="select-next-picker-button" id="select-current-picker-button-blue">Blue</button>
+                <button class="select-next-picker-button" id="select-current-picker-button-none">None</button>
             </div>
         </div>
     </div>
