@@ -44,6 +44,7 @@ let maxHp
 let playerData = {
     player1: {
         id: 123456,
+        playerName: "",
         currentMaxHp: 300000,
         currentScore: 0,
         currentTarget: 6,
@@ -52,6 +53,7 @@ let playerData = {
     },
     player2: {
         id: 123456,
+        playerName: "",
         currentMaxHp: 300000,
         currentScore: 0,
         currentTarget: 5,
@@ -60,6 +62,7 @@ let playerData = {
     },
     player3: {
         id: 123456,
+        playerName: "",
         currentMaxHp: 300000,
         currentScore: 0,
         currentTarget: 4,
@@ -68,6 +71,7 @@ let playerData = {
     },
     player4: {
         id: 123456,
+        playerName: "",
         currentMaxHp: 300000,
         currentScore: 0,
         currentTarget: 3,
@@ -76,6 +80,7 @@ let playerData = {
     },
     player5: {
         id: 123456,
+        playerName: "",
         currentMaxHp: 300000,
         currentScore: 0,
         currentTarget: 2,
@@ -84,6 +89,7 @@ let playerData = {
     },
     player6: {
         id: 123456,
+        playerName: "",
         currentMaxHp: 300000,
         currentScore: 0,
         currentTarget: 1,
