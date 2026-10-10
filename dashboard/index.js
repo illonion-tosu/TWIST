@@ -36,6 +36,9 @@ function setCurrentPicker(team) {
 // Toggle HP
 const toggleHpEl = document.getElementById("toggle-hp-button")
 
+// Auto OBS Button
+const autoObsButtonEl = document.getElementById("auto-obs-button")
+
 // Max HP
 let maxHp
 let playerData = {
@@ -215,11 +218,20 @@ socket.onmessage = event => {
         if (currentIpcState === 2 || currentIpcState === 3 || currentIpcState === 4) {
             checkedWinner = false
             updatePlayerData(playerData, socketData)
+
+            if (autoObsButtonEl.checked) {
+                changeScene("Gameplay")
+            }
+            
         }
 
         // Reset information
         if (currentIpcState === 1 && previousIpcState === 4 && !checkedWinner) {
             checkedWinner === true
+
+            if (toggleHpEl.checked && autoObsButtonEl.checked) {
+                changeScene("Mappool")
+            }
         }
     }
 
