@@ -368,7 +368,7 @@ async function refreshScenes() {
                     
             // Highlight the currently active scene
             if (scene.sceneName === currentProgramScene) {
-                btn.classList.add('active')
+                btn.classList.add('active-hp-button')
             }
 
             // Click event to switch scene
