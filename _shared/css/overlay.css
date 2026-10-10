@@ -283,3 +283,9 @@
     right: var(--camera-x);
     background-color: var(--team-blue-colour);
 }
+
+/* Toggle HP */
+.toggle-hp {
+    opacity: 1;
+    transition: 500ms ease-in-out;
+}

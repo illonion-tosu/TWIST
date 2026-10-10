@@ -79,6 +79,10 @@ let scoreVisible
 const chatboxContainerEl = document.getElementById("chatbox-container")
 let chatLen
 
+// Toggle HP
+const toggleHpEls = document.getElementsByClassName("toggle-hp")
+let currentToggleHp
+
 async function getData() {
     const data = JSON.parse(localStorage.getItem("data"))
     console.log(data)
@@ -217,6 +221,20 @@ async function getData() {
     const chatData = tourneyData.chat
     if (chatLen !== chatData.length) {
         chatLen = updateChat(chatLen, chatData, chatboxContainerEl)
+    }
+
+    // Toggle HP
+    if (currentToggleHp !== data.toggleHp) {
+        currentToggleHp = data.toggleHp
+        if (currentToggleHp) {
+            for (let i = 0; i < toggleHpEls.length; i++) {
+                toggleHpEls[i].style.opacity = 1
+            }
+        } else {
+            for (let i = 0; i < toggleHpEls.length; i++) {
+                toggleHpEls[i].style.opacity = 0
+            }
+        }
     }
 }
 

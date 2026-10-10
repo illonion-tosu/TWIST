@@ -62,6 +62,10 @@ let allBeatmaps
 const mappoolMapWrapperEls = document.getElementsByClassName("mappool-map-wrapper")
 let currentRedBan, currentBlueBan, currentRedPick, currentBluePick
 
+// Toggle HP
+const toggleHpEls = document.getElementsByClassName("toggle-hp")
+let currentToggleHp
+
 async function getData() {
     const data = JSON.parse(localStorage.getItem("data"))
     console.log(data)
@@ -178,6 +182,20 @@ async function getData() {
                 pickBanElement.classList.toggle("mappool-map-pick-ban-left", !isRight)
                 pickBanElement.classList.toggle("mappool-map-pick-ban-right", isRight)
                 pickBanElement.textContent = text
+            }
+        }
+    }
+
+    // Toggle HP
+    if (currentToggleHp !== data.toggleHp) {
+        currentToggleHp = data.toggleHp
+        if (currentToggleHp) {
+            for (let i = 0; i < toggleHpEls.length; i++) {
+                toggleHpEls[i].style.opacity = 1
+            }
+        } else {
+            for (let i = 0; i < toggleHpEls.length; i++) {
+                toggleHpEls[i].style.opacity = 0
             }
         }
     }

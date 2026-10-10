@@ -33,6 +33,9 @@ function setCurrentPicker(team) {
     currentPicker = team.toLowerCase()
 }
 
+// Toggle HP
+const toggleHpEl = document.getElementById("toggle-hp-button")
+
 // Max HP
 let maxHp
 let playerData = {
@@ -275,7 +278,8 @@ setInterval(() => {
             redPick: redPick,
             blueBan: blueBan,
             bluePick: bluePick
-        }
+        },
+        toggleHp: toggleHpEl.checked
     }
 
     localStorage.setItem("data", JSON.stringify(savedInfo))
