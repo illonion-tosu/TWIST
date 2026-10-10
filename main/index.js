@@ -164,7 +164,7 @@ async function getData() {
 
         // Mod info
         if (mappoolInfo.mappoolMapFound) {
-            nowPlayingModEl.style.backgroundColor = `var(--${mappoolInfo.currentPicker}-team-colour)`
+            nowPlayingModEl.style.backgroundColor = `var(--team-${mappoolInfo.currentPicker}-colour)`
             nowPlayingModEl.textContent = mappoolInfo.mappoolMapModId
 
             const currentBeatmap = mappoolInfo.currentBeatmap

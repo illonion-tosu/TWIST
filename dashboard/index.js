@@ -10,17 +10,28 @@ let allBeatmaps = []
 
 // Select next picker
 const autoPickButtonEl = document.getElementById("auto-pick-button")
-const currentPickerEl = document.getElementById("current-picker")
+const nextPickerEl = document.getElementById("next-picker")
 const selectNextPickerButtonRedEl = document.getElementById("select-next-picker-button-red")
 const selectNextPickerButtonBlueEl = document.getElementById("select-next-picker-button-blue")
 const selectNextPickerButtonNoneEl = document.getElementById("select-next-picker-button-none")
-let currentPicker = "red"
+let nextPicker = "red"
 
 function setNextPicker(team) {
+    nextPickerEl.textContent = `Current: ${team}`
+    nextPicker = team.toLowerCase()
+}
+
+// current picker
+const currentPickerEl = document.getElementById("current-picker")
+const selectCurrentPickerButtonRedEl = document.getElementById("select-current-picker-button-red")
+const selectCurrentPickerButtonBlueEl = document.getElementById("select-current-picker-button-blue")
+const selectCurrentPickerButtonNoneEl = document.getElementById("select-current-picker-button-none")
+let currentPicker = "blue"
+
+function setCurrentPicker(team) {
     currentPickerEl.textContent = `Current: ${team}`
     currentPicker = team.toLowerCase()
 }
-
 
 // Max HP
 let maxHp
@@ -154,6 +165,7 @@ function mapClickEvent(event) {
     if (team === "red" && action === "pick") {
         redPick.push(this.getAttribute("id"))
         this.classList.add("mappool-select-button-red-pick")
+        currentPicker = team
     }
     if (team === "blue" && action === "ban") {
         blueBan.push(this.getAttribute("id"))
@@ -162,6 +174,7 @@ function mapClickEvent(event) {
     if (team === "blue" && action === "pick") {
         bluePick.push(this.getAttribute("id"))
         this.classList.add("mappool-select-button-blue-pick")
+        currentPicker = team
     }
 }
 
@@ -221,10 +234,11 @@ socket.onmessage = event => {
                 bubbles: true,
                 cancelable: true,
                 view: window,
-                button: currentPicker === "red" ? 0 : 2
+                button: nextPicker === "red" ? 0 : 2
             })
             targetElement.dispatchEvent(event)
-            setNextPicker(currentPicker === "red" ? 'Blue' : 'Red')
+            setCurrentPicker(nextPicker)
+            setNextPicker(nextPicker === "red" ? 'Blue' : 'Red')
         }
 
         // Mappool map found
@@ -299,4 +313,7 @@ document.addEventListener("DOMContentLoaded", () => {
     selectNextPickerButtonRedEl.addEventListener("click", () => setNextPicker("Red"))
     selectNextPickerButtonBlueEl.addEventListener("click", () => setNextPicker("Blue"))
     selectNextPickerButtonNoneEl.addEventListener("click", () => setNextPicker("None"))
+    selectCurrentPickerButtonRedEl.addEventListener("click", () => setCurrentPicker("Red"))
+    selectCurrentPickerButtonBlueEl.addEventListener("click", () => setCurrentPicker("Blue"))
+    selectCurrentPickerButtonNoneEl.addEventListener("click", () => setCurrentPicker("None"))
 })
