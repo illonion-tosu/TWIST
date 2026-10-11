@@ -1,3 +1,7 @@
+:root {
+    --winner-gap: 55px;
+}
+
 /* Whole Page */
 .main { background-image: url("static/background.png" )}
 
@@ -24,7 +28,7 @@
     display: flex;
     justify-content: center;
     width: 1920px;
-    gap: 55px;
+    gap: var(--winner-gap);
 }
 
 .chibi-container {
@@ -37,4 +41,14 @@
 
 .chibi-container img {
     height: 337px;
+}
+
+/* Player Name Wrapper */
+.player-name-wrapper {
+    position: absolute;
+    top: 750px;
+    display: flex;
+    justify-content: center;
+    width: 1920px;
+    gap: var(--winner-gap);
 }
