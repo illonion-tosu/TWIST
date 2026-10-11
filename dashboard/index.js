@@ -371,11 +371,15 @@ socket.onmessage = event => {
         }
 
         // Reset information
-        if (currentIpcState === 1 && previousIpcState === 4 && !checkedWinner && toggleHpEl.checked) {
+        if (currentIpcState === 1 && previousIpcState === 4 && !checkedWinner) {
             checkedWinner = true
-
-            if (toggleHpEl.checked && autoObsButtonEl.checked) {
-                changeScene("Mappool")
+        
+            if (toggleHpEl.checked) {
+                applyDamage(playerData)
+            
+                if (autoObsButtonEl.checked) {
+                    changeScene("Mappool")
+                }
             }
         }
     }
@@ -416,6 +420,30 @@ socket.onmessage = event => {
             currentModIdEl.textContent = ""
         }
     }
+}
+
+// Apply damage
+function applyDamage(playerData) {
+    Object.values(playerData).forEach((player, i) => {
+        const wasAlive = player.currentMaxHp > 0
+
+        player.currentMaxHp = Math.max(0, Math.round(player.currentMaxHp - player.currentScoreAgainst))
+
+        if (wasAlive && player.currentMaxHp === 0) {
+            // Just died this map
+            player.currentDeadRounds = 2
+        } else if (player.currentDeadRounds > 0) {
+            // Already dead from a previous map: tick down
+            player.currentDeadRounds--
+
+            // Counter hit 0: revive with 30% of max HP
+            if (player.currentDeadRounds === 0) {
+                player.currentMaxHp = Math.round(maxHp * 0.3)
+            }
+        }
+
+        teamHpIOnputNumberElements[i].value = player.currentMaxHp
+    })
 }
 
 setInterval(() => {
