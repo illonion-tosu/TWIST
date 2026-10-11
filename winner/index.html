@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Winner</title>
+
+    <link rel="stylesheet" href="../_shared/css/style.css">
+    <link rel="stylesheet" href="../_shared/css/overlay.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Shared SVG definitions, referenced by id from the SVGs below -->
+    <svg class="svg-defs" aria-hidden="true">
+        <defs>
+            <!-- White outer ring, black inner ring, then the text on top, check radiuses -->
+            <filter id="outline-winner-name" x="-20%" y="-150%" width="140%" height="400%">
+                <feMorphology in="SourceAlpha" operator="dilate" radius="12" result="white-dilate" />
+                <feGaussianBlur in="white-dilate" stdDeviation="3.5" result="white-blur" />
+                <feColorMatrix in="white-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="white-round" />
+                <feFlood flood-color="white" result="white-colour" />
+                <feComposite in="white-colour" in2="white-round" operator="in" result="white-layer" />
+                <feMorphology in="SourceAlpha" operator="dilate" radius="7" result="black-dilate" />
+                <feGaussianBlur in="black-dilate" stdDeviation="2" result="black-blur" />
+                <feColorMatrix in="black-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="black-round" />
+                <feFlood flood-color="black" result="black-colour" />
+                <feComposite in="black-colour" in2="black-round" operator="in" result="black-layer" />
+                <feMerge>
+                    <feMergeNode in="white-layer" />
+                    <feMergeNode in="black-layer" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+
+            <!-- White outer ring, black inner ring, then the text on top, check radiuses -->
+            <filter id="outline-round-name" x="-20%" y="-150%" width="140%" height="400%">
+                <feMorphology in="SourceAlpha" operator="dilate" radius="9" result="white-dilate" />
+                <feGaussianBlur in="white-dilate" stdDeviation="3.5" result="white-blur" />
+                <feColorMatrix in="white-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="white-round" />
+                <feFlood flood-color="white" result="white-colour" />
+                <feComposite in="white-colour" in2="white-round" operator="in" result="white-layer" />
+                <feMorphology in="SourceAlpha" operator="dilate" radius="5" result="black-dilate" />
+                <feGaussianBlur in="black-dilate" stdDeviation="2" result="black-blur" />
+                <feColorMatrix in="black-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="black-round" />
+                <feFlood flood-color="black" result="black-colour" />
+                <feComposite in="black-colour" in2="black-round" operator="in" result="black-layer" />
+                <feMerge>
+                    <feMergeNode in="white-layer" />
+                    <feMergeNode in="black-layer" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+        </defs>
+    </svg>
+
+    <div class="main">
+        <!-- Winner Name -->
+        <svg class="round-winner-container" xmlns="http://www.w3.org/2000/svg" width="1920" height="300" viewBox="0 0 1920 300">
+            <text
+                x="960"
+                y="285"
+                text-anchor="middle"
+                font-size="150px"
+                letter-spacing="-12"
+                class="outlined-text"
+                id="winner-name"
+                filter="url(#outline-winner-name)"
+            >KIM BREAD CHILL</text>
+        </svg>
+
+        <!-- Round Name -->
+        <svg class="round-name-container" xmlns="http://www.w3.org/2000/svg" width="1920" height="300" viewBox="0 0 1920 300">
+            <text
+                x="960"
+                y="285"
+                text-anchor="middle"
+                font-size="57px"
+                letter-spacing="-4"
+                class="outlined-text outlined-text-round-name"
+                id="round-name-WINNER"
+                filter="url(#outline-round-name)"
+            >ROUND NAME WINNER</text>
+        </svg>
+
+        <!-- Chibis -->
+        <div class="chibi-wrapper" id="chibi-wrapper">
+            <div class="chibi-container">
+                <img src="static/placeholder chibi.png">
+            </div>
+            <div class="chibi-container">
+                <img src="static/placeholder chibi.png">
+            </div>
+            <div class="chibi-container">
+                <img src="static/placeholder chibi.png">
+            </div>
+        </div>
+
+        <!-- Player Names -->
+        <div class="player-name-wrapper">
+            <!-- Player Name -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="366" height="300" viewBox="0 0 366 300">
+                <text
+                    x="183"
+                    y="285"
+                    text-anchor="middle"
+                    font-size="56px"
+                    letter-spacing="-4"
+                    class="outlined-text"
+                    id="player-1-name"
+                    filter="url(#outline-round-name)"
+                >KIM BREAD CHILL</text>
+            </svg>
+
+            <svg xmlns="http://www.w3.org/2000/svg" width="366" height="300" viewBox="0 0 366 300">
+                <text
+                    x="183"
+                    y="285"
+                    text-anchor="middle"
+                    font-size="56px"
+                    letter-spacing="-4"
+                    class="outlined-text"
+                    id="player-2-name"
+                    filter="url(#outline-round-name)"
+                >KIM BREAD CHILL</text>
+            </svg>
+
+            <svg xmlns="http://www.w3.org/2000/svg" width="366" height="300" viewBox="0 0 366 300">
+                <text
+                    x="183"
+                    y="285"
+                    text-anchor="middle"
+                    font-size="56px"
+                    letter-spacing="-4"
+                    class="outlined-text"
+                    id="player-3-name"
+                    filter="url(#outline-round-name)"
+                >KIM BREAD CHILL</text>
+            </svg>
+        </div>
+    </div>
+
+    <script src="index.js"></script>
+</body>
+</html>

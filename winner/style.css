@@ -1,0 +1,54 @@
+:root {
+    --winner-gap: 55px;
+}
+
+/* Whole Page */
+.main { background-image: url("static/background.png" )}
+
+/* Round Winner */
+.round-winner-container {
+    position: absolute;
+    top: 5px;
+}
+
+/* Round Name */
+.round-name-container {
+    position: absolute;
+    top: 109px;
+}
+
+/* Outlined Text */
+.outlined-text { fill: #f5d49c; }
+.outlined-text-round-name { fill: #b2d4f6; }
+
+/* Chibi Container */
+.chibi-wrapper {
+    position: absolute;
+    top: 449px;
+    display: flex;
+    justify-content: center;
+    width: 1920px;
+    gap: var(--winner-gap);
+}
+
+.chibi-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 366px;
+    height: 453px
+}
+
+.chibi-container img {
+    height: 337px;
+}
+
+/* Player Name Wrapper */
+.player-name-wrapper {
+    position: absolute;
+    top: 750px;
+    display: flex;
+    justify-content: center;
+    width: 1920px;
+    gap: var(--winner-gap);
+}
