@@ -1,2 +1,11 @@
 /* Whole Page */
 .main { background-image: url("static/background.png" )}
+
+.round-winner-container {
+    position: absolute;
+    top: 14px;
+}
+
+.outlined-text {
+    fill: #f5d49c;
+}
