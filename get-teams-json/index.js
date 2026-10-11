@@ -1,4 +1,5 @@
 const textareaEl = document.getElementById("textarea")
+const buttonEl = document.getElementById("button")
 let teams = []
 async function submit() {
     const textareaElValue = textareaEl.value
@@ -31,3 +32,7 @@ async function submit() {
     link.download = "teams.json"
     link.click()
 }
+
+window.onload(() => {
+    buttonEl.addEventListener("click", submit)
+})

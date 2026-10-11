@@ -265,8 +265,7 @@ select:focus,
 }
 
 .class-panel-title {
-    margin: 10px 0 0 20px;
-    text-align: left;
+    text-align: center;
 }
 
 .class-controls .auto-labels {
