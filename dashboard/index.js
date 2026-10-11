@@ -259,12 +259,14 @@ function changeTeams(teamName, side) {
         teamMapTargetSelectionPlayerElements[i].textContent = currentPlayerName
 
         // Fill each select's options with the matching team player
+        // Value = player number (1-6), since that's what currentTarget uses
+        const playerNumberOffset = side === "red" ? 0 : 3
         const options = teamMapTargetSelectionPlayerSelectElements[i].children
         for (let j = 0; j < options.length; j++) {
             const optionPlayer = currentTeam[`player${j + 1}`]
             if (!optionPlayer) continue
             options[j].textContent = optionPlayer.playerName
-            options[j].value = optionPlayer.id
+            options[j].value = playerNumberOffset + j + 1
         }
     }
 }
@@ -284,6 +286,31 @@ function setHpButton() {
     for (let i = 0; i < teamHpIOnputNumberElements.length; i++) {
         playerData[`player${i + 1}`].currentMaxHp = Number(teamHpIOnputNumberElements[i].value)
     }
+}
+
+// Map Target Button
+const mapTargetButtonEl = document.getElementById("map-target-button")
+const targetSelectElements = [1, 2, 3, 4, 5, 6].map(i =>
+    document.getElementById(`map-target-selection-player-${i}-select`)
+)
+
+function setTargetButton() {
+    targetSelectElements.forEach((el, i) => {
+        const value = Number(el.value)
+        // Ignore placeholder options that haven't been filled with a player yet
+        if (Number.isNaN(value)) return
+        playerData[`player${i + 1}`].currentTarget = value
+    })
+}
+
+// Make dropdowns reflect what's actually in playerData
+function syncTargetSelects() {
+    targetSelectElements.forEach((el, i) => {
+        const target = String(playerData[`player${i + 1}`].currentTarget)
+        if ([...el.options].some(option => option.value === target)) {
+            el.value = target
+        }
+    })
 }
 
 // IPC State
@@ -334,7 +361,7 @@ socket.onmessage = event => {
         currentIpcState = socketData.tourney.ipcState
         
         // Calculate scores
-        if (currentIpcState === 2 || currentIpcState === 3 || currentIpcState === 4) {
+        if ((currentIpcState === 2 || currentIpcState === 3 || currentIpcState === 4) && toggleHpEl.checked) {
             checkedWinner = false
             updatePlayerData(playerData, socketData)
 
@@ -344,13 +371,18 @@ socket.onmessage = event => {
         }
 
         // Reset information
-        if (currentIpcState === 1 && previousIpcState === 4 && !checkedWinner) {
-            checkedWinner === true
+        if (currentIpcState === 1 && previousIpcState === 4 && !checkedWinner && toggleHpEl.checked) {
+            checkedWinner = true
 
             if (toggleHpEl.checked && autoObsButtonEl.checked) {
                 changeScene("Mappool")
             }
         }
+    }
+
+    // Keep scores updating live while the map is being played
+    if ((currentIpcState === 2 || currentIpcState === 3 || currentIpcState === 4) && toggleHpEl.checked) {
+        updatePlayerData(playerData, socketData)
     }
 
 
@@ -472,6 +504,7 @@ document.addEventListener("DOMContentLoaded", () => {
     selectCurrentPickerButtonBlueEl.addEventListener("click", () => setCurrentPicker("Blue"))
     selectCurrentPickerButtonNoneEl.addEventListener("click", () => setCurrentPicker("None"))
     teamHpButtonEl.addEventListener("click", () => setHpButton())
+    mapTargetButtonEl.addEventListener("click", () => setTargetButton())
 })
 
 // OBS stuff
