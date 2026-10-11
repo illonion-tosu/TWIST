@@ -109,25 +109,22 @@ async function getData() {
     }
 
     if (setHpInfo) {
+        // Effective HP for a player: max HP minus incoming damage, floored at 0
+        const effectiveHp = player => Math.max(0, Math.round(player.currentMaxHp - player.currentScoreAgainst))
+    
         // Left Score
-        const currentLeftHp = 
-            currentPlayerData.player1.currentMaxHp +
-            currentPlayerData.player2.currentMaxHp +
-            currentPlayerData.player3.currentMaxHp - 
-            currentPlayerData.player1.currentScoreAgainst -
-            currentPlayerData.player2.currentScoreAgainst -
-            currentPlayerData.player3.currentScoreAgainst 
+        const currentLeftHp =
+            effectiveHp(currentPlayerData.player1) +
+            effectiveHp(currentPlayerData.player2) +
+            effectiveHp(currentPlayerData.player3)
         animation.hpLeft.update(currentLeftHp)
         teamLeftHpBarEl.style.width = `${currentLeftHp / (currentMaxHp * 3) * MAX_HP_BAR_WIDTH}px`
-
+    
         // Right Score
         const currentRightHp =
-            currentPlayerData.player4.currentMaxHp +
-            currentPlayerData.player5.currentMaxHp +
-            currentPlayerData.player6.currentMaxHp - 
-            currentPlayerData.player1.currentScoreAgainst -
-            currentPlayerData.player2.currentScoreAgainst -
-            currentPlayerData.player3.currentScoreAgainst
+            effectiveHp(currentPlayerData.player4) +
+            effectiveHp(currentPlayerData.player5) +
+            effectiveHp(currentPlayerData.player6)
         animation.hpRight.update(currentRightHp)
         teamRightHpBarEl.style.width = `${currentRightHp / (currentMaxHp * 3) * MAX_HP_BAR_WIDTH}px`
     }

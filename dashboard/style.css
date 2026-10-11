@@ -257,3 +257,22 @@ select:focus,
         justify-content: center;
     }
 }
+
+/* Class activation */
+.class-activation-container {
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.class-panel-title {
+    margin: 10px 0 0 20px;
+    text-align: left;
+}
+
+.class-controls .auto-labels {
+    margin: 5px 0 0 20px;
+}
+
+.class-submit-button {
+    height: 100px;
+}
