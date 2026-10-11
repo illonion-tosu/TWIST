@@ -1,4 +1,5 @@
 import { loadBeatmaps } from "../_shared/core/beatmaps.js"
+import { findTeam, loadTeams } from "../_shared/core/teams.js"
 import { createTosuWsSocket } from "../_shared/core/websocket.js"
 
 // Round Name
@@ -190,6 +191,58 @@ function mapClickEvent(event) {
     }
 }
 
+// Load Teams
+let allTeams = []
+loadTeams().then(teams => { allTeams = teams })
+
+// Change Teams
+function changeTeams(teamName, side) {
+    // Find team
+    const currentTeam = findTeam(teamName)
+    if (!currentTeam) return
+
+    // Set up arrays
+    let currentPlayers = []
+    let teamHpPlayerElements = []
+    let teamMapTargetSelectionPlayerElements = []
+    let teamMapTargetSelectionPlayerSelectElements = []
+    if (side === "red") {
+        currentPlayers.push(playerData.player1, playerData.player2, playerData.player3)
+        teamHpPlayerElements.push(
+            document.getElementById("team-hp-player-1"),
+            document.getElementById("team-hp-player-2"),
+            document.getElementById("team-hp-player-3")
+        )
+        teamMapTargetSelectionPlayerElements.push(
+            document.getElementById("map-target-selection-player-1"),
+            document.getElementById("map-target-selection-player-2"),
+            document.getElementById("map-target-selection-player-3")
+        )
+        teamMapTargetSelectionPlayerSelectElements.push(
+            document.getElementById("map-target-selection-player-4-select"),
+            document.getElementById("map-target-selection-player-5-select"),
+            document.getElementById("map-target-selection-player-6-select")
+        )
+    } else {
+        currentPlayers.push(playerData.player4, playerData.player5, playerData.player6)
+        teamHpPlayerElements.push(
+            document.getElementById("team-hp-player-4"),
+            document.getElementById("team-hp-player-5"),
+            document.getElementById("team-hp-player-6")
+        )
+        teamMapTargetSelectionPlayerElements.push(
+            document.getElementById("map-target-selection-player-4"),
+            document.getElementById("map-target-selection-player-5"),
+            document.getElementById("map-target-selection-player-6")
+        )
+        teamMapTargetSelectionPlayerSelectElements.push(
+            document.getElementById("map-target-selection-player-1-select"),
+            document.getElementById("map-target-selection-player-2-select"),
+            document.getElementById("map-target-selection-player-3-select")
+        )
+    }
+}
+
 // IPC State
 let previousIpcState, currentIpcState
 let checkedWinner = false
@@ -216,8 +269,21 @@ socket.onmessage = event => {
     socketData = JSON.parse(event.data)
 
     // Team Names
-    redTeamName = socketData.tourney.team.left
-    blueTeamName = socketData.tourney.team.right
+    const teamNames = socketData.tourney.team
+    if (allTeams &&
+        (redTeamName !== teamNames.left ||
+        blueTeamName !== teamNames.right
+    )) {
+        if (redTeamName !== teamNames.left) {
+            redTeamName = teamNames.left
+            changeTeams(redTeamName, "red")
+        }
+
+        if (blueTeamName !== teamNames.right) {
+            blueTeamName = teamNames.right
+            changeTeams(blueTeamName, "blue")
+        }
+    }
 
     // Set score against information
     if (currentIpcState !== socketData.tourney.ipcState) {
