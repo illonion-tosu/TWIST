@@ -574,9 +574,17 @@ socket.onmessage = event => {
                 applyDamage(playerData)
             
                 if (autoObsButtonEl.checked) {
-                    changeScene("Mappool")
+                    if (isTeamEliminated(team1Players) || isTeamEliminated(team2Players)) {
+                        changeScene("Winner")
+                    } else {
+                        changeScene("Mappool")
+                    }
                 }
             }
+        }
+        
+        function isTeamEliminated(players) {
+            return players.every(player => player.hp <= 0)
         }
     }
 
