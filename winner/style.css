@@ -3,9 +3,13 @@
 
 .round-winner-container {
     position: absolute;
-    top: 14px;
+    top: 5px;
 }
 
-.outlined-text {
-    fill: #f5d49c;
+.round-name-container {
+    position: absolute;
+    top: 109px;
 }
+
+.outlined-text { fill: #f5d49c; }
+.outlined-text-round-name { fill: #b2d4f6; }
