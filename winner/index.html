@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Winner</title>
+
+    <link rel="stylesheet" href="../_shared/css/style.css">
+    <link rel="stylesheet" href="../_shared/css/overlay.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+        <!-- Shared SVG definitions, referenced by id from the SVGs below -->
+    <svg class="svg-defs" aria-hidden="true">
+        <defs>
+            <!-- White outer ring, black inner ring, then the text on top -->
+            <filter id="outline-round-name" x="-10%" y="-100%" width="120%" height="300%">
+                <feMorphology in="SourceAlpha" operator="dilate" radius="6" result="white-dilate" />
+                <feGaussianBlur in="white-dilate" stdDeviation="2.5" result="white-blur" />
+                <feColorMatrix in="white-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="white-round" />
+                <feFlood flood-color="white" result="white-colour" />
+                <feComposite in="white-colour" in2="white-round" operator="in" result="white-layer" />
+                <feMorphology in="SourceAlpha" operator="dilate" radius="3.5" result="black-dilate" />
+                <feGaussianBlur in="black-dilate" stdDeviation="1.2" result="black-blur" />
+                <feColorMatrix in="black-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="black-round" />
+                <feFlood flood-color="black" result="black-colour" />
+                <feComposite in="black-colour" in2="black-round" operator="in" result="black-layer" />
+                <feMerge>
+                    <feMergeNode in="white-layer" />
+                    <feMergeNode in="black-layer" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+        </defs>
+    </svg>
+
+    <div class="main">
+        <!-- Round Name -->
+        <svg class="round-winner-container" xmlns="http://www.w3.org/2000/svg" width="1920" height="300" viewBox="0 0 1920 300">
+            <text
+                x="960"
+                y="285"
+                text-anchor="middle"
+                font-size="200px"
+                letter-spacing="-4"
+                class="outlined-text"
+                id="round-name"
+                filter="url(#outline-round-name)"
+            >ROUND NAME WINNER</text>
+        </svg>
+    </div>
+
+    <script src="index.js"></script>
+</body>
+</html>
