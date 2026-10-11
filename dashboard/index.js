@@ -628,20 +628,21 @@ function applyDamage(playerData) {
 
         player.currentMaxHp = Math.max(0, Math.round(player.currentMaxHp - player.currentScoreAgainst))
 
-        if (wasAlive && player.currentMaxHp === 0) {
-            // Just died this map
-            player.currentDeadRounds = 2
-            player.reviveHp = null
-        } else if (wasAlive && playerKey === duelLoser) {
-            // Lost the duel but survived: sit out 2 picks, return at half their current HP
-            player.reviveHp = Math.round(player.currentMaxHp / 2)
+        if (wasAlive && playerKey === duelLoser) {
+            // Lost the duel: dies, returns at 50% of round max HP
+            // (checked first so a duel loser who also hits 0 from damage still gets 50%)
             player.currentMaxHp = 0
             player.currentDeadRounds = 2
+            player.reviveHp = Math.round(maxHp * 0.5)
+        } else if (wasAlive && player.currentMaxHp === 0) {
+            // Died to damage: returns at 30% of round max HP
+            player.currentDeadRounds = 2
+            player.reviveHp = null
         } else if (player.currentDeadRounds > 0) {
             player.currentDeadRounds--
 
             if (player.currentDeadRounds === 0) {
-                // Duel losers return at half HP, everyone else at 30% of max HP
+                // Duel losers return at 50%, everyone else at 30% of round max HP
                 player.currentMaxHp = player.reviveHp ?? Math.round(maxHp * 0.3)
                 player.reviveHp = null
             }
