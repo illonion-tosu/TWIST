@@ -241,6 +241,27 @@ function changeTeams(teamName, side) {
             document.getElementById("map-target-selection-player-3-select")
         )
     }
+
+    // Set players
+    for (let i = 0; i < currentPlayers.length; i++) {
+        const currentPlayer = currentTeam[`player${i + 1}`]
+        const currentPlayerId = currentPlayer.id
+        const currentPlayerName = currentPlayer.playerName
+        currentPlayers[i].id = currentPlayerId
+        currentPlayers[i].playerName = currentPlayerName
+
+        teamHpPlayerElements[i].textContent = currentPlayerName
+        teamMapTargetSelectionPlayerElements[i].textContent = currentPlayerName
+
+        // Fill each select's options with the matching team player
+        const options = teamMapTargetSelectionPlayerSelectElements[i].children
+        for (let j = 0; j < options.length; j++) {
+            const optionPlayer = currentTeam[`player${j + 1}`]
+            if (!optionPlayer) continue
+            options[j].textContent = optionPlayer.playerName
+            options[j].value = optionPlayer.id
+        }
+    }
 }
 
 // IPC State
