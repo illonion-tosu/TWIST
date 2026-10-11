@@ -124,6 +124,11 @@ loadBeatmaps().then(beatmaps => {
             break
     }
 
+    // Set all input values to max hp
+    for (let i = 0; i < teamHpIOnputNumberElements.length; i++) {
+        teamHpIOnputNumberElements[i].value = maxHp
+    }
+
     // Set all player's current max hp
     for (const key in playerData) {
         playerData[key].currentMaxHp = maxHp
@@ -242,7 +247,7 @@ function changeTeams(teamName, side) {
         )
     }
 
-    // Set players
+    // Set playersx
     for (let i = 0; i < currentPlayers.length; i++) {
         const currentPlayer = currentTeam[`player${i + 1}`]
         const currentPlayerId = currentPlayer.id
@@ -261,6 +266,23 @@ function changeTeams(teamName, side) {
             options[j].textContent = optionPlayer.playerName
             options[j].value = optionPlayer.id
         }
+    }
+}
+
+// Team HP Button
+const teamHpButtonEl = document.getElementById("team-hp-button")
+const teamHpIOnputNumberElements = [
+    document.getElementById("team-hp-input-number-player-1"),
+    document.getElementById("team-hp-input-number-player-2"),
+    document.getElementById("team-hp-input-number-player-3"),
+    document.getElementById("team-hp-input-number-player-4"),
+    document.getElementById("team-hp-input-number-player-5"),
+    document.getElementById("team-hp-input-number-player-6")
+]
+
+function setHpButton() {
+    for (let i = 0; i < teamHpIOnputNumberElements.length; i++) {
+        playerData[`player${i + 1}`].currentMaxHp = Number(teamHpIOnputNumberElements[i].value)
     }
 }
 
@@ -412,16 +434,33 @@ function updatePlayerData(playerData, data) {
     Object.entries(playerData).forEach(([playerKey, player]) => {
         const playerNumber = Number(playerKey.replace("player", ""))
 
+        // Figure out which team this player is on (1-3 = red, 4-6 = blue)
+        const teamKeys = playerNumber <= 3
+            ? ["player1", "player2", "player3"]
+            : ["player4", "player5", "player6"]
+
+        // Count alive players on this player's team (currentMaxHp > 0)
+        const alivePlayers = teamKeys.filter(key => playerData[key].currentMaxHp > 0)
+        const isLastAlive = alivePlayers.length === 1 && player.currentMaxHp > 0
+
         const targeters = Object.values(playerData).filter(
             otherPlayer => otherPlayer.currentTarget === playerNumber
         )
 
-        player.currentScoreAgainst = targeters.length
-            ? targeters.reduce(
-                (sum, targeter) => sum + targeter.currentScore,
-                0
-            ) / targeters.length
-            : 0
+        if (!targeters.length) {
+            player.currentScoreAgainst = 0
+            return
+        }
+
+        const totalScore = targeters.reduce(
+            (sum, targeter) => sum + targeter.currentScore,
+            0
+        )
+
+        // Last alive on their team: cumulative. Otherwise: average.
+        player.currentScoreAgainst = isLastAlive
+            ? totalScore
+            : totalScore / targeters.length
     })
 }
 
@@ -432,6 +471,7 @@ document.addEventListener("DOMContentLoaded", () => {
     selectCurrentPickerButtonRedEl.addEventListener("click", () => setCurrentPicker("Red"))
     selectCurrentPickerButtonBlueEl.addEventListener("click", () => setCurrentPicker("Blue"))
     selectCurrentPickerButtonNoneEl.addEventListener("click", () => setCurrentPicker("None"))
+    teamHpButtonEl.addEventListener("click", () => setHpButton())
 })
 
 // OBS stuff
