@@ -446,7 +446,7 @@ function getDuelLoser() {
 // Load Teams
 let teamsLoaded = false
 // tosu messages are ignored for team names until this finishes; the next message then picks the teams up
-loadTeams().then(teams => {
+loadTeams().then(() => {
     teamsLoaded = true
 }).catch(error => console.error("Could not load teams:", error))
 
