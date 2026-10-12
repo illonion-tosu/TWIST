@@ -203,7 +203,7 @@ const abilities = {
         red: { lucky: false, poolSize: 0 },
         blue: { lucky: false, poolSize: 0 },
     },
-    demigod: null,    // { player, mode, target }, cleared after every map
+    demigod: null, // { player, mode, target }, cleared after every map
     soulweaver: null, // { challenger, challenged }, cleared after every map
 }
 
@@ -214,50 +214,96 @@ const classPanelsEl = document.getElementById("class-panels")
 
 const sideOf = playerNumber => playerNumber <= 3 ? "red" : "blue"
 
+function el(tag, props = {}, ...children) {
+    const node = document.createElement(tag)
+    const { className, dataset, ...rest } = props
+    if (className) node.className = className
+    if (dataset) Object.assign(node.dataset, dataset)
+    Object.assign(node, rest)
+    node.append(...children)
+    return node
+}
+
 function buildClassPanel(side) {
     const colour = `team-${side}-colour`
+
     const select = (id, scope) =>
-        `<select class="class-player-select" id="${id}" data-side="${side}" data-scope="${scope}"></select>`
-    const row = (label, control) => `
-        <div class="team-hp-container">
-            <div class="team-hp ${colour}">${label}</div>
-            ${control}
-        </div>`
-    const checkbox = (id, label, perMap = false) => `
-        <label class="auto-labels">
-            <input type="checkbox" id="${id}" class="${perMap ? "per-map-ability" : ""}">
-            <span>${label}</span>
-        </label>`
+        el("select", {
+            className: "class-player-select",
+            id,
+            dataset: { side, scope },
+        })
 
-    return `
-        <div class="class-panel">
-            <div class="class-panel-title ${colour}" id="class-title-${side}"></div>
+    const row = (label, control) =>
+        el("div", { className: "team-hp-container" },
+            el("div", { className: `team-hp ${colour}`, textContent: label }),
+            control
+        )
 
-            <div class="team-hp-wrapper" id="class-wrapper-${side}" hidden>
-                <div class="team-hp-wrapper-left">
-                    <div class="class-controls" id="class-controls-${side}-human" hidden>
-                        ${checkbox(`human-${side}-lucky`, "Lucky!")}
-                        ${row("Maps before Lucky!:", `<input type="number" id="human-${side}-pool" min="0" value="0">`)}
-                    </div>
+    const checkbox = (id, label, perMap = false) =>
+        el("label", { className: "auto-labels" },
+            el("input", {
+                type: "checkbox",
+                id,
+                className: perMap ? "per-map-ability" : "",
+            }),
+            el("span", { textContent: label })
+        )
 
-                    <div class="class-controls" id="class-controls-${side}-demigod" hidden>
-                        ${checkbox(`demigod-${side}-active`, "Go solo this map", true)}
-                        ${row("Demigod:", select(`demigod-${side}-player`, "own"))}
-                        ${row("Mode:", `<select id="demigod-${side}-mode"><option value="split">Split</option><option value="target">Target</option></select>`)}
-                        ${row("Target:", select(`demigod-${side}-target`, "opp"))}
-                    </div>
+    const numberInput = (id) =>
+        el("input", { type: "number", id, min: "0", value: "0" })
 
-                    <div class="class-controls" id="class-controls-${side}-soulweaver" hidden>
-                        ${checkbox(`soulweaver-${side}-active`, "Duel this map", true)}
-                        ${row("Challenger:", select(`soulweaver-${side}-challenger`, "own"))}
-                        ${row("Challenged:", select(`soulweaver-${side}-challenged`, "opp"))}
-                    </div>
-                </div>
-                <button class="team-hp-button class-submit-button" id="class-activation-button-${side}">
-                    Submit
-                </button>
-            </div>
-        </div>`
+    const modeSelect = (id) =>
+        el("select", { id },
+            el("option", { value: "split", textContent: "Split" }),
+            el("option", { value: "target", textContent: "Target" })
+        )
+
+    const controls = (name, ...children) =>
+        el("div", {
+            className: "class-controls",
+            id: `class-controls-${side}-${name}`,
+            hidden: true,
+        }, ...children)
+
+    return el("div", { className: "class-panel" },
+        el("div", {
+            className: `class-panel-title ${colour}`,
+            id: `class-title-${side}`,
+        }),
+
+        el("div", {
+            className: "team-hp-wrapper",
+            id: `class-wrapper-${side}`,
+            hidden: true,
+        },
+            el("div", { className: "team-hp-wrapper-left" },
+                controls("human",
+                    checkbox(`human-${side}-lucky`, "Lucky!"),
+                    row("Maps before Lucky!:", numberInput(`human-${side}-pool`))
+                ),
+
+                controls("demigod",
+                    checkbox(`demigod-${side}-active`, "Go solo this map", true),
+                    row("Demigod:", select(`demigod-${side}-player`, "own")),
+                    row("Mode:", modeSelect(`demigod-${side}-mode`)),
+                    row("Target:", select(`demigod-${side}-target`, "opp"))
+                ),
+
+                controls("soulweaver",
+                    checkbox(`soulweaver-${side}-active`, "Duel this map", true),
+                    row("Challenger:", select(`soulweaver-${side}-challenger`, "own")),
+                    row("Challenged:", select(`soulweaver-${side}-challenged`, "opp"))
+                )
+            ),
+
+            el("button", {
+                className: "team-hp-button class-submit-button",
+                id: `class-activation-button-${side}`,
+                textContent: "Submit",
+            })
+        )
+    )
 }
 
 classPanelsEl.innerHTML = ["red", "blue"].map(buildClassPanel).join("")
@@ -841,18 +887,18 @@ async function refreshScenes() {
 
         // Generate a button for each scene (reversing order if you want it to match OBS layout top-to-bottom)
         scenes.reverse().forEach(scene => {
-            const btn = document.createElement('button')
-            btn.className = 'team-hp-button'
-            btn.innerText = scene.sceneName
+            const button = document.createElement('button')
+            button.className = 'team-hp-button'
+            button.innerText = scene.sceneName
                     
             // Highlight the currently active scene
             if (scene.sceneName === currentProgramScene) {
-                btn.classList.add('active-hp-button')
+                button.classList.add('active-hp-button')
             }
 
             // Click event to switch scene
-            btn.addEventListener("click", () => changeScene(scene.sceneName))
-            sceneButtonsEl.appendChild(btn)
+            button.addEventListener("click", () => changeScene(scene.sceneName))
+            sceneButtonsEl.appendChild(button)
         })
     } catch (error) {
         console.error('Failed to grab scene list:', error)
