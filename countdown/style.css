@@ -98,3 +98,8 @@
     background-color: white;
     color: var(--solid-graphite-colour);
 }
+
+/* Hidden until showError() turns one on (nothing hid them before, so both showed on load) */
+.timer-error-message {
+    display: none;
+}

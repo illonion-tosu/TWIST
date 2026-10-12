@@ -17,8 +17,10 @@ const selectNextPickerButtonBlueEl = document.getElementById("select-next-picker
 const selectNextPickerButtonNoneEl = document.getElementById("select-next-picker-button-none")
 let nextPicker = "red"
 
+const capitalise = text => text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
+
 function setNextPicker(team) {
-    nextPickerEl.textContent = `Current: ${team}`
+    nextPickerEl.textContent = `Next: ${capitalise(team)}`
     nextPicker = team.toLowerCase()
 }
 
@@ -30,9 +32,13 @@ const selectCurrentPickerButtonNoneEl = document.getElementById("select-current-
 let currentPicker = "blue"
 
 function setCurrentPicker(team) {
-    currentPickerEl.textContent = `Current: ${team}`
+    currentPickerEl.textContent = `Current: ${capitalise(team)}`
     currentPicker = team.toLowerCase()
 }
+
+// The HTML says "None" until clicked, but the variables above start as red / blue: show what's really in effect
+setNextPicker(nextPicker)
+setCurrentPicker(currentPicker)
 
 // Toggle HP
 const toggleHpEl = document.getElementById("toggle-hp-button")
@@ -41,7 +47,8 @@ const toggleHpEl = document.getElementById("toggle-hp-button")
 const autoObsButtonEl = document.getElementById("auto-obs-button")
 
 // Max HP
-let maxHp
+const DEFAULT_MAX_HP = 300000
+let maxHp = DEFAULT_MAX_HP
 let playerData = {
     player1: {
         id: 123456,
@@ -122,6 +129,9 @@ loadBeatmaps().then(beatmaps => {
         case "finals": case "f": case "gf": case "grand finals":
             maxHp = 600000
             break
+        default:
+            maxHp = DEFAULT_MAX_HP
+            console.warn(`Unknown round name "${roundName}", using ${DEFAULT_MAX_HP} max HP. Set it with the Map Starting HP box.`)
     }
 
     // Set all input values to max hp
@@ -144,7 +154,7 @@ loadBeatmaps().then(beatmaps => {
         button.addEventListener("contextmenu", event => event.preventDefault())
         mappoolSelectContainerEl.append(button)
     })
-})
+}).catch(error => console.error("Could not load beatmaps:", error))
 
 // Map Click Event
 let redBan = []
@@ -183,7 +193,7 @@ function mapClickEvent(event) {
     if (team === "red" && action === "pick") {
         redPick.push(this.getAttribute("id"))
         this.classList.add("mappool-select-button-red-pick")
-        currentPicker = team
+        setCurrentPicker(team)
     }
     if (team === "blue" && action === "ban") {
         blueBan.push(this.getAttribute("id"))
@@ -192,7 +202,7 @@ function mapClickEvent(event) {
     if (team === "blue" && action === "pick") {
         bluePick.push(this.getAttribute("id"))
         this.classList.add("mappool-select-button-blue-pick")
-        currentPicker = team
+        setCurrentPicker(team)
     }
 }
 
@@ -306,7 +316,7 @@ function buildClassPanel(side) {
     )
 }
 
-classPanelsEl.innerHTML = ["red", "blue"].map(buildClassPanel).join("")
+classPanelsEl.replaceChildren(...["red", "blue"].map(buildClassPanel))
 
 // Fill every player select (value = player number 1-6, text = player name)
 function refreshClassSelects() {
@@ -335,9 +345,13 @@ function updateClassPanel(side, className) {
     document.getElementById(`class-title-${side}`).textContent =
         `${side === "red" ? "Red" : "Blue"}: ${className}`
 
-    for (const type of ["human", "demigod", "soulweaver"]) {
+    const classesWithControls = ["human", "demigod", "soulweaver"]
+    for (const type of classesWithControls) {
         document.getElementById(`class-controls-${side}-${type}`).hidden = teamClass[side] !== type
     }
+
+    // Classes without controls (e.g. Witch) have nothing to submit
+    document.getElementById(`class-wrapper-${side}`).hidden = !classesWithControls.includes(teamClass[side])
 }
 
 // Read the controls into `abilities`
@@ -430,8 +444,11 @@ function getDuelLoser() {
 }
 
 // Load Teams
-let allTeams = []
-loadTeams().then(teams => { allTeams = teams })
+let teamsLoaded = false
+// tosu messages are ignored for team names until this finishes; the next message then picks the teams up
+loadTeams().then(teams => {
+    teamsLoaded = true
+}).catch(error => console.error("Could not load teams:", error))
 
 // Change Teams
 function changeTeams(teamName, side) {
@@ -581,11 +598,8 @@ socket.onmessage = event => {
     socketData = JSON.parse(event.data)
 
     // Team Names
-    const teamNames = socketData.tourney.team
-    if (allTeams &&
-        (redTeamName !== teamNames.left ||
-        blueTeamName !== teamNames.right
-    )) {
+    const teamNames = socketData.tourney?.team
+    if (teamsLoaded && teamNames) {
         if (redTeamName !== teamNames.left) {
             redTeamName = teamNames.left
             changeTeams(redTeamName, "red")
@@ -620,17 +634,13 @@ socket.onmessage = event => {
                 applyDamage(playerData)
             
                 if (autoObsButtonEl.checked) {
-                    if (isTeamEliminated([playerData.player1, playerData.player2, playerData.player3]) || isTeamEliminated(playerData.player4, playerData.player5, playerData.player6)) {
+                    if (isTeamEliminated(["player1", "player2", "player3"]) || isTeamEliminated(["player4", "player5", "player6"])) {
                         changeScene("Winner")
                     } else {
                         changeScene("Mappool")
                     }
                 }
             }
-        }
-
-        function isTeamEliminated(players) {
-            return players.every(player => player.hp <= 0)
         }
     }
 
@@ -640,7 +650,7 @@ socket.onmessage = event => {
     }
 
 
-    if ((currentId !== socketData.beatmap.id || currentChecksum !== socketData.beatmap.checksum) && allBeatmaps) {
+    if (socketData.beatmap && (currentId !== socketData.beatmap.id || currentChecksum !== socketData.beatmap.checksum)) {
         currentId = socketData.beatmap.id
         currentChecksum = socketData.beatmap.checksum
 
@@ -648,8 +658,9 @@ socket.onmessage = event => {
         currentMapEl.textContent = `${socketData.beatmap.artist} - ${socketData.beatmap.title}`
 
         // Autopicking
-        if (currentBeatmap && autoPickButtonEl.checked && currentPicker !== "none") {
-            const targetElement = document.getElementById(`${currentId}`)
+        // (it used to check currentPicker here, so "None" as next picker still auto picked for blue)
+        const targetElement = document.getElementById(`${currentId}`)
+        if (currentBeatmap && targetElement && autoPickButtonEl.checked && nextPicker !== "none") {
             const event = new MouseEvent('mousedown', {
                 bubbles: true,
                 cancelable: true,
@@ -658,7 +669,7 @@ socket.onmessage = event => {
             })
             targetElement.dispatchEvent(event)
             setCurrentPicker(nextPicker)
-            setNextPicker(nextPicker === "red" ? 'Blue' : 'Red')
+            setNextPicker(nextPicker === "red" ? "Blue" : "Red")
         }
 
         // Mappool map found
@@ -667,9 +678,17 @@ socket.onmessage = event => {
             mappoolMapModId = `${currentBeatmap.mod.toUpperCase()}${currentBeatmap.order}`
             currentModIdEl.textContent = mappoolMapModId
         } else {
+            // Not a pool map: previously the old flag stayed true and main/ crashed on the missing beatmap
+            mappoolMapFound = false
+            mappoolMapModId = undefined
             currentModIdEl.textContent = ""
         }
     }
+}
+
+// A team is out when none of its players have any HP left
+function isTeamEliminated(playerKeys) {
+    return playerKeys.every(key => playerData[key].currentMaxHp <= 0)
 }
 
 // Apply damage
@@ -714,8 +733,8 @@ function applyDamage(playerData) {
 }
 
 setInterval(() => {
-    teamRedNameEl.textContent = redTeamName
-    teamBlueNameEl.textContent = blueTeamName
+    teamRedNameEl.textContent = redTeamName ?? ""
+    teamBlueNameEl.textContent = blueTeamName ?? ""
 
     // Save information
     const savedInfo = {
@@ -750,7 +769,7 @@ setInterval(() => {
 function updatePlayerData(playerData, data) {
     // Raw scores
     Object.values(playerData).forEach(player => {
-        const client = data.tourney.clients.find(
+        const client = data.tourney?.clients?.find(
             client => client.user.id === player.id
         )
 
@@ -846,7 +865,7 @@ function setDemigodDamage() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+{
     selectNextPickerButtonRedEl.addEventListener("click", () => setNextPicker("Red"))
     selectNextPickerButtonBlueEl.addEventListener("click", () => setNextPicker("Blue"))
     selectNextPickerButtonNoneEl.addEventListener("click", () => setNextPicker("None"))
@@ -855,24 +874,28 @@ document.addEventListener("DOMContentLoaded", () => {
     selectCurrentPickerButtonNoneEl.addEventListener("click", () => setCurrentPicker("None"))
     teamHpButtonEl.addEventListener("click", () => setHpButton())
     mapTargetButtonEl.addEventListener("click", () => setTargetButton())
-    document.getElementById("class-activation-button-red").addEventListener("click", () => setClassButton("red"))
-    document.getElementById("class-activation-button-blue").addEventListener("click", () => setClassButton("blue"))
-})
+    document.getElementById("class-activation-button-red").addEventListener("click", setClassButton)
+    document.getElementById("class-activation-button-blue").addEventListener("click", setClassButton)
+}
 
 // OBS stuff
-const obs = new OBSWebSocket()
+const obs = typeof OBSWebSocket === "undefined" ? null : new OBSWebSocket()
 const OBS_ADDRESS = 'ws://127.0.0.1:4455'
 const sceneButtonsEl = document.getElementById('scene-buttons')
 
 // Connect to OBS WebSocket
-obs.connect(OBS_ADDRESS)
-    .then(() => {
-        refreshScenes()
-        setupListeners()
-    })
-    .catch(err => {
-        console.error('Connection failed:', err)
-    })
+if (obs) {
+    obs.connect(OBS_ADDRESS)
+        .then(() => {
+            refreshScenes()
+            setupListeners()
+        })
+        .catch(err => {
+            console.error('Connection failed:', err)
+        })
+} else {
+    console.warn("obs-websocket-js didn't load, OBS scene control is disabled")
+}
 
 // Fetch scenes and populate buttons
 async function refreshScenes() {
@@ -907,6 +930,7 @@ async function refreshScenes() {
 
 // Send command to switch scene
 async function changeScene(sceneName) {
+    if (!obs) return
     try {
         await obs.call('SetCurrentProgramScene', { sceneName: sceneName })
     } catch (error) {

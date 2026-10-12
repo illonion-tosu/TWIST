@@ -6,7 +6,7 @@ function setRoundName(name) {
     const text = document.getElementById("round-name")
 
     const maxWidth = 350
-    const words = name.split(" ")
+    const words = String(name ?? "").split(" ").filter(Boolean)
     const lines = []
     let currentLine = ""
 
@@ -35,7 +35,7 @@ function setRoundName(name) {
         lines.push(currentLine)
     }
 
-    // Rebuild the text using tspans.
+    // Rebuild the text using tspans. Only 1 and 2 line layouts exist, so anything longer is cut off.
     text.textContent = ""
 
     const lineYs = {
@@ -43,14 +43,19 @@ function setRoundName(name) {
         2: [45, 80],
     }
 
-    lines.forEach((line, index) => {
+    const visibleLines = lines.slice(0, 2)
+    if (lines.length > 2) {
+        visibleLines[1] = visibleLines[1].replace(/\s*$/, "") + "..."
+    }
+
+    visibleLines.forEach((line, index) => {
         const tspan = document.createElementNS(
             "http://www.w3.org/2000/svg",
             "tspan"
         )
 
         tspan.setAttribute("x", "210")
-        tspan.setAttribute("y", lineYs[lines.length][index])
+        tspan.setAttribute("y", lineYs[visibleLines.length][index])
         tspan.textContent = line
 
         text.appendChild(tspan)
@@ -58,19 +63,19 @@ function setRoundName(name) {
 }
 
 // Load beatmaps
-let allBeatmaps = []
 loadShowcaseBeatmaps().then(beatmaps => {
     setRoundName(beatmaps.roundName)
-})
+}).catch(error => console.error("Could not load showcase beatmaps:", error))
 
 ComfyJS.Init( "purlstournaments", null, "purlstournaments" )
 
 // Twitch Chat
 const twitchChatContainer = document.getElementById("chatbox-container")
+const MAX_CHAT_MESSAGES = 100
 ComfyJS.onChat = ( user, message, flags, self, extra ) => {
 
     // Get rid of nightbot messages
-    if (user === "Nightbot") return
+    if (user.toLowerCase() === "nightbot") return
 
     // Set up message container
     const twitchChatMessageContainer = document.createElement("div")
@@ -95,11 +100,16 @@ ComfyJS.onChat = ( user, message, flags, self, extra ) => {
     // Append everything together
     twitchChatMessageContainer.append(messageUser, chatMessage)
     twitchChatContainer.append(twitchChatMessageContainer)
+
+    // Don't let the overlay grow forever during a long stream
+    while (twitchChatContainer.children.length > MAX_CHAT_MESSAGES) {
+        twitchChatContainer.firstElementChild.remove()
+    }
     twitchChatContainer.scrollTop = twitchChatContainer.scrollHeight
 }
 
 // Delete message
-ComfyJS.onMessageDeleted = (id) => document.getElementById(id).remove()
+ComfyJS.onMessageDeleted = (id) => document.getElementById(id)?.remove()
 
 // Timeout
 ComfyJS.onTimeout = (extra) => deleteAllMessagesFromUser(extra.timedOutUserId)
@@ -109,9 +119,9 @@ ComfyJS.onBan = (extra) => deleteAllMessagesFromUser(extra.bannedUserId)
 
 // Delete all messages from user
 function deleteAllMessagesFromUser(twitchId) {
-    const allTwitchChatMessages = Array.from(document.getElementsByClassName("twitchChatMessage"))
+    const allTwitchChatMessages = Array.from(twitchChatContainer.getElementsByClassName("chatbox-message"))
     allTwitchChatMessages.forEach((message) => {
-        if (message.dataset.twitchId === twitchId) {
+        if (message.dataset.twitchId === String(twitchId)) {
             message.remove()
         }
     })
@@ -128,9 +138,8 @@ function generateChatColour(username) {
         g = Math.floor(Math.random() * 256)
         b = Math.floor(Math.random() * 256)
 
-        // Guard clauses
-        if (r + g + b <= 384) validColour = true
-        if (g > (r + b) * 0.8) continue
+        // Not too bright and not too green
+        validColour = r + g + b <= 384 && g <= (r + b) * 0.8
     }
 
     chatColours[username] = {"r": r, "g": g, "b": b}
@@ -154,14 +163,19 @@ socket.onmessage = async event => {
 
     // Now Playing Information
     const beatmapData = data.beatmap
-    if ((currentId !== beatmapData.id || currentChecksum !== beatmapData.checksum) && allBeatmaps) {
+    if (beatmapData && (currentId !== beatmapData.id || currentChecksum !== beatmapData.checksum)) {
         currentId = beatmapData.id
         currentChecksum = beatmapData.checksum
 
         // Metadata
-        const url = `${window.location.origin}/Songs/${data.directPath.beatmapBackground}`
-        const fixedUrl = encodeURI(url.replaceAll("\\", "/"));
-        nowPlayingBackgroundEl.style.backgroundImage = `url("${fixedUrl}")`
+        const background = data.directPath?.beatmapBackground
+        if (background) {
+            const url = `${window.location.origin}/Songs/${background}`
+            const fixedUrl = encodeURI(url.replaceAll("\\", "/"))
+            nowPlayingBackgroundEl.style.backgroundImage = `url("${fixedUrl}")`
+        } else {
+            nowPlayingBackgroundEl.style.backgroundImage = "none"
+        }
         nowPlayingArtistTitleEl.textContent = `${beatmapData.artist} - ${beatmapData.title}`
         nowPlayingVersionEl.textContent = `[${beatmapData.version}]`
 
@@ -180,7 +194,7 @@ socket.onmessage = async event => {
     }
 
     // Update Stats
-    if (updateStats) {
+    if (updateStats && data.beatmap?.stats) {
         const tosuStats = data.beatmap.stats
         updateStats = false
         nowPlayingStatsCsEl.textContent = `CS: ${Number(tosuStats.cs.converted).toFixed(1)}`

@@ -153,7 +153,7 @@ class UTCTimer {
         const hours = Number(elements.utc.hours.value) || 0
         const minutes = Number(elements.utc.minutes.value) || 0
 
-        if (hours < 0 || minutes < 0) {
+        if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
             showError(elements.utc.errorMessage)
             return
         }
@@ -161,6 +161,9 @@ class UTCTimer {
         const utcTime = new Date()
         utcTime.setUTCHours(hours, minutes, 0, 0)
         this.targetTime = utcTime.getTime()
+
+        // Already past today: count down to the same time tomorrow
+        if (this.targetTime <= Date.now()) this.targetTime += 24 * 60 * 60 * 1000
 
         hideErrors()
         this.active = true
@@ -178,18 +181,19 @@ class UTCTimer {
     /**
      * Updates the display based on the remaining time until the target UTC time.
      *
-     * Automatically rolls over to the next day if the target time has passed.
+     * Stops at zero.
      */
     tick() {
         if (!this.active) return
 
-        let timeDiff = this.targetTime - Date.now()
-        if (timeDiff < 0) {
-            this.targetTime += 24 * 60 * 60 * 1000
-            timeDiff = this.targetTime - Date.now()
+        const timeDiff = this.targetTime - Date.now()
+        if (timeDiff <= 0) {
+            updateDisplay(0)
+            this.stop()
+            return
         }
 
-        updateDisplay(Math.floor(timeDiff / 1000))
+        updateDisplay(Math.ceil(timeDiff / 1000))
     }
 }
 

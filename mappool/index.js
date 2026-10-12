@@ -1,31 +1,6 @@
-import { updateChat } from "../_shared/core/chat.js";
-import { constants } from "../_shared/js/constants.js";
-
-function truncateSVGTexts(element, maxWidth) {
-    const originalText = element.textContent.trim()
-    element.textContent = originalText
-
-    if (element.getComputedTextLength() <= maxWidth) return
-    let text = originalText
-    while (text.length > 0) {
-        text = text.slice(0, -1)
-        element.textContent = text + "..."
-
-        if (element.getComputedTextLength() <= maxWidth) break
-    }
-}
-
-function schedule() {
-    const now = Date.now()
-    const delay = 100 - (now % 100)
-
-    setTimeout(() => {
-        getData()
-        schedule()
-    }, delay)
-}
-
-schedule()
+import { updateChat } from "../_shared/core/chat.js"
+import { constants } from "../_shared/js/constants.js"
+import { deepEqual, readSavedData, startPolling, truncateSVGText } from "../_shared/core/utils.js"
 
 // Round Name
 const roundNameEl = document.getElementById("round-name")
@@ -41,9 +16,10 @@ let previousMaxHp, currentMaxHp
 let previousPlayerData, currentPlayerData
 let setHpInfo = false
 
+const countUpOptions = { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: "" }
 const animation = {
-    hpLeft: new CountUp(teamTotalHpLeftEl, 0, 0, 0, 0.2, { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: ""}),
-    hpRight: new CountUp(teamTotalHpRightEl, 0, 0, 0, 0.2, { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: ""}),
+    hpLeft: new CountUp(teamTotalHpLeftEl, 0, 0, 0, 0.2, countUpOptions),
+    hpRight: new CountUp(teamTotalHpRightEl, 0, 0, 0, 0.2, countUpOptions),
 }
 
 // Team Name
@@ -66,15 +42,23 @@ let currentRedBan, currentBlueBan, currentRedPick, currentBluePick
 const toggleHpEls = document.getElementsByClassName("toggle-hp")
 let currentToggleHp
 
-async function getData() {
-    const data = JSON.parse(localStorage.getItem("data"))
-    console.log(data)
-    
+// Width of an HP bar for `hp` out of a team's 3 x maxHp
+function getHpBarWidth(hp, maxHp) {
+    if (!(maxHp > 0)) return 0
+    return Math.min(1, Math.max(0, hp / (maxHp * 3))) * MAX_HP_BAR_WIDTH
+}
+
+function getData() {
+    const data = readSavedData()
+
+    // The dashboard hasn't saved anything (or hasn't heard from tosu) yet
+    if (!data || !data.tosuData || !data.playerData) return
+
     // Round Name
     currentRoundName = data.roundName
     if (previousRoundName !== currentRoundName) {
         previousRoundName = currentRoundName
-        roundNameEl.textContent = currentRoundName
+        roundNameEl.textContent = currentRoundName ?? ""
     }
 
     // Max HP
@@ -101,7 +85,7 @@ async function getData() {
             effectiveHp(currentPlayerData.player2) +
             effectiveHp(currentPlayerData.player3)
         animation.hpLeft.update(currentLeftHp)
-        teamLeftHpBarEl.style.width = `${currentLeftHp / (currentMaxHp * 3) * MAX_HP_BAR_WIDTH}px`
+        teamLeftHpBarEl.style.width = `${getHpBarWidth(currentLeftHp, currentMaxHp)}px`
     
         // Right Score
         const currentRightHp =
@@ -109,25 +93,27 @@ async function getData() {
             effectiveHp(currentPlayerData.player5) +
             effectiveHp(currentPlayerData.player6)
         animation.hpRight.update(currentRightHp)
-        teamRightHpBarEl.style.width = `${currentRightHp / (currentMaxHp * 3) * MAX_HP_BAR_WIDTH}px`
+        teamRightHpBarEl.style.width = `${getHpBarWidth(currentRightHp, currentMaxHp)}px`
     }
 
     // Team Name
     const tosuData = data.tosuData
-    const tourneyData = tosuData.tourney
-    if (currentTeamNameLeft !== data.teamName.redTeamName) {
-        currentTeamNameLeft = data.teamName.redTeamName
+    const tourneyData = tosuData.tourney ?? {}
+    const redTeamName = data.teamName?.redTeamName ?? ""
+    const blueTeamName = data.teamName?.blueTeamName ?? ""
+    if (currentTeamNameLeft !== redTeamName) {
+        currentTeamNameLeft = redTeamName
         teamNameLeftEl.textContent = currentTeamNameLeft
-        truncateSVGTexts(document.getElementsByClassName("team-name-left")[0], constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
+        truncateSVGText(teamNameLeftEl, constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
     }
-    if (currentTeamNameRight !== data.teamName.blueTeamName) {
-        currentTeamNameRight = data.teamName.blueTeamName
+    if (currentTeamNameRight !== blueTeamName) {
+        currentTeamNameRight = blueTeamName
         teamNameRightEl.textContent = currentTeamNameRight
-        truncateSVGTexts(document.getElementsByClassName("team-name-right")[0], constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
+        truncateSVGText(teamNameRightEl, constants.GAMEPLAY_TEAM_NAME_MAX_WIDTH)
     }
 
     // Chatbox Container
-    const chatData = tourneyData.chat
+    const chatData = tourneyData.chat ?? []
     if (chatLen !== chatData.length) {
         chatLen = updateChat(chatLen, chatData, chatboxContainerEl)
     }
@@ -138,11 +124,15 @@ async function getData() {
 
         for (let i = 0; i < allBeatmaps.length; i++) {
             const container = document.getElementById(`mappool-${allBeatmaps[i].mod.toLowerCase()}-mod-container`)
+            if (!container) {
+                console.warn(`No mappool container for mod "${allBeatmaps[i].mod}", skipping ${allBeatmaps[i].mod}${allBeatmaps[i].order}`)
+                continue
+            }
             container.append(createMapCard(allBeatmaps[i]))
         }
     }
 
-    const pickInfo = data.pickBanInfo
+    const pickInfo = data.pickBanInfo ?? { redBan: [], blueBan: [], redPick: [], bluePick: [] }
     if (
         !deepEqual(currentRedBan, pickInfo.redBan) ||
         !deepEqual(currentBlueBan, pickInfo.blueBan) ||
@@ -155,7 +145,8 @@ async function getData() {
         currentBluePick = pickInfo.bluePick
 
         for (const element of mappoolMapWrapperEls) {
-            const pickBanElement = element.children[1].children[5]
+            const pickBanElement = element.querySelector(".mappool-map-pick-ban")
+            if (!pickBanElement) continue
             const mapId = element.getAttribute("id")
 
             let text
@@ -186,30 +177,10 @@ async function getData() {
     // Toggle HP
     if (currentToggleHp !== data.toggleHp) {
         currentToggleHp = data.toggleHp
-        if (currentToggleHp) {
-            for (let i = 0; i < toggleHpEls.length; i++) {
-                toggleHpEls[i].style.opacity = 1
-            }
-        } else {
-            for (let i = 0; i < toggleHpEls.length; i++) {
-                toggleHpEls[i].style.opacity = 0
-            }
+        for (let i = 0; i < toggleHpEls.length; i++) {
+            toggleHpEls[i].style.opacity = currentToggleHp ? 1 : 0
         }
     }
-}
-
-// Deep equal for object
-function deepEqual(a, b) {
-    if (a === b) return true
-    if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) {
-        return false
-    }
-
-    const keysA = Object.keys(a)
-    const keysB = Object.keys(b)
-    if (keysA.length !== keysB.length) return false
-
-    return keysA.every(key => keysB.includes(key) && deepEqual(a[key], b[key]))
 }
 
 const SVG_NS = "http://www.w3.org/2000/svg"
@@ -295,3 +266,5 @@ function createMapCard({
     wrapper.append(createBorder(borderColor), container)
     return wrapper
 }
+
+startPolling(getData, 100)
