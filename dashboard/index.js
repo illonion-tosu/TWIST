@@ -117,17 +117,14 @@ loadBeatmaps().then(beatmaps => {
 
     // Set Max HP
     switch (roundName.toLowerCase()) {
-        case "round of 16": case "ro16":
-            maxHp = 300000
-            break
         case "quarterfinals": case "quarter finals": case "qf":
             maxHp = 400000
             break
         case "semifinals": case "sf": case "semi finals":
-            maxHp = 500000
+            maxHp = 600000
             break
         case "finals": case "f": case "gf": case "grand finals":
-            maxHp = 600000
+            maxHp = 800000
             break
         default:
             maxHp = DEFAULT_MAX_HP
@@ -205,6 +202,28 @@ function mapClickEvent(event) {
         setCurrentPicker(team)
     }
 }
+
+// Damage multiplier: +0.5x after every 2 maps (maps 1-2 = 1x, 3-4 = 1.5x, 5-6 = 2x, ...)
+const DAMAGE_MULTIPLIER_STEP = 0.5
+const MAPS_PER_MULTIPLIER_STEP = 2
+const mapsPlayedInputEl = document.getElementById("maps-played-input")
+const damageMultiplierEl = document.getElementById("damage-multiplier")
+let mapsPlayed = 0
+
+function getDamageMultiplier() {
+    return 1 + DAMAGE_MULTIPLIER_STEP * Math.floor(mapsPlayed / MAPS_PER_MULTIPLIER_STEP)
+}
+
+function refreshDamageMultiplierUi() {
+    mapsPlayedInputEl.value = mapsPlayed
+    damageMultiplierEl.textContent = `${getDamageMultiplier()}x`
+}
+
+// Lets you correct the count by hand (e.g. a map was replayed)
+mapsPlayedInputEl.addEventListener("input", () => {
+    mapsPlayed = Math.max(0, Math.floor(Number(mapsPlayedInputEl.value)) || 0)
+    damageMultiplierEl.textContent = `${getDamageMultiplier()}x`
+})
 
 // Class abilities
 const teamClass = { red: "", blue: "" }
@@ -730,6 +749,9 @@ function applyDamage(playerData) {
     })
 
     resetMapAbilities()
+
+    mapsPlayed++
+    refreshDamageMultiplierUi()
 }
 
 setInterval(() => {
@@ -759,7 +781,9 @@ setInterval(() => {
             blueBan: blueBan,
             bluePick: bluePick
         },
-        toggleHp: toggleHpEl.checked
+        toggleHp: toggleHpEl.checked,
+        mapsPlayed: mapsPlayed,
+        damageMultiplier: getDamageMultiplier()
     }
 
     localStorage.setItem("data", JSON.stringify(savedInfo))
@@ -795,6 +819,10 @@ function updatePlayerData(playerData, data) {
     } else {
         setStandardDamage()
     }
+
+    // Damage scales up as the match goes on
+    const damageMultiplier = getDamageMultiplier()
+    Object.values(playerData).forEach(player => { player.currentScoreAgainst *= damageMultiplier })
 }
 
 function setStandardDamage() {
