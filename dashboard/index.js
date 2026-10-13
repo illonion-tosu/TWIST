@@ -242,6 +242,8 @@ const SOULWEAVER_CHALLENGED_MULTIPLIER = 1.4
 const classPanelsEl = document.getElementById("class-panels")
 
 const sideOf = playerNumber => playerNumber <= 3 ? "red" : "blue"
+const playersOf = side => side === "red" ? [1, 2, 3] : [4, 5, 6]
+const otherSide = side => side === "red" ? "blue" : "red"
 
 function el(tag, props = {}, ...children) {
     const node = document.createElement(tag)
@@ -331,7 +333,15 @@ function buildClassPanel(side) {
                 id: `class-activation-button-${side}`,
                 textContent: "Submit",
             })
-        )
+        ),
+
+        // Validation errors from the Submit button show up here
+        el("div", {
+            className: "class-error",
+            id: `class-error-${side}`,
+            hidden: true,
+            style: "color: #ff6b6b; font-size: 14px; margin-top: 6px;",
+        })
     )
 }
 
@@ -341,7 +351,7 @@ classPanelsEl.replaceChildren(...["red", "blue"].map(buildClassPanel))
 function refreshClassSelects() {
     document.querySelectorAll(".class-player-select").forEach(select => {
         const side = select.dataset.side
-        const teamSide = select.dataset.scope === "own" ? side : (side === "red" ? "blue" : "red")
+        const teamSide = select.dataset.scope === "own" ? side : otherSide(side)
         const offset = teamSide === "red" ? 0 : 3
         const previous = select.value
 
@@ -357,6 +367,13 @@ function refreshClassSelects() {
 }
 refreshClassSelects()
 
+function showClassError(side, messages) {
+    const errorEl = document.getElementById(`class-error-${side}`)
+    if (!errorEl) return
+    errorEl.textContent = messages.join(" ")
+    errorEl.hidden = messages.length === 0
+}
+
 // Show only the controls for this team's class
 function updateClassPanel(side, className) {
     teamClass[side] = className.toLowerCase()
@@ -371,48 +388,121 @@ function updateClassPanel(side, className) {
 
     // Classes without controls (e.g. Witch) have nothing to submit
     document.getElementById(`class-wrapper-${side}`).hidden = !classesWithControls.includes(teamClass[side])
+
+    showClassError(side, [])
 }
 
-// Read the controls into `abilities`
+const isAlive = playerNumber => playerData[`player${playerNumber}`]?.currentMaxHp > 0
+const playerLabel = playerNumber =>
+    playerData[`player${playerNumber}`]?.playerName || `Player ${playerNumber}`
+
+// Read the controls into `abilities`.
+// Everything is validated first; if anything is wrong, nothing is applied and the errors are shown.
 function setClassButton() {
-    abilities.demigod = null
-    abilities.soulweaver = null
+    const errors = { red: [], blue: [] }
+    const next = {
+        human: { red: abilities.human.red, blue: abilities.human.blue },
+        demigod: null,
+        soulweaver: null,
+    }
+    let demigodSide = null
+    let soulweaverSide = null
+
+    const value = id => document.getElementById(id).value
+    const checked = id => document.getElementById(id).checked
 
     for (const side of ["red", "blue"]) {
         const className = teamClass[side]
-        const value = id => document.getElementById(id).value
-        const checked = id => document.getElementById(id).checked
+        const own = playersOf(side)
+        const opp = playersOf(otherSide(side))
 
         if (className === "human") {
-            const mapsBefore = Math.max(0, Number(value(`human-${side}-pool`)) || 0)
-            abilities.human[side] = {
+            const mapsBefore = Math.max(0, Math.floor(Number(value(`human-${side}-pool`))) || 0)
+            next.human[side] = {
                 lucky: checked(`human-${side}-lucky`),
                 poolSize: mapsBefore + 1,
             }
         }
 
         if (className === "demigod" && checked(`demigod-${side}-active`)) {
-            abilities.demigod = {
-                player: Number(value(`demigod-${side}-player`)),
-                mode: value(`demigod-${side}-mode`),
-                target: Number(value(`demigod-${side}-target`)),
+            const player = Number(value(`demigod-${side}-player`))
+            const mode = value(`demigod-${side}-mode`)
+            const target = Number(value(`demigod-${side}-target`))
+
+            if (!own.includes(player)) {
+                errors[side].push("Pick a Demigod from your own team.")
+            } else if (!isAlive(player)) {
+                errors[side].push(`${playerLabel(player)} is dead and can't go solo.`)
             }
+
+            if (mode === "target") {
+                if (!opp.includes(target)) {
+                    errors[side].push("Pick a target from the opposing team.")
+                } else if (!isAlive(target)) {
+                    errors[side].push(`${playerLabel(target)} is dead and can't be targeted.`)
+                }
+            } else if (!opp.some(isAlive)) {
+                errors[side].push("There are no opponents alive to hit.")
+            }
+
+            if (next.demigod) {
+                errors[side].push("Only one Demigod can go solo per map.")
+            }
+            next.demigod = { player, mode, target }
+            demigodSide ??= side
         }
 
         if (className === "soulweaver" && checked(`soulweaver-${side}-active`)) {
-            abilities.soulweaver = {
-                challenger: Number(value(`soulweaver-${side}-challenger`)),
-                challenged: Number(value(`soulweaver-${side}-challenged`)),
+            const challenger = Number(value(`soulweaver-${side}-challenger`))
+            const challenged = Number(value(`soulweaver-${side}-challenged`))
+
+            if (!own.includes(challenger)) {
+                errors[side].push("Pick a challenger from your own team.")
+            } else if (!isAlive(challenger)) {
+                errors[side].push(`${playerLabel(challenger)} is dead and can't duel.`)
             }
+
+            if (!opp.includes(challenged)) {
+                errors[side].push("Pick a challenged player from the opposing team.")
+            } else if (!isAlive(challenged)) {
+                errors[side].push(`${playerLabel(challenged)} is dead and can't be challenged.`)
+            }
+
+            if (next.soulweaver) {
+                errors[side].push("Only one duel can happen per map.")
+            }
+            next.soulweaver = { challenger, challenged }
+            soulweaverSide ??= side
         }
     }
+
+    // Demigod and Soulweaver both zero out players, so they can't share a map
+    if (next.demigod && next.soulweaver) {
+        const message = "Demigod and Soulweaver can't both be active in the same map."
+        errors[demigodSide].push(message)
+        if (soulweaverSide !== demigodSide) errors[soulweaverSide].push(message)
+    }
+
+    showClassError("red", errors.red)
+    showClassError("blue", errors.blue)
+
+    if (errors.red.length || errors.blue.length) {
+        console.warn("Class submit rejected:", errors)
+        return
+    }
+
+    abilities.human = next.human
+    abilities.demigod = next.demigod
+    abilities.soulweaver = next.soulweaver
 }
 
 // Demigod / Soulweaver only last one map. Human's Lucky! stays.
 function resetMapAbilities() {
     abilities.demigod = null
     abilities.soulweaver = null
-    document.querySelectorAll(".per-map-ability").forEach(el => { el.checked = false })
+    document.querySelectorAll(".per-map-ability").forEach(checkboxEl => { checkboxEl.checked = false })
+    showClassError("red", [])
+    showClassError("blue", [])
 }
 
 // Lucky! bonus: 1 number = 77.7%, -7% per extra number, floor 7.7%
@@ -800,15 +890,25 @@ function updatePlayerData(playerData, data) {
         player.currentScore = client?.play.score ?? 0
     })
 
-    // Effective scores (class bonuses applied, Demigod's teammates sit out)
+    // Effective scores (class bonuses applied, sit-outs zeroed)
     Object.entries(playerData).forEach(([playerKey, player]) => {
         const playerNumber = Number(playerKey.replace("player", ""))
         const demigod = abilities.demigod
-        const satOut = demigod
+        const duel = abilities.soulweaver
+
+        // Demigod: the rest of the Demigod's team sits out
+        const demigodSatOut = demigod
             && sideOf(playerNumber) === sideOf(demigod.player)
             && playerNumber !== demigod.player
 
-        player.effectiveScore = satOut ? 0 : player.currentScore * getScoreMultiplier(playerNumber)
+        // Soulweaver: only the two duelists play, everyone else is 0
+        const duelSatOut = duel
+            && playerNumber !== duel.challenger
+            && playerNumber !== duel.challenged
+
+        player.effectiveScore = (demigodSatOut || duelSatOut)
+            ? 0
+            : player.currentScore * getScoreMultiplier(playerNumber)
     })
 
     // Reset damage, then build it up
@@ -816,7 +916,9 @@ function updatePlayerData(playerData, data) {
 
     if (abilities.demigod) {
         setDemigodDamage()
-    } else {
+    } else if (!abilities.soulweaver) {
+        // Duel: targeting is ignored and nobody takes damage this map.
+        // The loser is decided in applyDamage via getDuelLoser().
         setStandardDamage()
     }
 
