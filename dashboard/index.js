@@ -2,6 +2,18 @@ import { loadBeatmaps } from "../_shared/core/beatmaps.js"
 import { findTeam, loadTeams } from "../_shared/core/teams.js"
 import { createTosuWsSocket } from "../_shared/core/websocket.js"
 
+// Saved match state: read it before anything gets a chance to overwrite it
+let savedState = null
+try {
+    savedState = JSON.parse(localStorage.getItem("data"))
+} catch {
+    savedState = null
+}
+let stateReady = false // saving is paused until the restore has run
+
+// Human's Lucky! state waits here until its team has been set up by changeTeams
+const pendingHuman = { red: null, blue: null }
+
 // Round Name
 const roundNameEl = document.getElementById("round-name")
 let roundName
@@ -151,7 +163,17 @@ loadBeatmaps().then(beatmaps => {
         button.addEventListener("contextmenu", event => event.preventDefault())
         mappoolSelectContainerEl.append(button)
     })
-}).catch(error => console.error("Could not load beatmaps:", error))
+
+    try {
+        restoreSavedState()
+    } catch (error) {
+        console.error("Could not restore saved state:", error)
+    }
+    stateReady = true
+}).catch(error => {
+    console.error("Could not load beatmaps:", error)
+    stateReady = true
+})
 
 // Map Click Event
 let redBan = []
@@ -217,6 +239,76 @@ function getDamageMultiplier() {
 function refreshDamageMultiplierUi() {
     mapsPlayedInputEl.value = mapsPlayed
     damageMultiplierEl.textContent = `${getDamageMultiplier()}x`
+}
+refreshDamageMultiplierUi()
+
+function applyPendingHuman(side, teamName) {
+    const pending = pendingHuman[side]
+    pendingHuman[side] = null
+    const state = pending && pending.teamName === teamName
+        ? pending.state
+        : { lucky: false, poolSize: 0 }
+
+    applyPendingHuman(side, teamName)
+}
+
+function restoreSavedState() {
+    const saved = savedState
+    savedState = null
+
+    // Only restore the same round, so a new round never starts with last round's HP
+    if (!saved || saved.roundName !== roundName) return
+
+    // Players: HP, dead rounds, revive HP, targets (scores start fresh)
+    Object.keys(playerData).forEach((key, i) => {
+        const savedPlayer = saved.playerData?.[key]
+        if (!savedPlayer) return
+        Object.assign(playerData[key], savedPlayer)
+        playerData[key].currentScore = 0
+        playerData[key].effectiveScore = 0
+        playerData[key].currentScoreAgainst = 0
+        teamHpIOnputNumberElements[i].value = playerData[key].currentMaxHp
+    })
+    syncTargetSelects()
+
+    // Maps played + multiplier display
+    mapsPlayed = Math.max(0, Math.floor(Number(saved.mapsPlayed)) || 0)
+    refreshDamageMultiplierUi()
+
+    toggleHpEl.checked = Boolean(saved.toggleHp)
+
+    // Picks and bans
+    redBan = [...(saved.pickBanInfo?.redBan ?? [])]
+    redPick = [...(saved.pickBanInfo?.redPick ?? [])]
+    blueBan = [...(saved.pickBanInfo?.blueBan ?? [])]
+    bluePick = [...(saved.pickBanInfo?.bluePick ?? [])]
+
+    const classesFor = [
+        [redBan, "mappool-select-button-red-ban"],
+        [redPick, "mappool-select-button-red-pick"],
+        [blueBan, "mappool-select-button-blue-ban"],
+        [bluePick, "mappool-select-button-blue-pick"],
+    ]
+    mappoolSelectContainerEl.querySelectorAll(".mappool-select-button").forEach(button => {
+        for (const [list, className] of classesFor) {
+            if (list.includes(button.id)) button.classList.add(className)
+        }
+    })
+
+    // Pickers
+    if (saved.mappoolInfo?.currentPicker) setCurrentPicker(saved.mappoolInfo.currentPicker)
+    if (saved.nextPicker) setNextPicker(saved.nextPicker)
+
+    // Human's Lucky!: applied when the matching team is set up (or right now if it already is)
+    for (const side of ["red", "blue"]) {
+        const savedHuman = saved.abilities?.human?.[side]
+        const savedTeamName = saved.teamName?.[`${side}TeamName`]
+        if (!savedHuman || !savedTeamName) continue
+
+        pendingHuman[side] = { teamName: savedTeamName, state: savedHuman }
+        const currentTeamName = side === "red" ? redTeamName : blueTeamName
+        if (currentTeamName === savedTeamName) applyPendingHuman(side, currentTeamName)
+    }
 }
 
 // Lets you correct the count by hand (e.g. a map was replayed)
@@ -652,7 +744,12 @@ const teamHpIOnputNumberElements = [
 
 function setHpButton() {
     for (let i = 0; i < teamHpIOnputNumberElements.length; i++) {
-        playerData[`player${i + 1}`].currentMaxHp = Number(teamHpIOnputNumberElements[i].value)
+        const player = playerData[`player${i + 1}`]
+        player.currentMaxHp = Number(teamHpIOnputNumberElements[i].value)
+        if (player.currentMaxHp > 0) {
+            player.currentDeadRounds = 0
+            player.reviveHp = null
+        }
     }
 }
 
@@ -751,7 +848,13 @@ socket.onmessage = event => {
                 }
             } else {
                 clearScores()
+                resetMapAbilities()
             }
+        }
+
+        // Handles aborting map
+        if (currentIpcState === 1 && (previousIpcState === 2 || previousIpcState === 3)) {
+            clearScores()
         }
     }
 
@@ -859,6 +962,8 @@ setInterval(() => {
     teamRedNameEl.textContent = redTeamName ?? ""
     teamBlueNameEl.textContent = blueTeamName ?? ""
 
+    if (!stateReady) return
+
     // Save information
     const savedInfo = {
         tosuData: socketData,
@@ -884,7 +989,9 @@ setInterval(() => {
         },
         toggleHp: toggleHpEl.checked,
         mapsPlayed: mapsPlayed,
-        damageMultiplier: getDamageMultiplier()
+        damageMultiplier: getDamageMultiplier(),
+        nextPicker: nextPicker,
+        abilities: { human: abilities.human },
     }
 
     localStorage.setItem("data", JSON.stringify(savedInfo))
@@ -1025,12 +1132,37 @@ const obs = typeof OBSWebSocket === "undefined" ? null : new OBSWebSocket()
 const OBS_ADDRESS = 'ws://127.0.0.1:4455'
 const sceneButtonsEl = document.getElementById('scene-buttons')
 
+const OBS_RECONNECT_MS = 3000
+let obsConnected = false
+let obsReconnectTimer = null
+
+function scheduleObsReconnect() {
+    if (!obs || obsReconnectTimer) return
+    obsReconnectTimer = setTimeout(() => {
+        obsReconnectTimer = null
+        connectObs()
+    }, OBS_RECONNECT_MS)
+}
+
+async function connectObs() {
+    try {
+        await obs.connect(OBS_ADDRESS)
+        obsConnected = true
+        console.log("Connected to OBS")
+        refreshScenes()
+    } catch (error) {
+        obsConnected = false
+        console.warn(`OBS connection failed, retrying in ${OBS_RECONNECT_MS / 1000}s`)
+        scheduleObsReconnect()
+    }
+}
+
 // Connect to OBS WebSocket
 if (obs) {
     obs.connect(OBS_ADDRESS)
         .then(() => {
             refreshScenes()
-            setupListeners()
+            connectObs()
         })
         .catch(err => {
             console.error('Connection failed:', err)
@@ -1072,7 +1204,7 @@ async function refreshScenes() {
 
 // Send command to switch scene
 async function changeScene(sceneName) {
-    if (!obs) return
+    if (!obs || !obsConnected) return
     try {
         await obs.call('SetCurrentProgramScene', { sceneName: sceneName })
     } catch (error) {
@@ -1082,6 +1214,13 @@ async function changeScene(sceneName) {
 
 // Listen for live events so the dock updates if things change inside OBS
 function setupListeners() {
+    // Reconnect if connection is closed
+    obs.on('ConnectionClosed', () => {
+        if (obsConnected) console.warn("OBS connection lost")
+        obsConnected = false
+        scheduleObsReconnect()
+    })
+    
     // Update active button color when scene changes
     obs.on('CurrentProgramSceneChanged', (data) => {
         document.querySelectorAll('#scene-buttons .team-hp-button').forEach(btn => {
