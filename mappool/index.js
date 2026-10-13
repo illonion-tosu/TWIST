@@ -119,7 +119,7 @@ function getData() {
     }
 
     // Get beatmaps
-    if (data.allBeatmaps && !allBeatmaps) {
+    if (data.allBeatmaps?.length && !allBeatmaps) {
         allBeatmaps = data.allBeatmaps
 
         for (let i = 0; i < allBeatmaps.length; i++) {
