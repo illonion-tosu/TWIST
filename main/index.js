@@ -117,8 +117,16 @@ function getData() {
     }
 
     // Set score info
-    currentLeftScore = currentPlayerData.player1.currentScore + currentPlayerData.player2.currentScore + currentPlayerData.player3.currentScore
-    currentRightScore = currentPlayerData.player4.currentScore + currentPlayerData.player5.currentScore + currentPlayerData.player6.currentScore
+    const displayScore = player => player.effectiveScore ?? player.currentScore
+    
+    currentLeftScore =
+        displayScore(currentPlayerData.player1) +
+        displayScore(currentPlayerData.player2) +
+        displayScore(currentPlayerData.player3)
+    currentRightScore =
+        displayScore(currentPlayerData.player4) +
+        displayScore(currentPlayerData.player5) +
+        displayScore(currentPlayerData.player6)
     animation.scoreLeft.update(currentLeftScore)
     animation.scoreRight.update(currentRightScore)
 
