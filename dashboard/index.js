@@ -726,7 +726,7 @@ socket.onmessage = event => {
         currentIpcState = socketData.tourney.ipcState
         
         // Calculate scores
-        if ((currentIpcState === 2 || currentIpcState === 3 || currentIpcState === 4) && toggleHpEl.checked) {
+        if (currentIpcState === 2 || currentIpcState === 3 || currentIpcState === 4) {
             checkedWinner = false
             updatePlayerData(playerData, socketData)
 
@@ -749,12 +749,14 @@ socket.onmessage = event => {
                         changeScene("Mappool")
                     }
                 }
+            } else {
+                clearScores()
             }
         }
     }
 
     // Keep scores updating live while the map is being played
-    if ((currentIpcState === 2 || currentIpcState === 3 || currentIpcState === 4) && toggleHpEl.checked) {
+    if (currentIpcState === 2 || currentIpcState === 3 || currentIpcState === 4) {
         updatePlayerData(playerData, socketData)
     }
 
@@ -793,6 +795,15 @@ socket.onmessage = event => {
             currentModIdEl.textContent = ""
         }
     }
+}
+
+// Clear scores
+function clearScores() {
+    Object.values(playerData).forEach(player => {
+        player.currentScore = 0
+        player.effectiveScore = 0
+        player.currentScoreAgainst = 0
+    })
 }
 
 // A team is out when none of its players have any HP left
@@ -913,6 +924,7 @@ function updatePlayerData(playerData, data) {
 
     // Reset damage, then build it up
     Object.values(playerData).forEach(player => { player.currentScoreAgainst = 0 })
+    if (!toggleHpEl.checked) return
 
     if (abilities.demigod) {
         setDemigodDamage()
