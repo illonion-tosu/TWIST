@@ -9,15 +9,42 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Shared SVG definitions, referenced by id from the SVGs below -->
+    <svg class="svg-defs" aria-hidden="true">
+        <defs>
+            <!-- White outer ring, black inner ring, then the text on top -->
+            <filter id="outline-timer" x="-15%" y="-40%" width="130%" height="180%">
+                <feMorphology in="SourceAlpha" operator="dilate" radius="20" result="white-dilate" />
+                <feGaussianBlur in="white-dilate" stdDeviation="8" result="white-blur" />
+                <feColorMatrix in="white-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="white-round" />
+                <feFlood flood-color="white" result="white-colour" />
+                <feComposite in="white-colour" in2="white-round" operator="in" result="white-layer" />
+            
+                <feMorphology in="SourceAlpha" operator="dilate" radius="9.75" result="black-dilate" />
+                <feGaussianBlur in="black-dilate" stdDeviation="3.5" result="black-blur" />
+                <feColorMatrix in="black-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="black-round" />
+                <feFlood flood-color="black" result="black-colour" />
+                <feComposite in="black-colour" in2="black-round" operator="in" result="black-layer" />
+            
+                <feMerge>
+                    <feMergeNode in="white-layer" />
+                    <feMergeNode in="black-layer" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+        </defs>
+    </svg>
+
     <div class="main">
         <svg class="timer" xmlns="http://www.w3.org/2000/svg" width="945" height="350" viewBox="-50 0 865 350">
-            <!-- White outer stroke -->
-            <text class="timer-text timer-text-outer" x="397.5" y="300">
-                <tspan class="timer-minutes">44</tspan><tspan class="timer-colon">:</tspan><tspan class="timer-seconds">44</tspan>
-            </text>
-
-            <!-- Black inner stroke -->
-            <text class="timer-text timer-text-inner" x="397.5" y="300">
+            <text
+                x="397.5"
+                y="300"
+                letter-spacing="-20"
+                text-anchor="middle"
+                class="outlined-text timer-text"
+                filter="url(#outline-timer)"
+            >
                 <tspan class="timer-minutes">44</tspan><tspan class="timer-colon">:</tspan><tspan class="timer-seconds">44</tspan>
             </text>
         </svg>
