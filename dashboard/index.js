@@ -65,6 +65,7 @@ let playerData = {
     player1: {
         id: 123456,
         playerName: "",
+        class: "",
         currentMaxHp: 300000,
         currentScore: 0,
         currentTarget: 6,
@@ -74,6 +75,7 @@ let playerData = {
     player2: {
         id: 123456,
         playerName: "",
+        class: "",
         currentMaxHp: 300000,
         currentScore: 0,
         currentTarget: 5,
@@ -83,6 +85,7 @@ let playerData = {
     player3: {
         id: 123456,
         playerName: "",
+        class: "",
         currentMaxHp: 300000,
         currentScore: 0,
         currentTarget: 4,
@@ -92,6 +95,7 @@ let playerData = {
     player4: {
         id: 123456,
         playerName: "",
+        class: "",
         currentMaxHp: 300000,
         currentScore: 0,
         currentTarget: 3,
@@ -101,6 +105,7 @@ let playerData = {
     player5: {
         id: 123456,
         playerName: "",
+        class: "",
         currentMaxHp: 300000,
         currentScore: 0,
         currentTarget: 2,
@@ -110,6 +115,7 @@ let playerData = {
     player6: {
         id: 123456,
         playerName: "",
+        class: "",
         currentMaxHp: 300000,
         currentScore: 0,
         currentTarget: 1,
@@ -242,14 +248,47 @@ function refreshDamageMultiplierUi() {
 }
 refreshDamageMultiplierUi()
 
+// Class abilities
+// Class of a player (lowercase). Stored in playerData, filled from currentTeam.playerX.class
+const classOf = playerNumber => playerData[`player${playerNumber}`]?.class ?? ""
+
+const defaultHuman = () => ({ lucky: false, poolSize: 0 })
+
+const abilities = {
+    // Human's Lucky!, keyed by player number 1-6
+    human: Object.fromEntries([1, 2, 3, 4, 5, 6].map(n => [n, defaultHuman()])),
+    demigod: null, // { player, mode, target }, cleared after every map
+    soulweaver: null, // { challenger, challenged }, cleared after every map
+}
+
+const DEMIGOD_MULTIPLIERS = { 3: 4, 2: 3, 1: 2 } // keyed by opponents alive
+const SOULWEAVER_CHALLENGED_MULTIPLIER = 1.4
+
+const classPanelsEl = document.getElementById("class-panels")
+
+const sideOf = playerNumber => playerNumber <= 3 ? "red" : "blue"
+const playersOf = side => side === "red" ? [1, 2, 3] : [4, 5, 6]
+const otherSide = side => side === "red" ? "blue" : "red"
+
+const isAlive = playerNumber => playerData[`player${playerNumber}`]?.currentMaxHp > 0
+const playerLabel = playerNumber =>
+    playerData[`player${playerNumber}`]?.playerName || `Player ${playerNumber}`
+
+// Apply the Human state waiting for this side (if it was saved for this team) or reset to defaults
 function applyPendingHuman(side, teamName) {
     const pending = pendingHuman[side]
     pendingHuman[side] = null
-    const state = pending && pending.teamName === teamName
-        ? pending.state
-        : { lucky: false, poolSize: 0 }
+    const state = pending && pending.teamName === teamName ? pending.state : null
 
-    applyPendingHuman(side, teamName)
+    for (const n of playersOf(side)) {
+        const s = state?.[n] ?? defaultHuman()
+        abilities.human[n] = {
+            lucky: Boolean(s.lucky),
+            poolSize: Math.max(0, Number(s.poolSize) || 0),
+        }
+        document.getElementById(`human-${n}-lucky`).checked = abilities.human[n].lucky
+        document.getElementById(`human-${n}-pool`).value = Math.max(0, abilities.human[n].poolSize - 1)
+    }
 }
 
 function restoreSavedState() {
@@ -299,15 +338,23 @@ function restoreSavedState() {
     if (saved.mappoolInfo?.currentPicker) setCurrentPicker(saved.mappoolInfo.currentPicker)
     if (saved.nextPicker) setNextPicker(saved.nextPicker)
 
-    // Human's Lucky!: applied when the matching team is set up (or right now if it already is)
-    for (const side of ["red", "blue"]) {
-        const savedHuman = saved.abilities?.human?.[side]
-        const savedTeamName = saved.teamName?.[`${side}TeamName`]
-        if (!savedHuman || !savedTeamName) continue
+    // Human's Lucky!: keep the saved values in memory straight away (so the autosave doesn't wipe them
+    // before the teams load), then let changeTeams apply them to the UI once the matching team is set up
+    const savedHuman = saved.abilities?.human
+    if (savedHuman) {
+        for (const n of [1, 2, 3, 4, 5, 6]) {
+            const s = savedHuman[n]
+            if (s) abilities.human[n] = { lucky: Boolean(s.lucky), poolSize: Math.max(0, Number(s.poolSize) || 0) }
+        }
 
-        pendingHuman[side] = { teamName: savedTeamName, state: savedHuman }
-        const currentTeamName = side === "red" ? redTeamName : blueTeamName
-        if (currentTeamName === savedTeamName) applyPendingHuman(side, currentTeamName)
+        for (const side of ["red", "blue"]) {
+            const savedTeamName = saved.teamName?.[`${side}TeamName`]
+            if (!savedTeamName) continue
+
+            pendingHuman[side] = { teamName: savedTeamName, state: savedHuman }
+            const currentTeamName = side === "red" ? redTeamName : blueTeamName
+            if (currentTeamName === savedTeamName) applyPendingHuman(side, currentTeamName)
+        }
     }
 }
 
@@ -316,26 +363,6 @@ mapsPlayedInputEl.addEventListener("input", () => {
     mapsPlayed = Math.max(0, Math.floor(Number(mapsPlayedInputEl.value)) || 0)
     damageMultiplierEl.textContent = `${getDamageMultiplier()}x`
 })
-
-// Class abilities
-const teamClass = { red: "", blue: "" }
-const abilities = {
-    human: {
-        red: { lucky: false, poolSize: 0 },
-        blue: { lucky: false, poolSize: 0 },
-    },
-    demigod: null, // { player, mode, target }, cleared after every map
-    soulweaver: null, // { challenger, challenged }, cleared after every map
-}
-
-const DEMIGOD_MULTIPLIERS = { 3: 4, 2: 3, 1: 2 } // keyed by opponents alive
-const SOULWEAVER_CHALLENGED_MULTIPLIER = 1.4
-
-const classPanelsEl = document.getElementById("class-panels")
-
-const sideOf = playerNumber => playerNumber <= 3 ? "red" : "blue"
-const playersOf = side => side === "red" ? [1, 2, 3] : [4, 5, 6]
-const otherSide = side => side === "red" ? "blue" : "red"
 
 function el(tag, props = {}, ...children) {
     const node = document.createElement(tag)
@@ -382,12 +409,34 @@ function buildClassPanel(side) {
             el("option", { value: "target", textContent: "Target" })
         )
 
-    const controls = (name, ...children) =>
+    const controls = (n, name, ...children) =>
         el("div", {
             className: "class-controls",
-            id: `class-controls-${side}-${name}`,
+            id: `class-controls-${n}-${name}`,
             hidden: true,
         }, ...children)
+
+    // One block per player; only the controls for that player's own class are shown
+    const playerBlock = n =>
+        el("div", { className: "class-player", id: `class-player-${n}`, hidden: true },
+            el("div", { className: `team-hp ${colour}`, id: `class-player-title-${n}` }),
+
+            controls(n, "human",
+                checkbox(`human-${n}-lucky`, "Lucky!"),
+                row("Maps before Lucky!:", numberInput(`human-${n}-pool`))
+            ),
+
+            controls(n, "demigod",
+                checkbox(`demigod-${n}-active`, "Go solo this map", true),
+                row("Mode:", modeSelect(`demigod-${n}-mode`)),
+                row("Target:", select(`demigod-${n}-target`, "opp"))
+            ),
+
+            controls(n, "soulweaver",
+                checkbox(`soulweaver-${n}-active`, "Duel this map", true),
+                row("Challenged:", select(`soulweaver-${n}-challenged`, "opp"))
+            )
+        )
 
     return el("div", { className: "class-panel" },
         el("div", {
@@ -401,30 +450,8 @@ function buildClassPanel(side) {
             hidden: true,
         },
             el("div", { className: "team-hp-wrapper-left" },
-                controls("human",
-                    checkbox(`human-${side}-lucky`, "Lucky!"),
-                    row("Maps before Lucky!:", numberInput(`human-${side}-pool`))
-                ),
-
-                controls("demigod",
-                    checkbox(`demigod-${side}-active`, "Go solo this map", true),
-                    row("Demigod:", select(`demigod-${side}-player`, "own")),
-                    row("Mode:", modeSelect(`demigod-${side}-mode`)),
-                    row("Target:", select(`demigod-${side}-target`, "opp"))
-                ),
-
-                controls("soulweaver",
-                    checkbox(`soulweaver-${side}-active`, "Duel this map", true),
-                    row("Challenger:", select(`soulweaver-${side}-challenger`, "own")),
-                    row("Challenged:", select(`soulweaver-${side}-challenged`, "opp"))
-                )
-            ),
-
-            el("button", {
-                className: "team-hp-button class-submit-button",
-                id: `class-activation-button-${side}`,
-                textContent: "Submit",
-            })
+                ...playersOf(side).map(playerBlock)
+            )
         ),
 
         // Validation errors from the Submit button show up here
@@ -451,11 +478,12 @@ function refreshClassSelects() {
         for (let i = 1; i <= 3; i++) {
             const option = document.createElement("option")
             option.value = offset + i
-            option.textContent = playerData[`player${offset + i}`].playerName || `Player ${offset + i}`
+            option.textContent = playerLabel(offset + i)
             select.append(option)
         }
         if (previous) select.value = previous
     })
+
 }
 refreshClassSelects()
 
@@ -466,34 +494,42 @@ function showClassError(side, messages) {
     errorEl.hidden = messages.length === 0
 }
 
-// Show only the controls for this team's class
-function updateClassPanel(side, className) {
-    teamClass[side] = className.toLowerCase()
-    document.getElementById(`${side}-class`).textContent = className
-    document.getElementById(`class-title-${side}`).textContent =
-        `${side === "red" ? "Red" : "Blue"}: ${className}`
+// Show only the controls for each player's own class
+const CLASSES_WITH_CONTROLS = ["human", "demigod", "soulweaver"]
 
-    const classesWithControls = ["human", "demigod", "soulweaver"]
-    for (const type of classesWithControls) {
-        document.getElementById(`class-controls-${side}-${type}`).hidden = teamClass[side] !== type
+function updateClassPanel(side) {
+    const names = []
+
+    for (const n of playersOf(side)) {
+        const className = classOf(n)
+        if (className) names.push(capitalise(className))
+
+        document.getElementById(`class-player-${n}`).hidden = !CLASSES_WITH_CONTROLS.includes(className)
+        document.getElementById(`class-player-title-${n}`).textContent =
+            `${playerLabel(n)}: ${capitalise(className)}`
+
+        for (const type of CLASSES_WITH_CONTROLS) {
+            document.getElementById(`class-controls-${n}-${type}`).hidden = className !== type
+        }
     }
 
+    const classText = [...new Set(names)].join(" / ")
+    document.getElementById(`${side}-class`).textContent = classText
+    document.getElementById(`class-title-${side}`).textContent =
+        `${side === "red" ? "Red" : "Blue"}: ${classText}`
+
     // Classes without controls (e.g. Witch) have nothing to submit
-    document.getElementById(`class-wrapper-${side}`).hidden = !classesWithControls.includes(teamClass[side])
+    document.getElementById(`class-wrapper-${side}`).hidden =
+        !playersOf(side).some(n => CLASSES_WITH_CONTROLS.includes(classOf(n)))
 
     showClassError(side, [])
 }
 
-const isAlive = playerNumber => playerData[`player${playerNumber}`]?.currentMaxHp > 0
-const playerLabel = playerNumber =>
-    playerData[`player${playerNumber}`]?.playerName || `Player ${playerNumber}`
-
-// Read the controls into `abilities`.
-// Everything is validated first; if anything is wrong, nothing is applied and the errors are shown.
-function setClassButton() {
+// Read the controls and validate them. Returns { errors, next } and changes nothing.
+function evaluateClasses() {
     const errors = { red: [], blue: [] }
     const next = {
-        human: { red: abilities.human.red, blue: abilities.human.blue },
+        human: { ...abilities.human },
         demigod: null,
         soulweaver: null,
     }
@@ -504,67 +540,63 @@ function setClassButton() {
     const checked = id => document.getElementById(id).checked
 
     for (const side of ["red", "blue"]) {
-        const className = teamClass[side]
-        const own = playersOf(side)
         const opp = playersOf(otherSide(side))
 
-        if (className === "human") {
-            const mapsBefore = Math.max(0, Math.floor(Number(value(`human-${side}-pool`))) || 0)
-            next.human[side] = {
-                lucky: checked(`human-${side}-lucky`),
-                poolSize: mapsBefore + 1,
-            }
-        }
+        for (const n of playersOf(side)) {
+            const className = classOf(n)
 
-        if (className === "demigod" && checked(`demigod-${side}-active`)) {
-            const player = Number(value(`demigod-${side}-player`))
-            const mode = value(`demigod-${side}-mode`)
-            const target = Number(value(`demigod-${side}-target`))
-
-            if (!own.includes(player)) {
-                errors[side].push("Pick a Demigod from your own team.")
-            } else if (!isAlive(player)) {
-                errors[side].push(`${playerLabel(player)} is dead and can't go solo.`)
-            }
-
-            if (mode === "target") {
-                if (!opp.includes(target)) {
-                    errors[side].push("Pick a target from the opposing team.")
-                } else if (!isAlive(target)) {
-                    errors[side].push(`${playerLabel(target)} is dead and can't be targeted.`)
+            if (className === "human") {
+                const mapsBefore = Math.max(0, Math.floor(Number(value(`human-${n}-pool`))) || 0)
+                next.human[n] = {
+                    lucky: checked(`human-${n}-lucky`),
+                    poolSize: mapsBefore + 1,
                 }
-            } else if (!opp.some(isAlive)) {
-                errors[side].push("There are no opponents alive to hit.")
             }
 
-            if (next.demigod) {
-                errors[side].push("Only one Demigod can go solo per map.")
-            }
-            next.demigod = { player, mode, target }
-            demigodSide ??= side
-        }
+            if (className === "demigod" && checked(`demigod-${n}-active`)) {
+                const mode = value(`demigod-${n}-mode`)
+                const target = Number(value(`demigod-${n}-target`))
 
-        if (className === "soulweaver" && checked(`soulweaver-${side}-active`)) {
-            const challenger = Number(value(`soulweaver-${side}-challenger`))
-            const challenged = Number(value(`soulweaver-${side}-challenged`))
+                if (!isAlive(n)) {
+                    errors[side].push(`${playerLabel(n)} is dead and can't go solo.`)
+                }
 
-            if (!own.includes(challenger)) {
-                errors[side].push("Pick a challenger from your own team.")
-            } else if (!isAlive(challenger)) {
-                errors[side].push(`${playerLabel(challenger)} is dead and can't duel.`)
+                if (mode === "target") {
+                    if (!opp.includes(target)) {
+                        errors[side].push("Pick a target from the opposing team.")
+                    } else if (!isAlive(target)) {
+                        errors[side].push(`${playerLabel(target)} is dead and can't be targeted.`)
+                    }
+                } else if (!opp.some(isAlive)) {
+                    errors[side].push("There are no opponents alive to hit.")
+                }
+
+                if (next.demigod) {
+                    errors[side].push("Only one Demigod can go solo per map.")
+                }
+                next.demigod = { player: n, mode, target }
+                demigodSide ??= side
             }
 
-            if (!opp.includes(challenged)) {
-                errors[side].push("Pick a challenged player from the opposing team.")
-            } else if (!isAlive(challenged)) {
-                errors[side].push(`${playerLabel(challenged)} is dead and can't be challenged.`)
-            }
+            if (className === "soulweaver" && checked(`soulweaver-${n}-active`)) {
+                const challenged = Number(value(`soulweaver-${n}-challenged`))
 
-            if (next.soulweaver) {
-                errors[side].push("Only one duel can happen per map.")
+                if (!isAlive(n)) {
+                    errors[side].push(`${playerLabel(n)} is dead and can't duel.`)
+                }
+
+                if (!opp.includes(challenged)) {
+                    errors[side].push("Pick a challenged player from the opposing team.")
+                } else if (!isAlive(challenged)) {
+                    errors[side].push(`${playerLabel(challenged)} is dead and can't be challenged.`)
+                }
+
+                if (next.soulweaver) {
+                    errors[side].push("Only one duel can happen per map.")
+                }
+                next.soulweaver = { challenger: n, challenged }
+                soulweaverSide ??= side
             }
-            next.soulweaver = { challenger, challenged }
-            soulweaverSide ??= side
         }
     }
 
@@ -575,17 +607,33 @@ function setClassButton() {
         if (soulweaverSide !== demigodSide) errors[soulweaverSide].push(message)
     }
 
-    showClassError("red", errors.red)
-    showClassError("blue", errors.blue)
+    return { errors, next }
+}
 
-    if (errors.red.length || errors.blue.length) {
-        console.warn("Class submit rejected:", errors)
-        return
+// Runs whenever a class control changes. Toggles take effect straight away.
+// If the new setting is invalid, the ability that was just switched on is switched back off,
+// the errors are shown, and everything else stays as it was.
+function applyClasses(changedBlock) {
+    const hasErrors = ({ errors }) => errors.red.length > 0 || errors.blue.length > 0
+
+    let result = evaluateClasses()
+    const rejected = hasErrors(result)
+    const shownErrors = result.errors
+
+    if (rejected) {
+        console.warn("Class change rejected:", shownErrors)
+        changedBlock?.querySelectorAll(".per-map-ability").forEach(checkboxEl => { checkboxEl.checked = false })
+        result = evaluateClasses()
     }
 
-    abilities.human = next.human
-    abilities.demigod = next.demigod
-    abilities.soulweaver = next.soulweaver
+    if (!hasErrors(result)) {
+        abilities.human = result.next.human
+        abilities.demigod = result.next.demigod
+        abilities.soulweaver = result.next.soulweaver
+    }
+
+    showClassError("red", rejected ? shownErrors.red : [])
+    showClassError("blue", rejected ? shownErrors.blue : [])
 }
 
 // Demigod / Soulweaver only last one map. Human's Lucky! stays.
@@ -611,9 +659,10 @@ function getScoreMultiplier(playerNumber) {
     const side = sideOf(playerNumber)
     let multiplier = 1
 
-    // Human: permanent bonus for the whole team once Lucky!
-    if (teamClass[side] === "human" && abilities.human[side].lucky) {
-        multiplier *= 1 + getLuckyBonus(abilities.human[side].poolSize)
+    // Human: Lucky! bonus applies to that player only
+    const human = abilities.human[playerNumber]
+    if (classOf(playerNumber) === "human" && human?.lucky) {
+        multiplier *= 1 + getLuckyBonus(human.poolSize)
     }
 
     // Soulweaver: challenged player gets 1.4x
@@ -623,8 +672,7 @@ function getScoreMultiplier(playerNumber) {
 
     // Demigod: multiplier depends on opponents alive
     if (abilities.demigod?.player === playerNumber) {
-        const opponentSide = side === "red" ? "blue" : "red"
-        multiplier *= DEMIGOD_MULTIPLIERS[countAlive(opponentSide)] ?? 1
+        multiplier *= DEMIGOD_MULTIPLIERS[countAlive(otherSide(side))] ?? 1
     }
 
     return multiplier
@@ -657,11 +705,12 @@ function changeTeams(teamName, side) {
     const currentTeam = findTeam(teamName)
     if (!currentTeam) return
 
-    // Class panel + reset Human state for this side
-    updateClassPanel(side, currentTeam.class ?? "")
-    abilities.human[side] = { lucky: false, poolSize: 0 }
-    document.getElementById(`human-${side}-lucky`).checked = false
-    document.getElementById(`human-${side}-pool`).value = 0
+    // Reset Human state for this side (classes are set per player below)
+    for (const n of playersOf(side)) {
+        abilities.human[n] = defaultHuman()
+        document.getElementById(`human-${n}-lucky`).checked = false
+        document.getElementById(`human-${n}-pool`).value = 0
+    }
 
     // Set up arrays
     let currentPlayers = []
@@ -704,13 +753,16 @@ function changeTeams(teamName, side) {
         )
     }
 
-    // Set playersx
+    // Set players
     for (let i = 0; i < currentPlayers.length; i++) {
         const currentPlayer = currentTeam[`player${i + 1}`]
         const currentPlayerId = currentPlayer.id
         const currentPlayerName = currentPlayer.playerName
         currentPlayers[i].id = currentPlayerId
         currentPlayers[i].playerName = currentPlayerName
+
+        // Class is stored on each player: currentTeam.playerX.class
+        currentPlayers[i].class = String(currentPlayer.class ?? "").toLowerCase()
 
         teamHpPlayerElements[i].textContent = currentPlayerName
         teamMapTargetSelectionPlayerElements[i].textContent = currentPlayerName
@@ -728,7 +780,11 @@ function changeTeams(teamName, side) {
     }
 
     refreshClassSelects()
+    updateClassPanel(side)
     syncTargetSelects()
+
+    // Restore saved Lucky! state if this is the team it was saved for
+    applyPendingHuman(side, teamName)
 }
 
 // Team HP Button
@@ -760,8 +816,8 @@ const targetSelectElements = [1, 2, 3, 4, 5, 6].map(i =>
 )
 
 function setTargetButton() {
-    targetSelectElements.forEach((el, i) => {
-        const value = Number(el.value)
+    targetSelectElements.forEach((selectEl, i) => {
+        const value = Number(selectEl.value)
         // Ignore placeholder options that haven't been filled with a player yet
         if (Number.isNaN(value)) return
         playerData[`player${i + 1}`].currentTarget = value
@@ -770,10 +826,10 @@ function setTargetButton() {
 
 // Make dropdowns reflect what's actually in playerData
 function syncTargetSelects() {
-    targetSelectElements.forEach((el, i) => {
+    targetSelectElements.forEach((selectEl, i) => {
         const target = String(playerData[`player${i + 1}`].currentTarget)
-        if ([...el.options].some(option => option.value === target)) {
-            el.value = target
+        if ([...selectEl.options].some(option => option.value === target)) {
+            selectEl.value = target
         }
     })
 }
@@ -821,7 +877,7 @@ socket.onmessage = event => {
     if (currentIpcState !== socketData.tourney.ipcState) {
         previousIpcState = currentIpcState
         currentIpcState = socketData.tourney.ipcState
-        
+
         // Calculate scores
         if (currentIpcState === 2 || currentIpcState === 3 || currentIpcState === 4) {
             checkedWinner = false
@@ -835,10 +891,10 @@ socket.onmessage = event => {
         // Reset information
         if (currentIpcState === 1 && previousIpcState === 4 && !checkedWinner) {
             checkedWinner = true
-        
+
             if (toggleHpEl.checked) {
                 applyDamage(playerData)
-            
+
                 if (autoObsButtonEl.checked) {
                     if (isTeamEliminated(["player1", "player2", "player3"]) || isTeamEliminated(["player4", "player5", "player6"])) {
                         changeScene("Winner")
@@ -1046,6 +1102,8 @@ function updatePlayerData(playerData, data) {
     Object.values(playerData).forEach(player => { player.currentScoreAgainst *= damageMultiplier })
 }
 
+// Standard damage, based on who is targeting whom.
+// averageScore = average effective score of the alive players targeting this player.
 function setStandardDamage() {
     Object.entries(playerData).forEach(([playerKey, player]) => {
         const playerNumber = Number(playerKey.replace("player", ""))
@@ -1063,20 +1121,18 @@ function setStandardDamage() {
         )
         if (!attackers.length) return
 
-        const totalScore = attackers.reduce((sum, attacker) => sum + attacker.effectiveScore, 0)
+        const averageScore = attackers.reduce((sum, attacker) => sum + attacker.effectiveScore, 0) / attackers.length
+        const ownScore = player.effectiveScore
 
-        // Last alive on their team: cumulative
+        // Last alive on their team: attackers' average score, minus their own
         if (isLastAlive) {
-            player.currentScoreAgainst += totalScore
+            player.currentScoreAgainst += Math.max(0, averageScore - ownScore)
             return
         }
 
-        const averageScore = totalScore / attackers.length
-        const ownScore = player.effectiveScore
-
         if (averageScore > ownScore) {
             // Attackers out-score the target: target takes the difference
-            player.currentScoreAgainst += averageScore - ownScore
+            player.currentScoreAgainst += Math.max(0, averageScore - ownScore)
         } else if (ownScore > averageScore && attackers.length >= 2) {
             // Target out-scores the attackers: only hits one of its own attackers (head-on)
             const targetPlayer = playerData[`player${player.currentTarget}`]
@@ -1123,8 +1179,11 @@ function setDemigodDamage() {
     selectCurrentPickerButtonNoneEl.addEventListener("click", () => setCurrentPicker("None"))
     teamHpButtonEl.addEventListener("click", () => setHpButton())
     mapTargetButtonEl.addEventListener("click", () => setTargetButton())
-    document.getElementById("class-activation-button-red").addEventListener("click", setClassButton)
-    document.getElementById("class-activation-button-blue").addEventListener("click", setClassButton)
+    // Class abilities apply as soon as a control changes (no Submit button)
+    classPanelsEl.addEventListener("change", event => applyClasses(event.target.closest(".class-player")))
+    classPanelsEl.addEventListener("input", event => {
+        if (event.target.type === "number") applyClasses(null)
+    })
 }
 
 // OBS stuff
@@ -1157,20 +1216,6 @@ async function connectObs() {
     }
 }
 
-// Connect to OBS WebSocket
-if (obs) {
-    obs.connect(OBS_ADDRESS)
-        .then(() => {
-            refreshScenes()
-            connectObs()
-        })
-        .catch(err => {
-            console.error('Connection failed:', err)
-        })
-} else {
-    console.warn("obs-websocket-js didn't load, OBS scene control is disabled")
-}
-
 // Fetch scenes and populate buttons
 async function refreshScenes() {
     try {
@@ -1187,7 +1232,7 @@ async function refreshScenes() {
             const button = document.createElement('button')
             button.className = 'team-hp-button'
             button.innerText = scene.sceneName
-                    
+
             // Highlight the currently active scene
             if (scene.sceneName === currentProgramScene) {
                 button.classList.add('active-hp-button')
@@ -1220,7 +1265,7 @@ function setupListeners() {
         obsConnected = false
         scheduleObsReconnect()
     })
-    
+
     // Update active button color when scene changes
     obs.on('CurrentProgramSceneChanged', (data) => {
         document.querySelectorAll('#scene-buttons .team-hp-button').forEach(btn => {
@@ -1230,4 +1275,12 @@ function setupListeners() {
 
     // Rebuild the buttons entirely if a scene is added, removed, or collection changes
     obs.on('SceneListChanged', refreshScenes)
+}
+
+// Start the OBS connection (connectObs retries on failure, setupListeners handles drops and live updates)
+if (obs) {
+    setupListeners()
+    connectObs()
+} else {
+    console.warn("obs-websocket-js didn't load, OBS scene control is disabled")
 }

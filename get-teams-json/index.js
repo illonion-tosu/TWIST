@@ -11,16 +11,19 @@ async function submit() {
             "player1": {
                 "id": Number(textAreaElValueSplitSplit[1]),
                 "playerName": textAreaElValueSplitSplit[2],
+                "class": textAreaElValueSplitSplit[3]
             },
             "player2": {
-                "id": Number(textAreaElValueSplitSplit[3]),
-                "playerName": textAreaElValueSplitSplit[4],
+                "id": Number(textAreaElValueSplitSplit[4]),
+                "playerName": textAreaElValueSplitSplit[5],
+                "class": textAreaElValueSplitSplit[6]
             },
             "player3": {
-                "id": Number(textAreaElValueSplitSplit[5]),
-                "playerName": textAreaElValueSplitSplit[6],
-            },
-            "class": textAreaElValueSplitSplit[7]
+                "id": Number(textAreaElValueSplitSplit[7]),
+                "playerName": textAreaElValueSplitSplit[8],
+                "class": textAreaElValueSplitSplit[9]
+            }
+            
         }
         teams.push(teamStat)
     }
@@ -33,6 +36,6 @@ async function submit() {
     link.click()
 }
 
-window.onload(() => {
+window.onload = () => {
     buttonEl.addEventListener("click", submit)
-})
+}
