@@ -1197,7 +1197,7 @@ async function connectObs() {
         obsConnected = true
         console.log("Connected to OBS")
         refreshScenes()
-    } catch (error) {
+    } catch {
         obsConnected = false
         console.warn(`OBS connection failed, retrying in ${OBS_RECONNECT_MS / 1000}s`)
         scheduleObsReconnect()
