@@ -1113,18 +1113,11 @@ function updatePlayerData(playerData, data) {
     Object.values(playerData).forEach(player => { player.currentScoreAgainst *= damageMultiplier })
 }
 
-// Standard damage, based on who is targeting whom.
+// Standard damage, based purely on who is targeting whom:
 // averageScore = average effective score of the alive players targeting this player.
 function setStandardDamage() {
     Object.entries(playerData).forEach(([playerKey, player]) => {
         const playerNumber = Number(playerKey.replace("player", ""))
-
-        const teamKeys = playerNumber <= 3
-            ? ["player1", "player2", "player3"]
-            : ["player4", "player5", "player6"]
-
-        const alivePlayers = teamKeys.filter(key => playerData[key].currentMaxHp > 0)
-        const isLastAlive = alivePlayers.length === 1 && player.currentMaxHp > 0
 
         // Alive players targeting this player
         const attackers = Object.values(playerData).filter(
@@ -1133,24 +1126,8 @@ function setStandardDamage() {
         if (!attackers.length) return
 
         const averageScore = attackers.reduce((sum, attacker) => sum + attacker.effectiveScore, 0) / attackers.length
-        const ownScore = player.effectiveScore
 
-        // Last alive on their team: attackers' average score, minus their own
-        if (isLastAlive) {
-            player.currentScoreAgainst += Math.max(0, averageScore - ownScore)
-            return
-        }
-
-        if (averageScore > ownScore) {
-            // Attackers out-score the target: target takes the difference
-            player.currentScoreAgainst += Math.max(0, averageScore - ownScore)
-        } else if (ownScore > averageScore && attackers.length >= 2) {
-            // Target out-scores the attackers: only hits one of its own attackers (head-on)
-            const targetPlayer = playerData[`player${player.currentTarget}`]
-            if (attackers.includes(targetPlayer)) {
-                targetPlayer.currentScoreAgainst += ownScore - averageScore
-            }
-        }
+        player.currentScoreAgainst += Math.max(0, averageScore - player.effectiveScore)
     })
 }
 
