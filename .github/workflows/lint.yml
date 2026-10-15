@@ -42,23 +42,23 @@ jobs:
               continue-on-error: true
               run: |
                   stylelint "**/*.css" \
-                    --config ../lint-configs/.stylelintrc.json \
-                    --fix
+                      --config ../lint-configs/.stylelintrc.json \
+                      --fix
 
             - name: Auto-fix JavaScript
               id: js_fix
               continue-on-error: true
               run: |
                   eslint "**/*.js" \
-                    --config ../lint-configs/eslint.config.js \
-                    --fix
+                      --config ../lint-configs/eslint.config.js \
+                      --fix
 
             - name: Lint HTML
               id: html_lint
               continue-on-error: true
               run: |
                   htmlhint "**/*.html" \
-                    --config ../lint-configs/.htmlhintrc
+                      --config ../lint-configs/.htmlhintrc
 
             - name: Report lint results
               if: always()
@@ -108,10 +108,10 @@ jobs:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
                   gh pr create \
-                    --base "$HEAD_REF" \
-                    --head "$FIX_BRANCH" \
-                    --title "Automated lint fixes for $HEAD_REF" \
-                    --body "This PR was automatically created by GitHub Actions after running lint autofixes on the current PR branch.
+                      --base "$HEAD_REF" \
+                      --head "$FIX_BRANCH" \
+                      --title "Automated lint fixes for $HEAD_REF" \
+                      --body "This PR was automatically created by GitHub Actions after running lint autofixes on the current PR branch.
 
                   Lint results:
                   - CSS: ${{ steps.css_fix.outcome }}
@@ -123,10 +123,10 @@ jobs:
                   echo "Running final lint verification..."
 
                   stylelint "**/*.css" \
-                    --config ../lint-configs/.stylelintrc.json
+                      --config ../lint-configs/.stylelintrc.json
 
                   eslint "**/*.js" \
-                    --config ../lint-configs/eslint.config.js
+                      --config ../lint-configs/eslint.config.js
 
                   htmlhint "**/*.html" \
-                    --config ../lint-configs/.htmlhintrc
+                      --config ../lint-configs/.htmlhintrc
