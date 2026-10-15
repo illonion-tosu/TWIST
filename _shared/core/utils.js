@@ -38,3 +38,59 @@ export function getModDetails(cs, ar, od, bpm, len, mod) {
 
     return { cs, ar, od, bpm, len, mod }
 }
+
+// Read what the dashboard saved to localStorage (null until the dashboard has written something)
+export function readSavedData() {
+    try {
+        const raw = localStorage.getItem("data")
+        return raw ? JSON.parse(raw) : null
+    } catch (error) {
+        console.error("Could not read dashboard data:", error)
+        return null
+    }
+}
+
+// Run callback every `interval` ms, aligned to the clock.
+// An error in one tick is logged instead of killing the loop.
+export function startPolling(callback, interval = 100) {
+    const tick = () => {
+        try {
+            callback()
+        } catch (error) {
+            console.error(error)
+        }
+        setTimeout(tick, interval - (Date.now() % interval))
+    }
+    tick()
+}
+
+// Deep equal for plain objects / arrays
+export function deepEqual(a, b) {
+    if (a === b) return true
+    if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) {
+        return false
+    }
+
+    const keysA = Object.keys(a)
+    const keysB = Object.keys(b)
+    if (keysA.length !== keysB.length) return false
+
+    return keysA.every(key => keysB.includes(key) && deepEqual(a[key], b[key]))
+}
+
+// Shorten an SVG <text> with "..." until it fits maxWidth
+export function truncateSVGText(element, maxWidth) {
+    if (!element) return
+
+    const originalText = element.textContent.trim()
+    element.textContent = originalText
+
+    if (element.getComputedTextLength() <= maxWidth) return
+    let text = originalText
+    while (text.length > 0) {
+        text = text.slice(0, -1)
+        element.textContent = text.trimEnd() + "..."
+
+        if (element.getComputedTextLength() <= maxWidth) break
+    }
+}

@@ -8,6 +8,12 @@
     --hr-colour: #C43B3B;
     --dt-colour: #B540DB;
     --fm-colour: #F5EB46;
+    --tb-colour: #FF6FB5;
+}
+
+/* Author display rules (flex, grid...) otherwise override the hidden attribute */
+[hidden] {
+    display: none !important;
 }
 
 @font-face {

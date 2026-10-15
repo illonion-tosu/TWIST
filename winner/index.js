@@ -1,35 +1,44 @@
-function schedule() {
-    const now = Date.now()
-    const delay = 100 - (now % 100)
+import { readSavedData, startPolling } from "../_shared/core/utils.js"
 
-    setTimeout(() => {
-        getData()
-        schedule()
-    }, delay)
-}
-
-schedule()
-
-// Max HP Variables
+// Winner
 let currentWinnerSide, previousWinnerSide
+
+// Round Name
+const roundNameEl = document.getElementById("round-name-WINNER")
+let currentRoundName
 
 // Winner Name
 const winnerNameEl = document.getElementById("winner-name")
 let currentRedTeamName, currentBlueTeamName, teamsChanged = false
 
 // Chibis
+const PLACEHOLDER_CHIBI = "static/placeholder chibi.png"
 const chibiWrapperEl = document.getElementById("chibi-wrapper")
 
 // Player Names
-const playerNameEls = [
-    document.getElementById("player-1-name"),
-    document.getElementById("player-2-name"),
-    document.getElementById("player-3-name")
-]
+const MAX_NAME_LINES = 2
 
-async function getData() {
-    const data = JSON.parse(localStorage.getItem("data"))
-    console.log(data)
+// Chibis are static/chibis/<osu id>.png. Not everyone has one, so fall back to the placeholder instead of a broken image.
+function setChibi(imageEl, playerId) {
+    imageEl.onerror = () => {
+        imageEl.onerror = null
+        imageEl.setAttribute("src", PLACEHOLDER_CHIBI)
+    }
+    imageEl.setAttribute("src", `static/chibis/${playerId}.png`)
+}
+
+function getData() {
+    const data = readSavedData()
+
+    // The dashboard hasn't saved anything yet
+    if (!data || !data.playerData || !data.teamName) return
+
+    // Round Name (the "ROUND NAME WINNER" placeholder was never replaced before)
+    if (currentRoundName !== data.roundName) {
+        currentRoundName = data.roundName
+        roundNameEl.textContent = currentRoundName ? `${currentRoundName} WINNER` : ""
+    }
+
     teamsChanged = false
 
     // Compare team names
@@ -48,22 +57,26 @@ async function getData() {
     const currentRedMaxHp = playerData.player1.currentMaxHp + playerData.player2.currentMaxHp + playerData.player3.currentMaxHp
     const currentBlueMaxHp = playerData.player4.currentMaxHp + playerData.player5.currentMaxHp + playerData.player6.currentMaxHp
 
-    // Set and compare winner sides
-    currentWinnerSide = currentRedMaxHp > currentBlueMaxHp ? "red" : "blue"
+    // Set and compare winner sides. On an exact tie keep whoever was showing, so the page doesn't flip around.
+    if (currentRedMaxHp === currentBlueMaxHp) {
+        currentWinnerSide = previousWinnerSide ?? "red"
+    } else {
+        currentWinnerSide = currentRedMaxHp > currentBlueMaxHp ? "red" : "blue"
+    }
+
     if (previousWinnerSide !== currentWinnerSide || teamsChanged) {
         previousWinnerSide = currentWinnerSide
 
         // Set Team Name
-        winnerNameEl.textContent = currentWinnerSide === "red" ? currentRedTeamName : currentBlueTeamName
+        winnerNameEl.textContent = (currentWinnerSide === "red" ? currentRedTeamName : currentBlueTeamName) ?? ""
 
         // Set information on winning team
         const players = currentWinnerSide === "red" ? [playerData.player1, playerData.player2, playerData.player3] : [playerData.player4, playerData.player5, playerData.player6]
 
         // Chibi Wrapper
         for (let i = 0; i < players.length; i++) {
-            chibiWrapperEl.children[i].children[0].setAttribute("src", `static/chibis/${players[i].id}.png`)
-            playerNameEls[i].textContent = players[i].playerName
-            setPlayerName(i + 1, players[i].playerName)
+            setChibi(chibiWrapperEl.children[i].children[0], players[i].id)
+            setPlayerName(i + 1, players[i].playerName ?? "")
         }
     }
 }
@@ -93,10 +106,8 @@ function setPlayerName(playerNumber, name) {
                 // to avoid an infinite loop / empty lines
                 if (chunk) {
                     lines.push(chunk)
-                    chunk = char
-                } else {
-                    chunk = char
                 }
+                chunk = char
             }
         }
 
@@ -133,13 +144,22 @@ function setPlayerName(playerNumber, name) {
 
     text.textContent = ""
 
+    // Only 1 and 2 line layouts exist (a 3rd line used to throw because lineYs[3] is undefined)
     const lineYs = {
         1: [260],
         2: [235, 285]
     }
 
-    // Only 3 positions are defined, so keep the last 3 lines at most
-    const visibleLines = lines.slice(0, 3)
+    const visibleLines = lines.slice(0, MAX_NAME_LINES)
+    if (!visibleLines.length) return
+
+    // Names that need more lines are cut off with "..."
+    if (lines.length > MAX_NAME_LINES) {
+        let last = visibleLines[MAX_NAME_LINES - 1]
+        while (last.length > 0 && !fits(`${last}...`)) last = last.slice(0, -1)
+        visibleLines[MAX_NAME_LINES - 1] = `${last.trimEnd()}...`
+        text.textContent = ""
+    }
 
     visibleLines.forEach((line, index) => {
         const tspan = document.createElementNS(
@@ -154,3 +174,5 @@ function setPlayerName(playerNumber, name) {
         text.appendChild(tspan)
     })
 }
+
+startPolling(getData, 100)
