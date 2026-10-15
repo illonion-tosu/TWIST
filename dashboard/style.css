@@ -279,3 +279,7 @@ select:focus,
 input[type="number"].maps-played-input {
     width: calc(100% - 174px);
 }
+
+.class-player {
+    margin-bottom: 25px;
+}

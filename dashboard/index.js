@@ -1010,8 +1010,19 @@ function applyDamage(playerData) {
 
     resetMapAbilities()
 
+    // Only runs with HP toggled on: a map counts, and each Human's Lucky! count grows by one.
+    // Once a player's Lucky! is on, their count is locked and no longer grows.
+    // (Done after the damage above, so this map was still scored with the old counts.)
     mapsPlayed++
     refreshDamageMultiplierUi()
+
+    for (const n of [1, 2, 3, 4, 5, 6]) {
+        if (classOf(n) !== "human") continue
+        const human = abilities.human[n]
+        if (human.lucky) continue
+        human.poolSize = Math.max(1, human.poolSize) + 1
+        document.getElementById(`human-${n}-pool`).value = human.poolSize - 1
+    }
 }
 
 setInterval(() => {
