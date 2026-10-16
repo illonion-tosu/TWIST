@@ -21,7 +21,13 @@
     position: absolute;
     top: 335px;
     width: 675px;
-    height: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.player-container {
+    position: relative;
+    height: 185px;
 }
 
 .player-container > * {
