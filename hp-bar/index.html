@@ -9,6 +9,76 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="main"></div>
+    <!-- Shared SVG definitions, referenced by id from the SVGs below -->
+    <svg class="svg-defs" aria-hidden="true">
+        <defs>
+            <!-- White outer ring, red inner ring, then the text on top -->
+            <filter id="outline-red" x="-20%" y="-50%" width="140%" height="200%">
+                <feMorphology in="SourceAlpha" operator="dilate" radius="6" result="white-dilate" />
+                <feGaussianBlur in="white-dilate" stdDeviation="2.5" result="white-blur" />
+                <feColorMatrix in="white-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="white-round" />
+                <feFlood flood-color="white" result="white-colour" />
+                <feComposite in="white-colour" in2="white-round" operator="in" result="white-layer" />
+                <feMorphology in="SourceAlpha" operator="dilate" radius="3.5" result="red-dilate" />
+                <feGaussianBlur in="red-dilate" stdDeviation="1.5" result="red-blur" />
+                <feColorMatrix in="red-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="red-round" />
+                <feFlood flood-color="#ff0000" result="red-colour" />
+                <feComposite in="red-colour" in2="red-round" operator="in" result="red-layer" />
+                <feMerge>
+                    <feMergeNode in="white-layer" />
+                    <feMergeNode in="red-layer" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+
+            <!-- White outer ring, blue inner ring, then the text on top -->
+            <filter id="outline-blue" x="-20%" y="-50%" width="140%" height="200%">
+                <feMorphology in="SourceAlpha" operator="dilate" radius="6" result="white-dilate" />
+                <feGaussianBlur in="white-dilate" stdDeviation="2.5" result="white-blur" />
+                <feColorMatrix in="white-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="white-round" />
+                <feFlood flood-color="white" result="white-colour" />
+                <feComposite in="white-colour" in2="white-round" operator="in" result="white-layer" />
+                <feMorphology in="SourceAlpha" operator="dilate" radius="3.5" result="blue-dilate" />
+                <feGaussianBlur in="blue-dilate" stdDeviation="1.5" result="blue-blur" />
+                <feColorMatrix in="blue-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="blue-round" />
+                <feFlood flood-color="#0078ff" result="blue-colour" />
+                <feComposite in="blue-colour" in2="blue-round" operator="in" result="blue-layer" />
+                <feMerge>
+                    <feMergeNode in="white-layer" />
+                    <feMergeNode in="blue-layer" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+        </defs>
+    </svg>
+    <div class="main">
+        <!-- Team Name Left -->
+        <svg class="team-name-container team-name-container-left" xmlns="http://www.w3.org/2000/svg" width="600" height="104" viewBox="0 0 600 104">
+            <text
+                x="15"
+                y="78"
+                text-anchor="start"
+                font-size="80px"
+                letter-spacing="-4"
+                class="outlined-text team-name-left"
+                id="team-name-left"
+                filter="url(#outline-red)"
+            >KIM HYUJIN</text>
+        </svg>
+
+        <!-- Team Name Right -->
+        <svg class="team-name-container team-name-container-right" xmlns="http://www.w3.org/2000/svg" width="600" height="104" viewBox="0 0 600 104">
+            <text
+                x="585"
+                y="78"
+                text-anchor="end"
+                font-size="80px"
+                letter-spacing="-4"
+                class="outlined-text team-name-left"
+                id="team-name-left"
+                filter="url(#outline-blue)"
+            >KIM HYUJIN</text>
+        </svg>
+    </div>
 </body>
 </html>
