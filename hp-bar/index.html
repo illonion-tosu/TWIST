@@ -68,6 +68,25 @@
                     <feMergeNode in="SourceGraphic" />
                 </feMerge>
             </filter>
+
+            <!-- White outer ring, black inner ring, then the text on top -->
+            <filter id="outline-white-small" x="-10%" y="-100%" width="120%" height="300%">
+                <feMorphology in="SourceAlpha" operator="dilate" radius="4" result="white-dilate" />
+                <feGaussianBlur in="white-dilate" stdDeviation="2.5" result="white-blur" />
+                <feColorMatrix in="white-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="white-round" />
+                <feFlood flood-color="white" result="white-colour" />
+                <feComposite in="white-colour" in2="white-round" operator="in" result="white-layer" />
+                <feMorphology in="SourceAlpha" operator="dilate" radius="3" result="black-dilate" />
+                <feGaussianBlur in="black-dilate" stdDeviation="1.2" result="black-blur" />
+                <feColorMatrix in="black-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="black-round" />
+                <feFlood flood-color="black" result="black-colour" />
+                <feComposite in="black-colour" in2="black-round" operator="in" result="black-layer" />
+                <feMerge>
+                    <feMergeNode in="white-layer" />
+                    <feMergeNode in="black-layer" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
         </defs>
     </svg>
     <div class="main">
@@ -123,6 +142,41 @@
                 filter="url(#outline-white)"
             >SCORE</text>
         </svg>
+
+        <!-- Player Section -->
+        <div class="player-section svg-container-left red-player-section">
+            <div class="player-container red-player-=container">
+                <svg xmlns="http://www.w3.org/2000/svg" width="675" height="104" viewBox="0 0 675 104">
+                    <text
+                        x="15"
+                        y="78"
+                        text-anchor="start"
+                        font-size="32px"
+                        letter-spacing="-2"
+                        class="outlined-text"
+                        filter="url(#outline-white-small)">
+                        PLAYER NAME
+                    </text>
+                </svg>
+
+                <svg xmlns="http://www.w3.org/2000/svg" width="675" height="104" viewBox="0 0 675 104">
+                    <text
+                        x="659"
+                        y="78"
+                        text-anchor="end"
+                        font-size="32px"
+                        letter-spacing="-2"
+                        class="outlined-text"
+                        filter="url(#outline-white-small)">
+                        SCORE
+                    </text>
+                </svg>
+
+                <div class="hp-bar-container team-left-hp-bar-container">
+                    <div class="hp-bar team-left-hp-bar" id="team-left-hp-bar"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>
