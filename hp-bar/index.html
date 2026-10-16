@@ -49,11 +49,30 @@
                     <feMergeNode in="SourceGraphic" />
                 </feMerge>
             </filter>
+
+            <!-- White outer ring, black inner ring, then the text on top -->
+            <filter id="outline-white" x="-10%" y="-100%" width="120%" height="300%">
+                <feMorphology in="SourceAlpha" operator="dilate" radius="6" result="white-dilate" />
+                <feGaussianBlur in="white-dilate" stdDeviation="2.5" result="white-blur" />
+                <feColorMatrix in="white-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="white-round" />
+                <feFlood flood-color="white" result="white-colour" />
+                <feComposite in="white-colour" in2="white-round" operator="in" result="white-layer" />
+                <feMorphology in="SourceAlpha" operator="dilate" radius="3" result="black-dilate" />
+                <feGaussianBlur in="black-dilate" stdDeviation="1.2" result="black-blur" />
+                <feColorMatrix in="black-blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 25 -8" result="black-round" />
+                <feFlood flood-color="black" result="black-colour" />
+                <feComposite in="black-colour" in2="black-round" operator="in" result="black-layer" />
+                <feMerge>
+                    <feMergeNode in="white-layer" />
+                    <feMergeNode in="black-layer" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
         </defs>
     </svg>
     <div class="main">
         <!-- Team Name Left -->
-        <svg class="team-name-container team-name-container-left" xmlns="http://www.w3.org/2000/svg" width="600" height="104" viewBox="0 0 600 104">
+        <svg class="svg-container team-name-container svg-container-left" xmlns="http://www.w3.org/2000/svg" width="600" height="104" viewBox="0 0 600 104">
             <text
                 x="15"
                 y="78"
@@ -67,7 +86,7 @@
         </svg>
 
         <!-- Team Name Right -->
-        <svg class="team-name-container team-name-container-right" xmlns="http://www.w3.org/2000/svg" width="600" height="104" viewBox="0 0 600 104">
+        <svg class="svg-container team-name-container svg-container-right" xmlns="http://www.w3.org/2000/svg" width="600" height="104" viewBox="0 0 600 104">
             <text
                 x="585"
                 y="78"
@@ -78,6 +97,31 @@
                 id="team-name-left"
                 filter="url(#outline-blue)"
             >KIM HYUJIN</text>
+        </svg>
+
+        <!-- Scores -->
+        <svg class="svg-container score-text-container svg-container-left" xmlns="http://www.w3.org/2000/svg" width="600" height="104" viewBox="0 0 600 104">
+            <text
+                x="15"
+                y="78"
+                text-anchor="start"
+                font-size="44px"
+                letter-spacing="-4"
+                class="outlined-text"
+                filter="url(#outline-white)"
+            >SCORE</text>
+        </svg>
+
+        <svg class="svg-container score-text-container svg-container-right" xmlns="http://www.w3.org/2000/svg" width="600" height="104" viewBox="0 0 600 104">
+            <text
+                x="585"
+                y="78"
+                text-anchor="end"
+                font-size="44px"
+                letter-spacing="-4"
+                class="outlined-text"
+                filter="url(#outline-white)"
+            >SCORE</text>
         </svg>
     </div>
 </body>

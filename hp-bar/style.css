@@ -5,9 +5,10 @@
 .main { background-image: url("static/background.png"); }
 
 /* Team Name */
-.team-name-container {
-    position: absolute;
-    top: 161px;
-}
-.team-name-container-left { left: var(--team-name-container-x); }
-.team-name-container-right { right: var(--team-name-container-x); }
+.svg-container { position: absolute; }
+.team-name-container { top: 161px; }
+.svg-container-left { left: var(--team-name-container-x); }
+.svg-container-right { right: var(--team-name-container-x); }
+
+/* Score Container */
+.score-text-container { top: 227px; }
