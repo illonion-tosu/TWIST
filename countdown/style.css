@@ -117,3 +117,35 @@
     bottom: 11px;
     right: 19px;
 }
+
+/* Chatbox CSS */
+.chatbox-container {
+position: absolute;
+    bottom: 29px;
+    right: 37px;
+    width: 439px;
+    height: 255px;
+    margin: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow-y: scroll;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+.chatbox-container::-webkit-scrollbar { display: none; }
+
+.chatbox-message {
+    display: flex;
+    width: inherit;
+    color: white;
+    line-height: 27px;
+}
+
+.chatbox-name {
+    margin-right: 10px;
+    white-space: nowrap;
+}
+
+.chatbox-content { width: 100%; }
