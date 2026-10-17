@@ -1,11 +1,16 @@
 import { loadBeatmaps } from "../_shared/core/beatmaps.js"
+import { getRoundMaxHp, otherSide, playersOf, sideOf } from "../_shared/core/match.js"
 import { findTeam, loadTeams } from "../_shared/core/teams.js"
+import { capitalise } from "../_shared/core/utils.js"
 import { createTosuWsSocket } from "../_shared/core/websocket.js"
+import { constants } from "../_shared/js/constants.js"
+
+const { IPC_STATE, OBS_SCENES, PLAYER_NUMBERS, SIDES } = constants
 
 // Saved match state: read it before anything gets a chance to overwrite it
 let savedState = null
 try {
-    savedState = JSON.parse(localStorage.getItem("data"))
+    savedState = JSON.parse(localStorage.getItem(constants.STORAGE_KEY))
 } catch {
     savedState = null
 }
@@ -28,8 +33,6 @@ const selectNextPickerButtonRedEl = document.getElementById("select-next-picker-
 const selectNextPickerButtonBlueEl = document.getElementById("select-next-picker-button-blue")
 const selectNextPickerButtonNoneEl = document.getElementById("select-next-picker-button-none")
 let nextPicker = "red"
-
-const capitalise = text => text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
 
 function setNextPicker(team) {
     nextPickerEl.textContent = `Next: ${capitalise(team)}`
@@ -59,70 +62,19 @@ const toggleHpEl = document.getElementById("toggle-hp-button")
 const autoObsButtonEl = document.getElementById("auto-obs-button")
 
 // Max HP
-const DEFAULT_MAX_HP = 300000
-let maxHp = DEFAULT_MAX_HP
-let playerData = {
-    player1: {
-        id: 123456,
-        playerName: "",
-        class: "",
-        currentMaxHp: 300000,
-        currentScore: 0,
-        currentTarget: 6,
-        currentScoreAgainst: 0,
-        currentDeadRounds: 0,
-    },
-    player2: {
-        id: 123456,
-        playerName: "",
-        class: "",
-        currentMaxHp: 300000,
-        currentScore: 0,
-        currentTarget: 5,
-        currentScoreAgainst: 0,
-        currentDeadRounds: 0,
-    },
-    player3: {
-        id: 123456,
-        playerName: "",
-        class: "",
-        currentMaxHp: 300000,
-        currentScore: 0,
-        currentTarget: 4,
-        currentScoreAgainst: 0,
-        currentDeadRounds: 0,
-    },
-    player4: {
-        id: 123456,
-        playerName: "",
-        class: "",
-        currentMaxHp: 300000,
-        currentScore: 0,
-        currentTarget: 3,
-        currentScoreAgainst: 0,
-        currentDeadRounds: 0,
-    },
-    player5: {
-        id: 123456,
-        playerName: "",
-        class: "",
-        currentMaxHp: 300000,
-        currentScore: 0,
-        currentTarget: 2,
-        currentScoreAgainst: 0,
-        currentDeadRounds: 0,
-    },
-    player6: {
-        id: 123456,
-        playerName: "",
-        class: "",
-        currentMaxHp: 300000,
-        currentScore: 0,
-        currentTarget: 1,
-        currentScoreAgainst: 0,
-        currentDeadRounds: 0,
-    },
-}
+let maxHp = constants.DEFAULT_MAX_HP
+
+// player1 - player6. Each starts targeting the opposite player (see DEFAULT_TARGETS).
+const playerData = Object.fromEntries(PLAYER_NUMBERS.map((n, i) => [`player${n}`, {
+    id: constants.DEFAULT_PLAYER_ID,
+    playerName: "",
+    class: "",
+    currentMaxHp: constants.DEFAULT_MAX_HP,
+    currentScore: 0,
+    currentTarget: constants.DEFAULT_TARGETS[i],
+    currentScoreAgainst: 0,
+    currentDeadRounds: 0,
+}]))
 
 // Mappool Select Container
 const mappoolSelectContainerEl = document.getElementById("mappool-select-container")
@@ -134,25 +86,16 @@ loadBeatmaps().then(beatmaps => {
     allBeatmaps = beatmaps.beatmaps
 
     // Set Max HP
-    switch (roundName.toLowerCase()) {
-        case "quarterfinals": case "quarter finals": case "qf":
-            maxHp = 400000
-            break
-        case "semifinals": case "sf": case "semi finals":
-            maxHp = 600000
-            break
-        case "finals": case "f": case "gf": case "grand finals":
-            maxHp = 800000
-            break
-        default:
-            maxHp = DEFAULT_MAX_HP
-            console.warn(`Unknown round name "${roundName}", using ${DEFAULT_MAX_HP} max HP. Set it with the Map Starting HP box.`)
+    const roundMaxHp = getRoundMaxHp(roundName)
+    if (roundMaxHp === null) {
+        maxHp = constants.DEFAULT_MAX_HP
+        console.warn(`Unknown round name "${roundName}", using ${constants.DEFAULT_MAX_HP} max HP. Set it with the Map Starting HP box.`)
+    } else {
+        maxHp = roundMaxHp
     }
 
     // Set all input values to max hp
-    for (let i = 0; i < teamHpIOnputNumberElements.length; i++) {
-        teamHpIOnputNumberElements[i].value = maxHp
-    }
+    teamHpInputEls.forEach(input => { input.value = maxHp })
 
     // Set all player's current max hp
     for (const key in playerData) {
@@ -231,15 +174,13 @@ function mapClickEvent(event) {
     }
 }
 
-// Damage multiplier: +0.5x after every 2 maps (maps 1-2 = 1x, 3-4 = 1.5x, 5-6 = 2x, ...)
-const DAMAGE_MULTIPLIER_STEP = 0.5
-const MAPS_PER_MULTIPLIER_STEP = 2
+// Damage multiplier grows every few maps (maps 1-2 = 1x, 3-4 = 1.5x, 5-6 = 2x, ...)
 const mapsPlayedInputEl = document.getElementById("maps-played-input")
 const damageMultiplierEl = document.getElementById("damage-multiplier")
 let mapsPlayed = 0
 
 function getDamageMultiplier() {
-    return 1 + DAMAGE_MULTIPLIER_STEP * Math.floor(mapsPlayed / MAPS_PER_MULTIPLIER_STEP)
+    return 1 + constants.DAMAGE_MULTIPLIER_STEP * Math.floor(mapsPlayed / constants.MAPS_PER_MULTIPLIER_STEP)
 }
 
 function refreshDamageMultiplierUi() {
@@ -256,19 +197,12 @@ const defaultHuman = () => ({ lucky: false, poolSize: 0 })
 
 const abilities = {
     // Human's Lucky!, keyed by player number 1-6
-    human: Object.fromEntries([1, 2, 3, 4, 5, 6].map(n => [n, defaultHuman()])),
+    human: Object.fromEntries(PLAYER_NUMBERS.map(n => [n, defaultHuman()])),
     demigod: null, // { player, mode, target }, cleared after every map
     soulweaver: null, // { challenger, challenged }, cleared after every map
 }
 
-const DEMIGOD_MULTIPLIERS = { 3: 4, 2: 3, 1: 2 } // keyed by opponents alive
-const SOULWEAVER_CHALLENGED_MULTIPLIER = 1.4
-
 const classPanelsEl = document.getElementById("class-panels")
-
-const sideOf = playerNumber => playerNumber <= 3 ? "red" : "blue"
-const playersOf = side => side === "red" ? [1, 2, 3] : [4, 5, 6]
-const otherSide = side => side === "red" ? "blue" : "red"
 
 const isAlive = playerNumber => playerData[`player${playerNumber}`]?.currentMaxHp > 0
 const playerLabel = playerNumber =>
@@ -306,7 +240,7 @@ function restoreSavedState() {
         playerData[key].currentScore = 0
         playerData[key].effectiveScore = 0
         playerData[key].currentScoreAgainst = 0
-        teamHpIOnputNumberElements[i].value = playerData[key].currentMaxHp
+        teamHpInputEls[i].value = playerData[key].currentMaxHp
     })
     syncTargetSelects()
 
@@ -342,12 +276,12 @@ function restoreSavedState() {
     // before the teams load), then let changeTeams apply them to the UI once the matching team is set up
     const savedHuman = saved.abilities?.human
     if (savedHuman) {
-        for (const n of [1, 2, 3, 4, 5, 6]) {
+        for (const n of PLAYER_NUMBERS) {
             const s = savedHuman[n]
             if (s) abilities.human[n] = { lucky: Boolean(s.lucky), poolSize: Math.max(0, Number(s.poolSize) || 0) }
         }
 
-        for (const side of ["red", "blue"]) {
+        for (const side of SIDES) {
             const savedTeamName = saved.teamName?.[`${side}TeamName`]
             if (!savedTeamName) continue
 
@@ -464,18 +398,18 @@ function buildClassPanel(side) {
     )
 }
 
-classPanelsEl.replaceChildren(...["red", "blue"].map(buildClassPanel))
+classPanelsEl.replaceChildren(...SIDES.map(buildClassPanel))
 
 // Fill every player select (value = player number 1-6, text = player name)
 function refreshClassSelects() {
     document.querySelectorAll(".class-player-select").forEach(select => {
         const side = select.dataset.side
         const teamSide = select.dataset.scope === "own" ? side : otherSide(side)
-        const offset = teamSide === "red" ? 0 : 3
+        const offset = playersOf(teamSide)[0] - 1
         const previous = select.value
 
         select.innerHTML = ""
-        for (let i = 1; i <= 3; i++) {
+        for (let i = 1; i <= playersOf(teamSide).length; i++) {
             const option = document.createElement("option")
             option.value = offset + i
             option.textContent = playerLabel(offset + i)
@@ -495,7 +429,7 @@ function showClassError(side, messages) {
 }
 
 // Show only the controls for each player's own class
-const CLASSES_WITH_CONTROLS = ["human", "demigod", "soulweaver"]
+const CLASSES_WITH_CONTROLS = constants.CLASSES_WITH_CONTROLS
 
 function updateClassPanel(side) {
     const names = []
@@ -516,7 +450,7 @@ function updateClassPanel(side) {
     const classText = [...new Set(names)].join(" / ")
     document.getElementById(`${side}-class`).textContent = classText
     document.getElementById(`class-title-${side}`).textContent =
-        `${side === "red" ? "Red" : "Blue"}: ${classText}`
+        `${capitalise(side)}: ${classText}`
 
     // Classes without controls (e.g. Witch) have nothing to submit
     document.getElementById(`class-wrapper-${side}`).hidden =
@@ -539,7 +473,7 @@ function evaluateClasses() {
     const value = id => document.getElementById(id).value
     const checked = id => document.getElementById(id).checked
 
-    for (const side of ["red", "blue"]) {
+    for (const side of SIDES) {
         const opp = playersOf(otherSide(side))
 
         for (const n of playersOf(side)) {
@@ -645,15 +579,14 @@ function resetMapAbilities() {
     showClassError("blue", [])
 }
 
-// Lucky! bonus: 1 number = 77.7%, -7% per extra number, floor 7.7%
+// Lucky! bonus: starts high for 1 number, drops for every extra number, never below the minimum
 function getLuckyBonus(poolSize) {
-    return Math.max(7.7, 77.7 - 7 * (Math.max(1, poolSize) - 1)) / 100
+    const { LUCKY_BASE_BONUS_PERCENT, LUCKY_PENALTY_PERCENT, LUCKY_MIN_BONUS_PERCENT } = constants
+    const extraNumbers = Math.max(1, poolSize) - 1
+    return Math.max(LUCKY_MIN_BONUS_PERCENT, LUCKY_BASE_BONUS_PERCENT - LUCKY_PENALTY_PERCENT * extraNumbers) / 100
 }
 
-function countAlive(side) {
-    const numbers = side === "red" ? [1, 2, 3] : [4, 5, 6]
-    return numbers.filter(n => playerData[`player${n}`].currentMaxHp > 0).length
-}
+const countAlive = side => playersOf(side).filter(isAlive).length
 
 function getScoreMultiplier(playerNumber) {
     const side = sideOf(playerNumber)
@@ -667,12 +600,12 @@ function getScoreMultiplier(playerNumber) {
 
     // Soulweaver: challenged player gets 1.4x
     if (abilities.soulweaver?.challenged === playerNumber) {
-        multiplier *= SOULWEAVER_CHALLENGED_MULTIPLIER
+        multiplier *= constants.SOULWEAVER_CHALLENGED_MULTIPLIER
     }
 
     // Demigod: multiplier depends on opponents alive
     if (abilities.demigod?.player === playerNumber) {
-        multiplier *= DEMIGOD_MULTIPLIERS[countAlive(otherSide(side))] ?? 1
+        multiplier *= constants.DEMIGOD_MULTIPLIERS[countAlive(otherSide(side))] ?? 1
     }
 
     return multiplier
@@ -712,72 +645,34 @@ function changeTeams(teamName, side) {
         document.getElementById(`human-${n}-pool`).value = 0
     }
 
-    // Set up arrays
-    let currentPlayers = []
-    let teamHpPlayerElements = []
-    let teamMapTargetSelectionPlayerElements = []
-    let teamMapTargetSelectionPlayerSelectElements = []
-    if (side === "red") {
-        currentPlayers.push(playerData.player1, playerData.player2, playerData.player3)
-        teamHpPlayerElements.push(
-            document.getElementById("team-hp-player-1"),
-            document.getElementById("team-hp-player-2"),
-            document.getElementById("team-hp-player-3")
-        )
-        teamMapTargetSelectionPlayerElements.push(
-            document.getElementById("map-target-selection-player-1"),
-            document.getElementById("map-target-selection-player-2"),
-            document.getElementById("map-target-selection-player-3")
-        )
-        teamMapTargetSelectionPlayerSelectElements.push(
-            document.getElementById("map-target-selection-player-4-select"),
-            document.getElementById("map-target-selection-player-5-select"),
-            document.getElementById("map-target-selection-player-6-select")
-        )
-    } else {
-        currentPlayers.push(playerData.player4, playerData.player5, playerData.player6)
-        teamHpPlayerElements.push(
-            document.getElementById("team-hp-player-4"),
-            document.getElementById("team-hp-player-5"),
-            document.getElementById("team-hp-player-6")
-        )
-        teamMapTargetSelectionPlayerElements.push(
-            document.getElementById("map-target-selection-player-4"),
-            document.getElementById("map-target-selection-player-5"),
-            document.getElementById("map-target-selection-player-6")
-        )
-        teamMapTargetSelectionPlayerSelectElements.push(
-            document.getElementById("map-target-selection-player-1-select"),
-            document.getElementById("map-target-selection-player-2-select"),
-            document.getElementById("map-target-selection-player-3-select")
-        )
-    }
+    // This side's players, and the target selects (of the other side's players) that list this team
+    const ownNumbers = playersOf(side)
+    const opponentNumbers = playersOf(otherSide(side))
+    const byId = id => document.getElementById(id)
 
-    // Set players
-    for (let i = 0; i < currentPlayers.length; i++) {
-        const currentPlayer = currentTeam[`player${i + 1}`]
-        const currentPlayerId = currentPlayer.id
-        const currentPlayerName = currentPlayer.playerName
-        currentPlayers[i].id = currentPlayerId
-        currentPlayers[i].playerName = currentPlayerName
+    ownNumbers.forEach((playerNumber, i) => {
+        const player = playerData[`player${playerNumber}`]
+        const teamPlayer = currentTeam[`player${i + 1}`]
+
+        player.id = teamPlayer.id
+        player.playerName = teamPlayer.playerName
 
         // Class is stored on each player: currentTeam.playerX.class
-        currentPlayers[i].class = String(currentPlayer.class ?? "").toLowerCase()
+        player.class = String(teamPlayer.class ?? "").toLowerCase()
 
-        teamHpPlayerElements[i].textContent = currentPlayerName
-        teamMapTargetSelectionPlayerElements[i].textContent = currentPlayerName
+        byId(`team-hp-player-${playerNumber}`).textContent = teamPlayer.playerName
+        byId(`map-target-selection-player-${playerNumber}`).textContent = teamPlayer.playerName
 
-        // Fill each select's options with the matching team player
+        // Each opposing player's select lists this team's players
         // Value = player number (1-6), since that's what currentTarget uses
-        const playerNumberOffset = side === "red" ? 0 : 3
-        const options = teamMapTargetSelectionPlayerSelectElements[i].children
-        for (let j = 0; j < options.length; j++) {
+        const select = byId(`map-target-selection-player-${opponentNumbers[i]}-select`)
+        for (let j = 0; j < select.children.length; j++) {
             const optionPlayer = currentTeam[`player${j + 1}`]
             if (!optionPlayer) continue
-            options[j].textContent = optionPlayer.playerName
-            options[j].value = playerNumberOffset + j + 1
+            select.children[j].textContent = optionPlayer.playerName
+            select.children[j].value = ownNumbers[j]
         }
-    }
+    })
 
     refreshClassSelects()
     updateClassPanel(side)
@@ -789,19 +684,12 @@ function changeTeams(teamName, side) {
 
 // Team HP Button
 const teamHpButtonEl = document.getElementById("team-hp-button")
-const teamHpIOnputNumberElements = [
-    document.getElementById("team-hp-input-number-player-1"),
-    document.getElementById("team-hp-input-number-player-2"),
-    document.getElementById("team-hp-input-number-player-3"),
-    document.getElementById("team-hp-input-number-player-4"),
-    document.getElementById("team-hp-input-number-player-5"),
-    document.getElementById("team-hp-input-number-player-6")
-]
+const teamHpInputEls = PLAYER_NUMBERS.map(n => document.getElementById(`team-hp-input-number-player-${n}`))
 
 function setHpButton() {
-    for (let i = 0; i < teamHpIOnputNumberElements.length; i++) {
+    for (let i = 0; i < teamHpInputEls.length; i++) {
         const player = playerData[`player${i + 1}`]
-        player.currentMaxHp = Number(teamHpIOnputNumberElements[i].value)
+        player.currentMaxHp = Number(teamHpInputEls[i].value)
         if (player.currentMaxHp > 0) {
             player.currentDeadRounds = 0
             player.reviveHp = null
@@ -811,8 +699,8 @@ function setHpButton() {
 
 // Map Target Button
 const mapTargetButtonEl = document.getElementById("map-target-button")
-const targetSelectElements = [1, 2, 3, 4, 5, 6].map(i =>
-    document.getElementById(`map-target-selection-player-${i}-select`)
+const targetSelectElements = PLAYER_NUMBERS.map(n =>
+    document.getElementById(`map-target-selection-player-${n}-select`)
 )
 
 function setTargetButton() {
@@ -836,6 +724,8 @@ function syncTargetSelects() {
 
 // IPC State
 let previousIpcState, currentIpcState
+const isMapInProgress = ipcState =>
+    ipcState === IPC_STATE.WAITING_FOR_CLIENTS || ipcState === IPC_STATE.PLAYING || ipcState === IPC_STATE.RANKING
 let checkedWinner = false
 
 // Mappool Map Found
@@ -879,27 +769,27 @@ socket.onmessage = event => {
         currentIpcState = socketData.tourney.ipcState
 
         // Calculate scores
-        if (currentIpcState === 2 || currentIpcState === 3 || currentIpcState === 4) {
+        if (isMapInProgress(currentIpcState)) {
             checkedWinner = false
             updatePlayerData(playerData, socketData)
 
             if (autoObsButtonEl.checked) {
-                changeScene("Gameplay")
+                changeScene(OBS_SCENES.GAMEPLAY)
             }
         }
 
         // Reset information
-        if (currentIpcState === 1 && previousIpcState === 4 && !checkedWinner) {
+        if (currentIpcState === IPC_STATE.IDLE && previousIpcState === IPC_STATE.RANKING && !checkedWinner) {
             checkedWinner = true
 
             if (toggleHpEl.checked) {
                 applyDamage(playerData)
 
                 if (autoObsButtonEl.checked) {
-                    if (isTeamEliminated(["player1", "player2", "player3"]) || isTeamEliminated(["player4", "player5", "player6"])) {
-                        changeScene("Winner")
+                    if (SIDES.some(isTeamEliminated)) {
+                        changeScene(OBS_SCENES.WINNER)
                     } else {
-                        changeScene("Mappool")
+                        changeScene(OBS_SCENES.MAPPOOL)
                     }
                 }
             } else {
@@ -909,16 +799,15 @@ socket.onmessage = event => {
         }
 
         // Handles aborting map
-        if (currentIpcState === 1 && (previousIpcState === 2 || previousIpcState === 3)) {
+        if (currentIpcState === IPC_STATE.IDLE && (previousIpcState === IPC_STATE.WAITING_FOR_CLIENTS || previousIpcState === IPC_STATE.PLAYING)) {
             clearScores()
         }
     }
 
     // Keep scores updating live while the map is being played
-    if (currentIpcState === 2 || currentIpcState === 3 || currentIpcState === 4) {
+    if (isMapInProgress(currentIpcState)) {
         updatePlayerData(playerData, socketData)
     }
-
 
     if (socketData.beatmap && (currentId !== socketData.beatmap.id || currentChecksum !== socketData.beatmap.checksum)) {
         currentId = socketData.beatmap.id
@@ -966,8 +855,8 @@ function clearScores() {
 }
 
 // A team is out when none of its players have any HP left
-function isTeamEliminated(playerKeys) {
-    return playerKeys.every(key => playerData[key].currentMaxHp <= 0)
+function isTeamEliminated(side) {
+    return !playersOf(side).some(isAlive)
 }
 
 // Apply damage
@@ -981,21 +870,21 @@ function applyDamage(playerData) {
         player.currentMaxHp = Math.max(0, Math.round(player.currentMaxHp - player.currentScoreAgainst))
 
         if (wasAlive && playerKey === duelLoser) {
-            // Lost the duel: dies, returns at 50% of round max HP
+            // Lost the duel: dies, returns at a share of the round max HP
             // (checked first so a duel loser who also hits 0 from damage still gets 50%)
             player.currentMaxHp = 0
-            player.currentDeadRounds = 2
-            player.reviveHp = Math.round(maxHp * 0.5)
+            player.currentDeadRounds = constants.DEAD_ROUNDS
+            player.reviveHp = Math.round(maxHp * constants.DUEL_LOSER_REVIVE_HP_RATIO)
         } else if (wasAlive && player.currentMaxHp === 0) {
-            // Died to damage: returns at 30% of round max HP
-            player.currentDeadRounds = 2
+            // Died to damage: returns at a share of the round max HP
+            player.currentDeadRounds = constants.DEAD_ROUNDS
             player.reviveHp = null
         } else if (player.currentDeadRounds > 0) {
             player.currentDeadRounds--
 
             if (player.currentDeadRounds === 0) {
-                // Duel losers return at 50%, everyone else at 30% of round max HP
-                player.currentMaxHp = player.reviveHp ?? Math.round(maxHp * 0.3)
+                // Duel losers return at the duel HP share, everyone else at the normal one
+                player.currentMaxHp = player.reviveHp ?? Math.round(maxHp * constants.REVIVE_HP_RATIO)
                 player.reviveHp = null
             }
         }
@@ -1005,7 +894,7 @@ function applyDamage(playerData) {
         player.effectiveScore = 0
         player.currentScoreAgainst = 0
 
-        teamHpIOnputNumberElements[i].value = player.currentMaxHp
+        teamHpInputEls[i].value = player.currentMaxHp
     })
 
     resetMapAbilities()
@@ -1016,7 +905,7 @@ function applyDamage(playerData) {
     mapsPlayed++
     refreshDamageMultiplierUi()
 
-    for (const n of [1, 2, 3, 4, 5, 6]) {
+    for (const n of PLAYER_NUMBERS) {
         if (classOf(n) !== "human") continue
         const human = abilities.human[n]
         if (human.lucky) continue
@@ -1061,8 +950,8 @@ setInterval(() => {
         abilities: { human: abilities.human },
     }
 
-    localStorage.setItem("data", JSON.stringify(savedInfo))
-}, 100)
+    localStorage.setItem(constants.STORAGE_KEY, JSON.stringify(savedInfo))
+}, constants.SAVE_INTERVAL_MS)
 
 
 function updatePlayerData(playerData, data) {
@@ -1133,7 +1022,7 @@ function setStandardDamage() {
 
 function setDemigodDamage() {
     const { player: demigodNumber, mode, target } = abilities.demigod
-    const opponentNumbers = sideOf(demigodNumber) === "red" ? [4, 5, 6] : [1, 2, 3]
+    const opponentNumbers = playersOf(otherSide(sideOf(demigodNumber)))
 
     const demigodScore = playerData[`player${demigodNumber}`].effectiveScore
     const opponentTotal = opponentNumbers.reduce(
@@ -1176,10 +1065,8 @@ function setDemigodDamage() {
 
 // OBS stuff
 const obs = typeof OBSWebSocket === "undefined" ? null : new OBSWebSocket()
-const OBS_ADDRESS = 'ws://127.0.0.1:4455'
 const sceneButtonsEl = document.getElementById('scene-buttons')
 
-const OBS_RECONNECT_MS = 3000
 let obsConnected = false
 let obsReconnectTimer = null
 
@@ -1188,18 +1075,18 @@ function scheduleObsReconnect() {
     obsReconnectTimer = setTimeout(() => {
         obsReconnectTimer = null
         connectObs()
-    }, OBS_RECONNECT_MS)
+    }, constants.OBS_RECONNECT_MS)
 }
 
 async function connectObs() {
     try {
-        await obs.connect(OBS_ADDRESS)
+        await obs.connect(constants.OBS_ADDRESS)
         obsConnected = true
         console.log("Connected to OBS")
         refreshScenes()
     } catch {
         obsConnected = false
-        console.warn(`OBS connection failed, retrying in ${OBS_RECONNECT_MS / 1000}s`)
+        console.warn(`OBS connection failed, retrying in ${constants.OBS_RECONNECT_MS / 1000}s`)
         scheduleObsReconnect()
     }
 }

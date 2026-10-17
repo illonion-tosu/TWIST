@@ -1,3 +1,5 @@
+import { constants } from "../js/constants.js"
+
 // Log Tosu Socket Events
 function registerSocketEventLoggers(socket) {
     socket.onopen = () => { console.log("Successfully Connected"); };
@@ -6,7 +8,7 @@ function registerSocketEventLoggers(socket) {
 }
 
 // Create Tosu Web Socket
-export function createTosuWsSocket(path = "/websocket/v2") {
+export function createTosuWsSocket(path = constants.TOSU_WS_PATH) {
     const protocol = location.protocol === "https:" ? "wss://" : "ws://";
     const socket = new ReconnectingWebSocket(protocol + location.host + path);
     registerSocketEventLoggers(socket);

@@ -1,137 +1,81 @@
+import { constants } from "../_shared/js/constants.js"
 import { deepEqual, readSavedData, startPolling } from "../_shared/core/utils.js"
+import { getEffectiveHp, getHpBarWidth, getTeamHp } from "../_shared/core/match.js"
+import { createCounter } from "../_shared/core/overlay.js"
 
-// Team Names
-const teamNameLeftEl = document.getElementById("team-name-left")
-const teamNameRightEl = document.getElementById("team-name-right")
-let currentTeamNameLeft, currentTeamNameRight
+// Team names + scores
+const teamEls = {
+    red: {
+        name: document.getElementById("team-name-left"),
+        score: document.getElementById("team-score-left"),
+    },
+    blue: {
+        name: document.getElementById("team-name-right"),
+        score: document.getElementById("team-score-right"),
+    },
+}
+const teamCounters = {
+    red: createCounter(teamEls.red.score),
+    blue: createCounter(teamEls.blue.score),
+}
+const currentTeamNames = { red: undefined, blue: undefined }
 
-// Player Names
-const currentPlayers = {
-    player1: {
-        currentName: "",
-        playerElement: document.getElementById("player-1-name"),
-        scoreElement: document.getElementById("player-1-score"),
-        hpBarElement: document.getElementById("player-1-hp-bar")
-    },
-    player2: {
-        currentName: "",
-        playerElement: document.getElementById("player-2-name"),
-        scoreElement: document.getElementById("player-2-score"),
-        hpBarElement: document.getElementById("player-2-hp-bar")
-    },
-    player3: {
-        currentName: "",
-        playerElement: document.getElementById("player-3-name"),
-        scoreElement: document.getElementById("player-3-score"),
-        hpBarElement: document.getElementById("player-3-hp-bar")
-    },
-    player4: {
-        currentName: "",
-        playerElement: document.getElementById("player-4-name"),
-        scoreElement: document.getElementById("player-4-score"),
-        hpBarElement: document.getElementById("player-4-hp-bar")
-    },
-    player5: {
-        currentName: "",
-        playerElement: document.getElementById("player-5-name"),
-        scoreElement: document.getElementById("player-5-score"),
-        hpBarElement: document.getElementById("player-5-hp-bar")
-    },
-    player6: {
-        currentName: "",
-        playerElement: document.getElementById("player-6-name"),
-        scoreElement: document.getElementById("player-6-score"),
-        hpBarElement: document.getElementById("player-6-hp-bar")
+// Players: name, score and HP bar elements + their score counter
+const players = {}
+for (const n of constants.PLAYER_NUMBERS) {
+    const scoreElement = document.getElementById(`player-${n}-score`)
+    players[`player${n}`] = {
+        currentName: undefined,
+        nameElement: document.getElementById(`player-${n}-name`),
+        scoreElement,
+        hpBarElement: document.getElementById(`player-${n}-hp-bar`),
+        counter: createCounter(scoreElement),
     }
 }
 
-// Scores
-const teamScoreLeftEl = document.getElementById("team-score-left")
-const teamScoreRightEl = document.getElementById("team-score-right")
+let previousMaxHp
+let previousPlayerData
 
-// Player Scores
-
-// Animation
-const countUpOptions = { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: "" }
-const animation = {
-    hpLeft: new CountUp(teamScoreLeftEl, 0, 0, 0, 0.2, countUpOptions),
-    hpRight: new CountUp(teamScoreRightEl, 0, 0, 0, 0.2, countUpOptions),
-    player1: new CountUp(currentPlayers.player1.scoreElement, 0, 0, 0, 0.2, countUpOptions),
-    player2: new CountUp(currentPlayers.player2.scoreElement, 0, 0, 0, 0.2, countUpOptions),
-    player3: new CountUp(currentPlayers.player3.scoreElement, 0, 0, 0, 0.2, countUpOptions),
-    player4: new CountUp(currentPlayers.player4.scoreElement, 0, 0, 0, 0.2, countUpOptions),
-    player5: new CountUp(currentPlayers.player5.scoreElement, 0, 0, 0, 0.2, countUpOptions),
-    player6: new CountUp(currentPlayers.player6.scoreElement, 0, 0, 0, 0.2, countUpOptions),
-}
-let previousMaxHp, currentMaxHp
-let previousPlayerData, currentPlayerData
-let setHpInfo = false
-
-// Effective HP for a player: max HP minus incoming damage, floored at 0
-const getEffectiveHp = player => Math.max(0, Math.round(player.currentMaxHp - player.currentScoreAgainst))
-
-// Get Data
 function getData() {
     const data = readSavedData()
-    console.log(data)
-
     if (!data || !data.tosuData || !data.playerData) return
 
     // Team names
-    if (currentTeamNameLeft !== data.teamName.redTeamName) {
-        currentTeamNameLeft = data.teamName.redTeamName
-        teamNameLeftEl.textContent = currentTeamNameLeft
-    }
-    if (currentTeamNameRight !== data.teamName.blueTeamName) {
-        currentTeamNameRight = data.teamName.blueTeamName
-        teamNameRightEl.textContent = currentTeamNameRight
-    }
-
-    // Max HP
-    currentMaxHp = data.maxHp
-    setHpInfo = false
-    if (previousMaxHp !== currentMaxHp) {
-        previousMaxHp = currentMaxHp
-        setHpInfo = true
-    }
-    
-    currentPlayerData = data.playerData
-    if (!deepEqual(currentPlayerData, previousPlayerData)) {
-        previousPlayerData = currentPlayerData
-        setHpInfo = true
+    const teamNames = { red: data.teamName.redTeamName, blue: data.teamName.blueTeamName }
+    for (const side of constants.SIDES) {
+        if (currentTeamNames[side] !== teamNames[side]) {
+            currentTeamNames[side] = teamNames[side]
+            teamEls[side].name.textContent = teamNames[side]
+        }
     }
 
-    // Team sscore
-    if (setHpInfo) {
-        // Left HP
-        const currentLeftHp =
-            getEffectiveHp(currentPlayerData.player1) +
-            getEffectiveHp(currentPlayerData.player2) +
-            getEffectiveHp(currentPlayerData.player3)
-        animation.hpLeft.update(currentLeftHp)
+    // Only redo the team totals when the max HP or any player changed
+    const maxHp = data.maxHp
+    const playerData = data.playerData
+    if (previousMaxHp !== maxHp || !deepEqual(playerData, previousPlayerData)) {
+        previousMaxHp = maxHp
+        previousPlayerData = playerData
 
-        // Right HP
-        const currentRightHp =
-            getEffectiveHp(currentPlayerData.player4) +
-            getEffectiveHp(currentPlayerData.player5) +
-            getEffectiveHp(currentPlayerData.player6)
-        animation.hpRight.update(currentRightHp)
+        for (const side of constants.SIDES) {
+            teamCounters[side].update(getTeamHp(playerData, side))
+        }
     }
 
-    for (const key of Object.keys(currentPlayerData)) {
-        // Player Names
-        if (currentPlayers[key].playerName !== currentPlayerData[key].playerName) {
-            currentPlayers[key].playerName = currentPlayerData[key].playerName 
-            currentPlayers[key].playerElement.textContent = currentPlayers[key].playerName
+    for (const [key, player] of Object.entries(playerData)) {
+        const els = players[key]
+        if (!els) continue
+
+        // Player name
+        if (els.currentName !== player.playerName) {
+            els.currentName = player.playerName
+            els.nameElement.textContent = player.playerName
         }
 
-        // Player scores
-        const effectiveHp = getEffectiveHp(currentPlayerData[key])
-        animation[key].update(effectiveHp)
-
-        // Player Score Bars
-        currentPlayers[key].hpBarElement.style.width = `${effectiveHp / currentMaxHp * 636}px`
+        // Player score + HP bar
+        const effectiveHp = getEffectiveHp(player)
+        els.counter.update(effectiveHp)
+        els.hpBarElement.style.width = `${getHpBarWidth(effectiveHp, maxHp, constants.PLAYER_HP_BAR_MAX_WIDTH)}px`
     }
 }
 
-startPolling(getData, 100)
+startPolling(getData)

@@ -1,3 +1,5 @@
+import { constants } from "../_shared/js/constants.js"
+
 // DOM Elements
 const elements = {
     countdown: {
@@ -42,22 +44,17 @@ function updateDisplay(totalSeconds) {
 }
 
 /**
- * Displays the specified error message and hides the other.
+ * Shows one timer's error message and hides the other.
+ * Call with no argument to hide both.
  *
- * @param {HTMLElement} errorEl - The error element to display.
+ * @param {HTMLElement} [errorEl] - The error element to display.
  */
 function showError(errorEl) {
     elements.countdown.errorMessage.style.display = errorEl === elements.countdown.errorMessage ? "block" : "none"
     elements.utc.errorMessage.style.display = errorEl === elements.utc.errorMessage ? "block" : "none"
 }
 
-/**
- * Hides all timer error messages.
- */
-function hideErrors() {
-    elements.countdown.errorMessage.style.display = "none"
-    elements.utc.errorMessage.style.display = "none"
-}
+const hideErrors = () => showError()
 
 // Countdown Timer
 class CountdownTimer {
@@ -163,7 +160,7 @@ class UTCTimer {
         this.targetTime = utcTime.getTime()
 
         // Already past today: count down to the same time tomorrow
-        if (this.targetTime <= Date.now()) this.targetTime += 24 * 60 * 60 * 1000
+        if (this.targetTime <= Date.now()) this.targetTime += constants.MS_PER_DAY
 
         hideErrors()
         this.active = true
@@ -222,4 +219,4 @@ window.startUTCTimer = () => {
 setInterval(() => {
     countdownTimer.tick()
     utcTimer.tick()
-}, 1000)
+}, constants.COUNTDOWN_TICK_MS)
