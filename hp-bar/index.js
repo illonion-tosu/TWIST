@@ -5,46 +5,61 @@ const teamNameLeftEl = document.getElementById("team-name-left")
 const teamNameRightEl = document.getElementById("team-name-right")
 let currentTeamNameLeft, currentTeamNameRight
 
-// Scores
-const teamScoreLeftEl = document.getElementById("team-score-left")
-const teamScoreRightEl = document.getElementById("team-score-right")
-
-const countUpOptions = { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: "" }
-const animation = {
-    hpLeft: new CountUp(teamScoreLeftEl, 0, 0, 0, 0.2, countUpOptions),
-    hpRight: new CountUp(teamScoreRightEl, 0, 0, 0, 0.2, countUpOptions),
-}
-let previousMaxHp, currentMaxHp
-let previousPlayerData, currentPlayerData
-let setHpInfo = false
-
 // Player Names
 const currentPlayers = {
     player1: {
         currentName: "",
-        element: document.getElementById("player-1-name")
+        playerElement: document.getElementById("player-1-name"),
+        scoreElement: document.getElementById("player-1-score")
     },
     player2: {
         currentName: "",
-        element: document.getElementById("player-2-name")
+        playerElement: document.getElementById("player-2-name"),
+        scoreElement: document.getElementById("player-2-score")
     },
     player3: {
         currentName: "",
-        element: document.getElementById("player-3-name")
+        playerElement: document.getElementById("player-3-name"),
+        scoreElement: document.getElementById("player-3-score")
     },
     player4: {
         currentName: "",
-        element: document.getElementById("player-4-name")
+        playerElement: document.getElementById("player-4-name"),
+        scoreElement: document.getElementById("player-4-score")
     },
     player5: {
         currentName: "",
-        element: document.getElementById("player-5-name")
+        playerElement: document.getElementById("player-5-name"),
+        scoreElement: document.getElementById("player-5-score")
     },
     player6: {
         currentName: "",
-        element: document.getElementById("player-6-name")
+        playerElement: document.getElementById("player-6-name"),
+        scoreElement: document.getElementById("player-6-score")
     }
 }
+
+// Scores
+const teamScoreLeftEl = document.getElementById("team-score-left")
+const teamScoreRightEl = document.getElementById("team-score-right")
+
+// Player Scores
+
+// Animation
+const countUpOptions = { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: "" }
+const animation = {
+    hpLeft: new CountUp(teamScoreLeftEl, 0, 0, 0, 0.2, countUpOptions),
+    hpRight: new CountUp(teamScoreRightEl, 0, 0, 0, 0.2, countUpOptions),
+    player1: new CountUp(currentPlayers.player1.scoreElement, 0, 0, 0, 0.2, countUpOptions),
+    player2: new CountUp(currentPlayers.player2.scoreElement, 0, 0, 0, 0.2, countUpOptions),
+    player3: new CountUp(currentPlayers.player3.scoreElement, 0, 0, 0, 0.2, countUpOptions),
+    player4: new CountUp(currentPlayers.player4.scoreElement, 0, 0, 0, 0.2, countUpOptions),
+    player5: new CountUp(currentPlayers.player5.scoreElement, 0, 0, 0, 0.2, countUpOptions),
+    player6: new CountUp(currentPlayers.player6.scoreElement, 0, 0, 0, 0.2, countUpOptions),
+}
+let previousMaxHp, currentMaxHp
+let previousPlayerData, currentPlayerData
+let setHpInfo = false
 
 // Get Data
 function getData() {
@@ -79,9 +94,6 @@ function getData() {
 
     // Team sscore
     if (setHpInfo) {
-        // Effective HP for a player: max HP minus incoming damage, floored at 0
-        const effectiveHp = player => Math.max(0, Math.round(player.currentMaxHp - player.currentScoreAgainst))
-
         // Left HP
         const currentLeftHp =
             effectiveHp(currentPlayerData.player1) +
@@ -97,13 +109,21 @@ function getData() {
         animation.hpRight.update(currentRightHp)
     }
 
-    // Player Names
-    for (const key of Object.keys(data.playerData)) {
-        if (currentPlayers[key].playerName !== data.playerData[key].playerName) {
-            currentPlayers[key].playerName = data.playerData[key].playerName 
-            currentPlayers[key].element.textContent = currentPlayers[key].playerName
+    for (const key of Object.keys(currentPlayerData)) {
+        // Player Names
+        if (currentPlayers[key].playerName !== currentPlayerData[key].playerName) {
+            currentPlayers[key].playerName = currentPlayerData[key].playerName 
+            currentPlayers[key].playerElement.textContent = currentPlayers[key].playerName
         }
+
+        // Player scores
+        animation[key].update(effectiveHp(currentPlayerData[key]))
+
+        // Player Score Bars
     }
 }
+
+// Effective HP for a player: max HP minus incoming damage, floored at 0
+const effectiveHp = player => Math.max(0, Math.round(player.currentMaxHp - player.currentScoreAgainst))
 
 startPolling(getData, 100)
