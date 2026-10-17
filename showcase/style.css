@@ -1,19 +1,15 @@
 :root {
-    --page-background: url("static/background.png");
-
-    /* Canvas */
     --greenscreen-height: 842px;
-
-    /* Now Playing */
     --now-playing-width: 977px;
     --now-playing-height: 177px;
-
-    /* Colours */
     --green-screen: #0f0;
     --now-playing-mod: #3b7cc4;
     --white: #fff;
     --black: #000;
 }
+
+/* Whole Page */
+.main { background-image: url("static/background.png"); }
 
 /* White Strip */
 .white-strip {

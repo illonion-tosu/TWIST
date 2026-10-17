@@ -1,7 +1,0 @@
-/* Shared page background rule.
- * Each overlay sets --page-background in its own style.css so the image URL
- * remains relative to that page's stylesheet.
- */
-.main {
-    background-image: var(--page-background);
-}

@@ -1,10 +1,12 @@
 :root {
-    --page-background: url("static/background.png");
     --greenscreen-top-y: 170px;
     --greenscreen-width: 480px;
     --greenscreen-height: 360px;
     --team-score-container-x: 941px;
 }
+
+/* Whole Page */
+.main { background-image: url("static/background.png"); }
 
 /* Green Screens */
 .greenscreen {

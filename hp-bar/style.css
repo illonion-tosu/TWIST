@@ -1,10 +1,12 @@
 :root {
-    --page-background: url("static/background.png");
     --team-name-container-x: 245px;
     --hp-bar-container-x: 10px;
     --hp-bar-container-skew: 5deg;
     --hp-bar-x: 7px;
 }
+
+/* Whole Page */
+.main { background-image: url("static/background.png"); }
 
 /* Team Name */
 .svg-container { position: absolute; }
