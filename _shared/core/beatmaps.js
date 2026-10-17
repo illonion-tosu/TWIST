@@ -1,8 +1,10 @@
+import { constants } from "../js/constants.js"
+
 let allBeatmaps = []
 
 // Load beatmaps
 export async function loadBeatmaps() {
-    const response = await axios.get("../_data/beatmaps.json")
+    const response = await axios.get(constants.BEATMAPS_PATH)
     allBeatmaps = response.data
     return allBeatmaps
 }
@@ -16,7 +18,7 @@ let showcaseBeatmaps = []
 
 // Load showcase beatmaps
 export async function loadShowcaseBeatmaps() {
-    const response = await axios.get("../_data/showcase-beatmaps.json")
+    const response = await axios.get(constants.SHOWCASE_BEATMAPS_PATH)
     showcaseBeatmaps = response.data
     return showcaseBeatmaps
 }

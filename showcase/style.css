@@ -1,4 +1,5 @@
 :root {
+    --page-background: url("static/background.png");
     /* Canvas */
     --greenscreen-height: 842px;
 
@@ -12,9 +13,6 @@
     --white: #fff;
     --black: #000;
 }
-
-/* Whole Page */
-.main { background-image: url("static/background.png"); }
 
 /* White Strip */
 .white-strip {

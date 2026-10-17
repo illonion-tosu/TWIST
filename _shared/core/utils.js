@@ -1,3 +1,5 @@
+import { constants } from "../js/constants.js"
+
 // Get Cookie
 export function getCookie(cname) {
     let name = cname + "="
@@ -18,22 +20,28 @@ export function setLengthDisplay(seconds) {
     return `${minuteCount.toString().padStart(2, "0")}:${secondCount.toString().padStart(2, "0")}`
 }
 
+// Capitalise the first letter, lowercase the rest
+export const capitalise = text => text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
+
 // Sleep
 export const delay = async time => new Promise(resolve => setTimeout(resolve, time))
 
-// Get Mods
+// Apply HR / DT to a map's stats (the AR / OD formulas below are osu!'s own)
 export function getModDetails(cs, ar, od, bpm, len, mod) {
+    const cap = value => Math.min(Math.round(value * 10) / 10, constants.MOD_STAT_CAP)
+
     if (mod.includes("HR")) {
-        cs = Math.min(Math.round(Number(cs) * 1.3 * 10) / 10, 10)
-        ar = Math.min(Math.round(Number(ar) * 1.4 * 10) / 10, 10)
-        od = Math.min(Math.round(Number(od) * 1.4 * 10) / 10, 10)
+        cs = cap(Number(cs) * constants.MOD_HR_CS_MULTIPLIER)
+        ar = cap(Number(ar) * constants.MOD_HR_AR_OD_MULTIPLIER)
+        od = cap(Number(od) * constants.MOD_HR_AR_OD_MULTIPLIER)
     }
     if (mod.includes("DT")) {
+        // The "* 2 / 3" below is osu!'s time-scale for DT (1 / 1.5). Kept literal so the rounding stays identical.
         if (ar > 5) ar = Math.round((((1200 - (( 1200 - (ar - 5) * 150) * 2 / 3)) / 150) + 5) * 10) / 10
         else ar = Math.round((1800 - ((1800 - ar * 120) * 2 / 3)) / 120 * 10) / 10
         od = Math.round((79.5 - (( 79.5 - 6 * od) * 2 / 3)) / 6 * 10) / 10
-        bpm = Math.round(bpm * 1.5)
-        len = Math.round(len / 1.5)
+        bpm = Math.round(bpm * constants.MOD_DT_SPEED_MULTIPLIER)
+        len = Math.round(len / constants.MOD_DT_SPEED_MULTIPLIER)
     }
 
     return { cs, ar, od, bpm, len, mod }
@@ -42,7 +50,7 @@ export function getModDetails(cs, ar, od, bpm, len, mod) {
 // Read what the dashboard saved to localStorage (null until the dashboard has written something)
 export function readSavedData() {
     try {
-        const raw = localStorage.getItem("data")
+        const raw = localStorage.getItem(constants.STORAGE_KEY)
         return raw ? JSON.parse(raw) : null
     } catch (error) {
         console.error("Could not read dashboard data:", error)
@@ -52,7 +60,7 @@ export function readSavedData() {
 
 // Run callback every `interval` ms, aligned to the clock.
 // An error in one tick is logged instead of killing the loop.
-export function startPolling(callback, interval = 100) {
+export function startPolling(callback, interval = constants.POLL_INTERVAL_MS) {
     const tick = () => {
         try {
             callback()
