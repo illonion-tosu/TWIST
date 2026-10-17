@@ -18,6 +18,34 @@ let previousMaxHp, currentMaxHp
 let previousPlayerData, currentPlayerData
 let setHpInfo = false
 
+// Player Names
+const currentPlayers = {
+    player1: {
+        currentName: "",
+        element: document.getElementById("player-1-name")
+    },
+    player2: {
+        currentName: "",
+        element: document.getElementById("player-2-name")
+    },
+    player3: {
+        currentName: "",
+        element: document.getElementById("player-3-name")
+    },
+    player4: {
+        currentName: "",
+        element: document.getElementById("player-4-name")
+    },
+    player5: {
+        currentName: "",
+        element: document.getElementById("player-5-name")
+    },
+    player6: {
+        currentName: "",
+        element: document.getElementById("player-6-name")
+    }
+}
+
 // Get Data
 function getData() {
     const data = readSavedData()
@@ -67,6 +95,14 @@ function getData() {
             effectiveHp(currentPlayerData.player5) +
             effectiveHp(currentPlayerData.player6)
         animation.hpRight.update(currentRightHp)
+    }
+
+    // Player Names
+    for (const key of Object.keys(data.playerData)) {
+        if (currentPlayers[key].playerName !== data.playerData[key].playerName) {
+            currentPlayers[key].playerName = data.playerData[key].playerName 
+            currentPlayers[key].element.textContent = currentPlayers[key].playerName
+        }
     }
 }
 
