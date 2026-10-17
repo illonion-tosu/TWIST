@@ -104,3 +104,16 @@
 .timer-error-message {
     display: none;
 }
+
+/* Chat Text */
+.chat-text {
+    position: absolute;
+    bottom: 298px;
+    right: 337px;
+}
+
+.chat-rectangle {
+    position: absolute;
+    bottom: 11px;
+    right: 19px;
+}
