@@ -9,7 +9,7 @@ export async function loadTeams() {
     return allTeams
 }
 
-// Find team from name
+// Find team from its name
 export function findTeam(teamName) {
     return allTeams.find(t => t.teamName === teamName)
 }

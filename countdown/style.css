@@ -1,5 +1,6 @@
-/* Whole Page */
-.main { background-image: url("static/background.png"); }
+:root {
+    --page-background: url("static/background.png");
+}
 
 /* Timer (digits are updated from index.js via .timer-minutes / .timer-seconds) */
 .timer {

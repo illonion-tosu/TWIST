@@ -1,9 +1,7 @@
 :root {
+    --page-background: url("static/background.png");
     --winner-gap: 55px;
 }
-
-/* Whole Page */
-.main { background-image: url("static/background.png" )}
 
 /* Round Winner */
 .round-winner-container {
