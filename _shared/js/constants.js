@@ -1,63 +1,50 @@
 /**
- * Every tweakable value used by the overlays and the dashboard.
- *
- * Usage:
- *   import { constants } from "../_shared/js/constants.js"
- *   constants.DEFAULT_MAX_HP
- *
- * Constants following the format of
- * SCENE_ELEMENT_TYPE_INFO
+ * Shared constants for the tournament overlays.
  */
 export const constants = Object.freeze({
-    // Players & teams
+    // Players and teams
     SIDES: ["red", "blue"],
     PLAYER_NUMBERS: [1, 2, 3, 4, 5, 6],
     TEAM_PLAYER_NUMBERS: { red: [1, 2, 3], blue: [4, 5, 6] },
     DEFAULT_PLAYER_ID: 123456,
-    // Who each player (1-6) targets before the dashboard says otherwise
     DEFAULT_TARGETS: [6, 5, 4, 3, 2, 1],
 
-    // HP & damage
+    // Mappool pickers
+    DEFAULT_NEXT_PICKER: "red",
+    DEFAULT_CURRENT_PICKER: "blue",
+
+    // HP and damage
     DEFAULT_MAX_HP: 300000,
-    // Starting HP per round. Every alias is matched against the lowercase round name.
     ROUND_MAX_HP: [
-        { names: ["quarterfinals", "quarter finals", "qf"], maxHp: 400000 },
-        { names: ["semifinals", "semi finals", "sf"], maxHp: 600000 },
-        { names: ["finals", "grand finals", "f", "gf"], maxHp: 800000 },
+        { names: ["quarterfinals", "quarter finals", "qf"], maxHp: 300000 },
+        { names: ["semifinals", "semi finals", "sf"], maxHp: 400000 },
+        { names: ["finals", "grand finals", "f", "gf"], maxHp: 650000 },
     ],
-    // Rounds a player stays dead for after reaching 0 HP
     DEAD_ROUNDS: 2,
-    // Revive HP as a share of the round's max HP
-    REVIVE_HP_RATIO: 0.3,
-    DUEL_LOSER_REVIVE_HP_RATIO: 0.5,
-    // Damage multiplier: +DAMAGE_MULTIPLIER_STEP after every MAPS_PER_MULTIPLIER_STEP maps
-    DAMAGE_MULTIPLIER_STEP: 0.5,
-    MAPS_PER_MULTIPLIER_STEP: 2,
+    REVIVE_HP_RATIO: 0.1,
+
+    DAMAGE_MULTIPLIER_STEP: 1,
+    MAPS_PER_MULTIPLIER_STEP: 1,
 
     // Class abilities
     CLASSES_WITH_CONTROLS: ["human", "demigod", "soulweaver"],
-    // Demigod multiplier, keyed by number of opponents alive
-    DEMIGOD_MULTIPLIERS: { 3: 4, 2: 3, 1: 2 },
-    SOULWEAVER_CHALLENGED_MULTIPLIER: 1.4,
-    // Human's Lucky!: first number is worth LUCKY_BASE_BONUS_PERCENT,
-    // every extra number takes off LUCKY_PENALTY_PERCENT, never below LUCKY_MIN_BONUS_PERCENT
-    LUCKY_BASE_BONUS_PERCENT: 77.7,
-    LUCKY_PENALTY_PERCENT: 7,
-    LUCKY_MIN_BONUS_PERCENT: 7.7,
+    DEMIGOD_MULTIPLIERS: { 3: 2.5, 2: 2, 1: 1.5 },
+    SOULWEAVER_CHALLENGER_MULTIPLIER: 1.1,
+    SOULWEAVER_CHALLENGED_MULTIPLIER: 0.9,
+    SOULWEAVER_LOSER_HP_LOSS_RATIO: 0.75,
+    HUMAN_HEAL_AMOUNT: 30000,
 
     // tosu
     TOSU_WS_PATH: "/websocket/v2",
-    // tourney.ipcState values
     IPC_STATE: { IDLE: 1, WAITING_FOR_CLIENTS: 2, PLAYING: 3, RANKING: 4 },
-    // tosu needs a moment after a map change before the converted stats are correct
     STATS_DELAY_MS: 250,
 
-    // Saved state & polling
+    // Saved state and polling
     STORAGE_KEY: "data",
     POLL_INTERVAL_MS: 100,
     SAVE_INTERVAL_MS: 100,
 
-    // Data files (relative to a page folder)
+    // Data files
     BEATMAPS_PATH: "../_data/beatmaps.json",
     SHOWCASE_BEATMAPS_PATH: "../_data/showcase-beatmaps.json",
     TEAMS_PATH: "../_data/teams.json",
@@ -75,10 +62,8 @@ export const constants = Object.freeze({
 
     // Overlay layout
     GAMEPLAY_TEAM_NAME_MAX_WIDTH: 550,
-    // Width in px of a full HP bar
-    TEAM_HP_BAR_MAX_WIDTH: 238, // main + mappool (a team's 3 players)
-    PLAYER_HP_BAR_MAX_WIDTH: 636, // hp-bar (a single player)
-    // CountUp animation used for every score / HP number
+    TEAM_HP_BAR_MAX_WIDTH: 238,
+    PLAYER_HP_BAR_MAX_WIDTH: 636,
     COUNT_UP_DURATION: 0.2,
     COUNT_UP_OPTIONS: { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: "" },
 
@@ -88,10 +73,7 @@ export const constants = Object.freeze({
     SHOWCASE_ROUND_NAME_LINE_YS: { 1: [62.5], 2: [45, 80] },
     TWITCH_CHANNEL: "purlstournaments",
     TWITCH_IGNORED_USERS: ["nightbot"],
-    // Don't let the overlay grow forever during a long stream
     MAX_CHAT_MESSAGES: 100,
-    // A random chat colour is accepted when r+g+b <= CHAT_COLOUR_MAX_BRIGHTNESS
-    // and g <= (r+b) * CHAT_COLOUR_MAX_GREEN_RATIO
     CHAT_COLOUR_MAX_BRIGHTNESS: 384,
     CHAT_COLOUR_MAX_GREEN_RATIO: 0.8,
 
