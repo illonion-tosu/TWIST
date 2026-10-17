@@ -1,11 +1,7 @@
-import { loadBeatmaps } from "../_shared/core/beatmaps.js"
-import { getRoundMaxHp, otherSide, playersOf, sideOf } from "../_shared/core/match.js"
-import { findTeam, loadTeams } from "../_shared/core/teams.js"
-import { capitalise } from "../_shared/core/utils.js"
-import { createTosuWsSocket } from "../_shared/core/websocket.js"
 import { constants } from "../_shared/js/constants.js"
-
-const { IPC_STATE, OBS_SCENES, PLAYER_NUMBERS, SIDES } = constants
+import { loadBeatmaps } from "../_shared/core/beatmaps.js"
+import { findTeam, loadTeams } from "../_shared/core/teams.js"
+import { createTosuWsSocket } from "../_shared/core/websocket.js"
 
 // Saved match state: read it before anything gets a chance to overwrite it
 let savedState = null
@@ -15,9 +11,6 @@ try {
     savedState = null
 }
 let stateReady = false // saving is paused until the restore has run
-
-// Human's Lucky! state waits here until its team has been set up by changeTeams
-const pendingHuman = { red: null, blue: null }
 
 // Round Name
 const roundNameEl = document.getElementById("round-name")
@@ -32,7 +25,9 @@ const nextPickerEl = document.getElementById("next-picker")
 const selectNextPickerButtonRedEl = document.getElementById("select-next-picker-button-red")
 const selectNextPickerButtonBlueEl = document.getElementById("select-next-picker-button-blue")
 const selectNextPickerButtonNoneEl = document.getElementById("select-next-picker-button-none")
-let nextPicker = "red"
+let nextPicker = constants.DEFAULT_NEXT_PICKER
+
+const capitalise = text => text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
 
 function setNextPicker(team) {
     nextPickerEl.textContent = `Next: ${capitalise(team)}`
@@ -44,7 +39,7 @@ const currentPickerEl = document.getElementById("current-picker")
 const selectCurrentPickerButtonRedEl = document.getElementById("select-current-picker-button-red")
 const selectCurrentPickerButtonBlueEl = document.getElementById("select-current-picker-button-blue")
 const selectCurrentPickerButtonNoneEl = document.getElementById("select-current-picker-button-none")
-let currentPicker = "blue"
+let currentPicker = constants.DEFAULT_CURRENT_PICKER
 
 function setCurrentPicker(team) {
     currentPickerEl.textContent = `Current: ${capitalise(team)}`
@@ -64,17 +59,22 @@ const autoObsButtonEl = document.getElementById("auto-obs-button")
 // Max HP
 let maxHp = constants.DEFAULT_MAX_HP
 
-// player1 - player6. Each starts targeting the opposite player (see DEFAULT_TARGETS).
-const playerData = Object.fromEntries(PLAYER_NUMBERS.map((n, i) => [`player${n}`, {
+// hasRevived: a player only gets one revive; the second knockout is permanent.
+const newPlayer = (target) => ({
     id: constants.DEFAULT_PLAYER_ID,
     playerName: "",
     class: "",
     currentMaxHp: constants.DEFAULT_MAX_HP,
     currentScore: 0,
-    currentTarget: constants.DEFAULT_TARGETS[i],
+    currentTarget: target,
     currentScoreAgainst: 0,
     currentDeadRounds: 0,
-}]))
+    hasRevived: false,
+})
+
+let playerData = Object.fromEntries(
+    constants.PLAYER_NUMBERS.map((n, i) => [`player${n}`, newPlayer(constants.DEFAULT_TARGETS[i])])
+)
 
 // Mappool Select Container
 const mappoolSelectContainerEl = document.getElementById("mappool-select-container")
@@ -86,16 +86,21 @@ loadBeatmaps().then(beatmaps => {
     allBeatmaps = beatmaps.beatmaps
 
     // Set Max HP
-    const roundMaxHp = getRoundMaxHp(roundName)
-    if (roundMaxHp === null) {
-        maxHp = constants.DEFAULT_MAX_HP
-        console.warn(`Unknown round name "${roundName}", using ${constants.DEFAULT_MAX_HP} max HP. Set it with the Map Starting HP box.`)
-    } else {
-        maxHp = roundMaxHp
+    const normalisedRoundName = roundName.toLowerCase().trim()
+    const roundConfig = constants.ROUND_MAX_HP.find(round =>
+        round.names.includes(normalisedRoundName)
+    )
+    maxHp = roundConfig?.maxHp ?? constants.DEFAULT_MAX_HP
+    if (!roundConfig) {
+        console.warn(
+            `Unknown round name "${roundName}", using ${maxHp} max HP.`
+        )
     }
 
     // Set all input values to max hp
-    teamHpInputEls.forEach(input => { input.value = maxHp })
+    for (let i = 0; i < teamHpIOnputNumberElements.length; i++) {
+        teamHpIOnputNumberElements[i].value = maxHp
+    }
 
     // Set all player's current max hp
     for (const key in playerData) {
@@ -174,13 +179,14 @@ function mapClickEvent(event) {
     }
 }
 
-// Damage multiplier grows every few maps (maps 1-2 = 1x, 3-4 = 1.5x, 5-6 = 2x, ...)
 const mapsPlayedInputEl = document.getElementById("maps-played-input")
 const damageMultiplierEl = document.getElementById("damage-multiplier")
 let mapsPlayed = 0
 
+// +1.0x per map played (constants.DAMAGE_MULTIPLIER_STEP)
 function getDamageMultiplier() {
-    return 1 + constants.DAMAGE_MULTIPLIER_STEP * Math.floor(mapsPlayed / constants.MAPS_PER_MULTIPLIER_STEP)
+    return 1 + constants.DAMAGE_MULTIPLIER_STEP
+        * Math.floor(mapsPlayed / constants.MAPS_PER_MULTIPLIER_STEP)
 }
 
 function refreshDamageMultiplierUi() {
@@ -193,37 +199,20 @@ refreshDamageMultiplierUi()
 // Class of a player (lowercase). Stored in playerData, filled from currentTeam.playerX.class
 const classOf = playerNumber => playerData[`player${playerNumber}`]?.class ?? ""
 
-const defaultHuman = () => ({ lucky: false, poolSize: 0 })
-
 const abilities = {
-    // Human's Lucky!, keyed by player number 1-6
-    human: Object.fromEntries(PLAYER_NUMBERS.map(n => [n, defaultHuman()])),
     demigod: null, // { player, mode, target }, cleared after every map
     soulweaver: null, // { challenger, challenged }, cleared after every map
 }
 
 const classPanelsEl = document.getElementById("class-panels")
 
+const sideOf = playerNumber => constants.TEAM_PLAYER_NUMBERS.red.includes(playerNumber) ? "red" : "blue"
+const playersOf = side => constants.TEAM_PLAYER_NUMBERS[side]
+const otherSide = side => side === "red" ? "blue" : "red"
+
 const isAlive = playerNumber => playerData[`player${playerNumber}`]?.currentMaxHp > 0
 const playerLabel = playerNumber =>
     playerData[`player${playerNumber}`]?.playerName || `Player ${playerNumber}`
-
-// Apply the Human state waiting for this side (if it was saved for this team) or reset to defaults
-function applyPendingHuman(side, teamName) {
-    const pending = pendingHuman[side]
-    pendingHuman[side] = null
-    const state = pending && pending.teamName === teamName ? pending.state : null
-
-    for (const n of playersOf(side)) {
-        const s = state?.[n] ?? defaultHuman()
-        abilities.human[n] = {
-            lucky: Boolean(s.lucky),
-            poolSize: Math.max(0, Number(s.poolSize) || 0),
-        }
-        document.getElementById(`human-${n}-lucky`).checked = abilities.human[n].lucky
-        document.getElementById(`human-${n}-pool`).value = Math.max(0, abilities.human[n].poolSize - 1)
-    }
-}
 
 function restoreSavedState() {
     const saved = savedState
@@ -232,15 +221,16 @@ function restoreSavedState() {
     // Only restore the same round, so a new round never starts with last round's HP
     if (!saved || saved.roundName !== roundName) return
 
-    // Players: HP, dead rounds, revive HP, targets (scores start fresh)
+    // Players: HP, dead rounds, revive status, targets (scores start fresh)
     Object.keys(playerData).forEach((key, i) => {
         const savedPlayer = saved.playerData?.[key]
         if (!savedPlayer) return
         Object.assign(playerData[key], savedPlayer)
+        playerData[key].hasRevived = Boolean(playerData[key].hasRevived)
         playerData[key].currentScore = 0
         playerData[key].effectiveScore = 0
         playerData[key].currentScoreAgainst = 0
-        teamHpInputEls[i].value = playerData[key].currentMaxHp
+        teamHpIOnputNumberElements[i].value = playerData[key].currentMaxHp
     })
     syncTargetSelects()
 
@@ -271,25 +261,6 @@ function restoreSavedState() {
     // Pickers
     if (saved.mappoolInfo?.currentPicker) setCurrentPicker(saved.mappoolInfo.currentPicker)
     if (saved.nextPicker) setNextPicker(saved.nextPicker)
-
-    // Human's Lucky!: keep the saved values in memory straight away (so the autosave doesn't wipe them
-    // before the teams load), then let changeTeams apply them to the UI once the matching team is set up
-    const savedHuman = saved.abilities?.human
-    if (savedHuman) {
-        for (const n of PLAYER_NUMBERS) {
-            const s = savedHuman[n]
-            if (s) abilities.human[n] = { lucky: Boolean(s.lucky), poolSize: Math.max(0, Number(s.poolSize) || 0) }
-        }
-
-        for (const side of SIDES) {
-            const savedTeamName = saved.teamName?.[`${side}TeamName`]
-            if (!savedTeamName) continue
-
-            pendingHuman[side] = { teamName: savedTeamName, state: savedHuman }
-            const currentTeamName = side === "red" ? redTeamName : blueTeamName
-            if (currentTeamName === savedTeamName) applyPendingHuman(side, currentTeamName)
-        }
-    }
 }
 
 // Lets you correct the count by hand (e.g. a map was replayed)
@@ -334,9 +305,6 @@ function buildClassPanel(side) {
             el("span", { textContent: label })
         )
 
-    const numberInput = (id) =>
-        el("input", { type: "number", id, min: "0", value: "0" })
-
     const modeSelect = (id) =>
         el("select", { id },
             el("option", { value: "split", textContent: "Split" }),
@@ -356,8 +324,12 @@ function buildClassPanel(side) {
             el("div", { className: `team-hp ${colour}`, id: `class-player-title-${n}` }),
 
             controls(n, "human",
-                checkbox(`human-${n}-lucky`, "Lucky!"),
-                row("Maps before Lucky!:", numberInput(`human-${n}-pool`))
+                el("button", {
+                    type: "button",
+                    className: "team-hp-button human-heal-button",
+                    textContent: `Heal team (+${constants.HUMAN_HEAL_AMOUNT / 1000}K)`,
+                    dataset: { player: String(n) },
+                })
             ),
 
             controls(n, "demigod",
@@ -388,7 +360,7 @@ function buildClassPanel(side) {
             )
         ),
 
-        // Validation errors from the Submit button show up here
+        // Validation errors show up here
         el("div", {
             className: "class-error",
             id: `class-error-${side}`,
@@ -398,18 +370,18 @@ function buildClassPanel(side) {
     )
 }
 
-classPanelsEl.replaceChildren(...SIDES.map(buildClassPanel))
+classPanelsEl.replaceChildren(...constants.SIDES.map(buildClassPanel))
 
 // Fill every player select (value = player number 1-6, text = player name)
 function refreshClassSelects() {
     document.querySelectorAll(".class-player-select").forEach(select => {
         const side = select.dataset.side
         const teamSide = select.dataset.scope === "own" ? side : otherSide(side)
-        const offset = playersOf(teamSide)[0] - 1
+        const offset = teamSide === "red" ? 0 : 3
         const previous = select.value
 
         select.innerHTML = ""
-        for (let i = 1; i <= playersOf(teamSide).length; i++) {
+        for (let i = 1; i <= 3; i++) {
             const option = document.createElement("option")
             option.value = offset + i
             option.textContent = playerLabel(offset + i)
@@ -429,8 +401,6 @@ function showClassError(side, messages) {
 }
 
 // Show only the controls for each player's own class
-const CLASSES_WITH_CONTROLS = constants.CLASSES_WITH_CONTROLS
-
 function updateClassPanel(side) {
     const names = []
 
@@ -438,11 +408,11 @@ function updateClassPanel(side) {
         const className = classOf(n)
         if (className) names.push(capitalise(className))
 
-        document.getElementById(`class-player-${n}`).hidden = !CLASSES_WITH_CONTROLS.includes(className)
+        document.getElementById(`class-player-${n}`).hidden = !constants.CLASSES_WITH_CONTROLS.includes(className)
         document.getElementById(`class-player-title-${n}`).textContent =
             `${playerLabel(n)}: ${capitalise(className)}`
 
-        for (const type of CLASSES_WITH_CONTROLS) {
+        for (const type of constants.CLASSES_WITH_CONTROLS) {
             document.getElementById(`class-controls-${n}-${type}`).hidden = className !== type
         }
     }
@@ -450,11 +420,11 @@ function updateClassPanel(side) {
     const classText = [...new Set(names)].join(" / ")
     document.getElementById(`${side}-class`).textContent = classText
     document.getElementById(`class-title-${side}`).textContent =
-        `${capitalise(side)}: ${classText}`
+        `${side === "red" ? "Red" : "Blue"}: ${classText}`
 
     // Classes without controls (e.g. Witch) have nothing to submit
     document.getElementById(`class-wrapper-${side}`).hidden =
-        !playersOf(side).some(n => CLASSES_WITH_CONTROLS.includes(classOf(n)))
+        !playersOf(side).some(n => constants.CLASSES_WITH_CONTROLS.includes(classOf(n)))
 
     showClassError(side, [])
 }
@@ -463,7 +433,6 @@ function updateClassPanel(side) {
 function evaluateClasses() {
     const errors = { red: [], blue: [] }
     const next = {
-        human: { ...abilities.human },
         demigod: null,
         soulweaver: null,
     }
@@ -473,19 +442,11 @@ function evaluateClasses() {
     const value = id => document.getElementById(id).value
     const checked = id => document.getElementById(id).checked
 
-    for (const side of SIDES) {
+    for (const side of constants.SIDES) {
         const opp = playersOf(otherSide(side))
 
         for (const n of playersOf(side)) {
             const className = classOf(n)
-
-            if (className === "human") {
-                const mapsBefore = Math.max(0, Math.floor(Number(value(`human-${n}-pool`))) || 0)
-                next.human[n] = {
-                    lucky: checked(`human-${n}-lucky`),
-                    poolSize: mapsBefore + 1,
-                }
-            }
 
             if (className === "demigod" && checked(`demigod-${n}-active`)) {
                 const mode = value(`demigod-${n}-mode`)
@@ -561,7 +522,6 @@ function applyClasses(changedBlock) {
     }
 
     if (!hasErrors(result)) {
-        abilities.human = result.next.human
         abilities.demigod = result.next.demigod
         abilities.soulweaver = result.next.soulweaver
     }
@@ -570,7 +530,7 @@ function applyClasses(changedBlock) {
     showClassError("blue", rejected ? shownErrors.blue : [])
 }
 
-// Demigod / Soulweaver only last one map. Human's Lucky! stays.
+// Demigod / Soulweaver only last one map.
 function resetMapAbilities() {
     abilities.demigod = null
     abilities.soulweaver = null
@@ -579,26 +539,40 @@ function resetMapAbilities() {
     showClassError("blue", [])
 }
 
-// Lucky! bonus: starts high for 1 number, drops for every extra number, never below the minimum
-function getLuckyBonus(poolSize) {
-    const { LUCKY_BASE_BONUS_PERCENT, LUCKY_PENALTY_PERCENT, LUCKY_MIN_BONUS_PERCENT } = constants
-    const extraNumbers = Math.max(1, poolSize) - 1
-    return Math.max(LUCKY_MIN_BONUS_PERCENT, LUCKY_BASE_BONUS_PERCENT - LUCKY_PENALTY_PERCENT * extraNumbers) / 100
+// Human: the button heals every living teammate (the Human included) by HUMAN_HEAL_AMOUNT.
+// No cooldown: press it as often as needed.
+function healTeam(humanNumber) {
+    const side = sideOf(humanNumber)
+
+    if (classOf(humanNumber) !== "human") return
+    if (!isAlive(humanNumber)) {
+        showClassError(side, [`${playerLabel(humanNumber)} is dead and can't heal the team.`])
+        return
+    }
+
+    for (const n of playersOf(side)) {
+        const player = playerData[`player${n}`]
+        // Healing doesn't bring dead players back, and nobody goes above the round's max HP
+        if (player.currentMaxHp <= 0) continue
+        player.currentMaxHp = Math.min(maxHp, player.currentMaxHp + constants.HUMAN_HEAL_AMOUNT)
+        teamHpIOnputNumberElements[n - 1].value = player.currentMaxHp
+    }
+
+    showClassError(side, [])
 }
 
-const countAlive = side => playersOf(side).filter(isAlive).length
+function countAlive(side) {
+    return playersOf(side).filter(n => playerData[`player${n}`].currentMaxHp > 0).length
+}
 
 function getScoreMultiplier(playerNumber) {
     const side = sideOf(playerNumber)
     let multiplier = 1
 
-    // Human: Lucky! bonus applies to that player only
-    const human = abilities.human[playerNumber]
-    if (classOf(playerNumber) === "human" && human?.lucky) {
-        multiplier *= 1 + getLuckyBonus(human.poolSize)
+    // Soulweaver: challenger gets 1.1x, the challenged player gets 0.9x
+    if (abilities.soulweaver?.challenger === playerNumber) {
+        multiplier *= constants.SOULWEAVER_CHALLENGER_MULTIPLIER
     }
-
-    // Soulweaver: challenged player gets 1.4x
     if (abilities.soulweaver?.challenged === playerNumber) {
         multiplier *= constants.SOULWEAVER_CHALLENGED_MULTIPLIER
     }
@@ -638,69 +612,103 @@ function changeTeams(teamName, side) {
     const currentTeam = findTeam(teamName)
     if (!currentTeam) return
 
-    // Reset Human state for this side (classes are set per player below)
-    for (const n of playersOf(side)) {
-        abilities.human[n] = defaultHuman()
-        document.getElementById(`human-${n}-lucky`).checked = false
-        document.getElementById(`human-${n}-pool`).value = 0
+    // Set up arrays
+    let currentPlayers = []
+    let teamHpPlayerElements = []
+    let teamMapTargetSelectionPlayerElements = []
+    let teamMapTargetSelectionPlayerSelectElements = []
+    if (side === "red") {
+        currentPlayers.push(playerData.player1, playerData.player2, playerData.player3)
+        teamHpPlayerElements.push(
+            document.getElementById("team-hp-player-1"),
+            document.getElementById("team-hp-player-2"),
+            document.getElementById("team-hp-player-3")
+        )
+        teamMapTargetSelectionPlayerElements.push(
+            document.getElementById("map-target-selection-player-1"),
+            document.getElementById("map-target-selection-player-2"),
+            document.getElementById("map-target-selection-player-3")
+        )
+        teamMapTargetSelectionPlayerSelectElements.push(
+            document.getElementById("map-target-selection-player-4-select"),
+            document.getElementById("map-target-selection-player-5-select"),
+            document.getElementById("map-target-selection-player-6-select")
+        )
+    } else {
+        currentPlayers.push(playerData.player4, playerData.player5, playerData.player6)
+        teamHpPlayerElements.push(
+            document.getElementById("team-hp-player-4"),
+            document.getElementById("team-hp-player-5"),
+            document.getElementById("team-hp-player-6")
+        )
+        teamMapTargetSelectionPlayerElements.push(
+            document.getElementById("map-target-selection-player-4"),
+            document.getElementById("map-target-selection-player-5"),
+            document.getElementById("map-target-selection-player-6")
+        )
+        teamMapTargetSelectionPlayerSelectElements.push(
+            document.getElementById("map-target-selection-player-1-select"),
+            document.getElementById("map-target-selection-player-2-select"),
+            document.getElementById("map-target-selection-player-3-select")
+        )
     }
 
-    // This side's players, and the target selects (of the other side's players) that list this team
-    const ownNumbers = playersOf(side)
-    const opponentNumbers = playersOf(otherSide(side))
-    const byId = id => document.getElementById(id)
-
-    ownNumbers.forEach((playerNumber, i) => {
-        const player = playerData[`player${playerNumber}`]
-        const teamPlayer = currentTeam[`player${i + 1}`]
-
-        player.id = teamPlayer.id
-        player.playerName = teamPlayer.playerName
+    // Set players
+    for (let i = 0; i < currentPlayers.length; i++) {
+        const currentPlayer = currentTeam[`player${i + 1}`]
+        const currentPlayerId = currentPlayer.id
+        const currentPlayerName = currentPlayer.playerName
+        currentPlayers[i].id = currentPlayerId
+        currentPlayers[i].playerName = currentPlayerName
 
         // Class is stored on each player: currentTeam.playerX.class
-        player.class = String(teamPlayer.class ?? "").toLowerCase()
+        currentPlayers[i].class = String(currentPlayer.class ?? "").toLowerCase()
 
-        byId(`team-hp-player-${playerNumber}`).textContent = teamPlayer.playerName
-        byId(`map-target-selection-player-${playerNumber}`).textContent = teamPlayer.playerName
+        teamHpPlayerElements[i].textContent = currentPlayerName
+        teamMapTargetSelectionPlayerElements[i].textContent = currentPlayerName
 
-        // Each opposing player's select lists this team's players
+        // Fill each select's options with the matching team player
         // Value = player number (1-6), since that's what currentTarget uses
-        const select = byId(`map-target-selection-player-${opponentNumbers[i]}-select`)
-        for (let j = 0; j < select.children.length; j++) {
+        const playerNumberOffset = side === "red" ? 0 : 3
+        const options = teamMapTargetSelectionPlayerSelectElements[i].children
+        for (let j = 0; j < options.length; j++) {
             const optionPlayer = currentTeam[`player${j + 1}`]
             if (!optionPlayer) continue
-            select.children[j].textContent = optionPlayer.playerName
-            select.children[j].value = ownNumbers[j]
+            options[j].textContent = optionPlayer.playerName
+            options[j].value = playerNumberOffset + j + 1
         }
-    })
+    }
 
     refreshClassSelects()
     updateClassPanel(side)
     syncTargetSelects()
-
-    // Restore saved Lucky! state if this is the team it was saved for
-    applyPendingHuman(side, teamName)
 }
 
 // Team HP Button
 const teamHpButtonEl = document.getElementById("team-hp-button")
-const teamHpInputEls = PLAYER_NUMBERS.map(n => document.getElementById(`team-hp-input-number-player-${n}`))
+const teamHpIOnputNumberElements = [
+    document.getElementById("team-hp-input-number-player-1"),
+    document.getElementById("team-hp-input-number-player-2"),
+    document.getElementById("team-hp-input-number-player-3"),
+    document.getElementById("team-hp-input-number-player-4"),
+    document.getElementById("team-hp-input-number-player-5"),
+    document.getElementById("team-hp-input-number-player-6")
+]
 
 function setHpButton() {
-    for (let i = 0; i < teamHpInputEls.length; i++) {
+    for (let i = 0; i < teamHpIOnputNumberElements.length; i++) {
         const player = playerData[`player${i + 1}`]
-        player.currentMaxHp = Number(teamHpInputEls[i].value)
+        player.currentMaxHp = Number(teamHpIOnputNumberElements[i].value)
         if (player.currentMaxHp > 0) {
             player.currentDeadRounds = 0
-            player.reviveHp = null
         }
     }
 }
 
 // Map Target Button
 const mapTargetButtonEl = document.getElementById("map-target-button")
-const targetSelectElements = PLAYER_NUMBERS.map(n =>
-    document.getElementById(`map-target-selection-player-${n}-select`)
+const targetSelectElements = constants.PLAYER_NUMBERS.map(i =>
+    document.getElementById(`map-target-selection-player-${i}-select`)
 )
 
 function setTargetButton() {
@@ -723,9 +731,10 @@ function syncTargetSelects() {
 }
 
 // IPC State
+const IPC = constants.IPC_STATE
+const isMapRunning = state =>
+    state === IPC.WAITING_FOR_CLIENTS || state === IPC.PLAYING || state === IPC.RANKING
 let previousIpcState, currentIpcState
-const isMapInProgress = ipcState =>
-    ipcState === IPC_STATE.WAITING_FOR_CLIENTS || ipcState === IPC_STATE.PLAYING || ipcState === IPC_STATE.RANKING
 let checkedWinner = false
 
 // Mappool Map Found
@@ -769,27 +778,27 @@ socket.onmessage = event => {
         currentIpcState = socketData.tourney.ipcState
 
         // Calculate scores
-        if (isMapInProgress(currentIpcState)) {
+        if (isMapRunning(currentIpcState)) {
             checkedWinner = false
             updatePlayerData(playerData, socketData)
 
             if (autoObsButtonEl.checked) {
-                changeScene(OBS_SCENES.GAMEPLAY)
+                changeScene(constants.OBS_SCENES.GAMEPLAY)
             }
         }
 
         // Reset information
-        if (currentIpcState === IPC_STATE.IDLE && previousIpcState === IPC_STATE.RANKING && !checkedWinner) {
+        if (currentIpcState === IPC.IDLE && previousIpcState === IPC.RANKING && !checkedWinner) {
             checkedWinner = true
 
             if (toggleHpEl.checked) {
                 applyDamage(playerData)
 
                 if (autoObsButtonEl.checked) {
-                    if (SIDES.some(isTeamEliminated)) {
-                        changeScene(OBS_SCENES.WINNER)
+                    if (constants.SIDES.some(side => isTeamEliminated(playersOf(side)))) {
+                        changeScene(constants.OBS_SCENES.WINNER)
                     } else {
-                        changeScene(OBS_SCENES.MAPPOOL)
+                        changeScene(constants.OBS_SCENES.MAPPOOL)
                     }
                 }
             } else {
@@ -799,13 +808,13 @@ socket.onmessage = event => {
         }
 
         // Handles aborting map
-        if (currentIpcState === IPC_STATE.IDLE && (previousIpcState === IPC_STATE.WAITING_FOR_CLIENTS || previousIpcState === IPC_STATE.PLAYING)) {
+        if (currentIpcState === IPC.IDLE && (previousIpcState === IPC.WAITING_FOR_CLIENTS || previousIpcState === IPC.PLAYING)) {
             clearScores()
         }
     }
 
     // Keep scores updating live while the map is being played
-    if (isMapInProgress(currentIpcState)) {
+    if (isMapRunning(currentIpcState)) {
         updatePlayerData(playerData, socketData)
     }
 
@@ -855,8 +864,8 @@ function clearScores() {
 }
 
 // A team is out when none of its players have any HP left
-function isTeamEliminated(side) {
-    return !playersOf(side).some(isAlive)
+function isTeamEliminated(playerNumbers) {
+    return playerNumbers.every(n => playerData[`player${n}`].currentMaxHp <= 0)
 }
 
 // Apply damage
@@ -866,26 +875,26 @@ function applyDamage(playerData) {
 
     Object.entries(playerData).forEach(([playerKey, player], i) => {
         const wasAlive = player.currentMaxHp > 0
+        const hpBefore = player.currentMaxHp
 
-        player.currentMaxHp = Math.max(0, Math.round(player.currentMaxHp - player.currentScoreAgainst))
+        player.currentMaxHp = Math.max(0, Math.round(hpBefore - player.currentScoreAgainst))
 
         if (wasAlive && playerKey === duelLoser) {
-            // Lost the duel: dies, returns at a share of the round max HP
-            // (checked first so a duel loser who also hits 0 from damage still gets 50%)
-            player.currentMaxHp = 0
-            player.currentDeadRounds = constants.DEAD_ROUNDS
-            player.reviveHp = Math.round(maxHp * constants.DUEL_LOSER_REVIVE_HP_RATIO)
+            // Lost the duel: loses 75% of the HP they entered the duel with. No sitting out.
+            player.currentMaxHp = Math.max(
+                0,
+                Math.round(hpBefore * (1 - constants.SOULWEAVER_LOSER_HP_LOSS_RATIO))
+            )
         } else if (wasAlive && player.currentMaxHp === 0) {
-            // Died to damage: returns at a share of the round max HP
-            player.currentDeadRounds = constants.DEAD_ROUNDS
-            player.reviveHp = null
+            // Knocked out: sits out 2 rounds, then revives once at 10% of round max HP.
+            // A player who has already revived stays down for good.
+            player.currentDeadRounds = player.hasRevived ? 0 : constants.DEAD_ROUNDS
         } else if (player.currentDeadRounds > 0) {
             player.currentDeadRounds--
 
             if (player.currentDeadRounds === 0) {
-                // Duel losers return at the duel HP share, everyone else at the normal one
-                player.currentMaxHp = player.reviveHp ?? Math.round(maxHp * constants.REVIVE_HP_RATIO)
-                player.reviveHp = null
+                player.currentMaxHp = Math.round(maxHp * constants.REVIVE_HP_RATIO)
+                player.hasRevived = true
             }
         }
 
@@ -894,24 +903,14 @@ function applyDamage(playerData) {
         player.effectiveScore = 0
         player.currentScoreAgainst = 0
 
-        teamHpInputEls[i].value = player.currentMaxHp
+        teamHpIOnputNumberElements[i].value = player.currentMaxHp
     })
 
     resetMapAbilities()
 
-    // Only runs with HP toggled on: a map counts, and each Human's Lucky! count grows by one.
-    // Once a player's Lucky! is on, their count is locked and no longer grows.
-    // (Done after the damage above, so this map was still scored with the old counts.)
+    // Only runs with HP toggled on: this map now counts towards the damage multiplier
     mapsPlayed++
     refreshDamageMultiplierUi()
-
-    for (const n of PLAYER_NUMBERS) {
-        if (classOf(n) !== "human") continue
-        const human = abilities.human[n]
-        if (human.lucky) continue
-        human.poolSize = Math.max(1, human.poolSize) + 1
-        document.getElementById(`human-${n}-pool`).value = human.poolSize - 1
-    }
 }
 
 setInterval(() => {
@@ -947,7 +946,6 @@ setInterval(() => {
         mapsPlayed: mapsPlayed,
         damageMultiplier: getDamageMultiplier(),
         nextPicker: nextPicker,
-        abilities: { human: abilities.human },
     }
 
     localStorage.setItem(constants.STORAGE_KEY, JSON.stringify(savedInfo))
@@ -1060,6 +1058,11 @@ function setDemigodDamage() {
     classPanelsEl.addEventListener("change", event => applyClasses(event.target.closest(".class-player")))
     classPanelsEl.addEventListener("input", event => {
         if (event.target.type === "number") applyClasses(null)
+    })
+    // Human: "Rolled a pool number" heals the team
+    classPanelsEl.addEventListener("click", event => {
+        const button = event.target.closest(".human-heal-button")
+        if (button) healTeam(Number(button.dataset.player))
     })
 }
 
