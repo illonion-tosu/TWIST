@@ -1,3 +1,5 @@
+import { constants } from "../_shared/js/constants.js"
+
 // DOM Elements
 const elements = {
     countdown: {
@@ -42,22 +44,17 @@ function updateDisplay(totalSeconds) {
 }
 
 /**
- * Displays the specified error message and hides the other.
+ * Shows one timer's error message and hides the other.
+ * Call with no argument to hide both.
  *
- * @param {HTMLElement} errorEl - The error element to display.
+ * @param {HTMLElement} [errorEl] - The error element to display.
  */
 function showError(errorEl) {
     elements.countdown.errorMessage.style.display = errorEl === elements.countdown.errorMessage ? "block" : "none"
     elements.utc.errorMessage.style.display = errorEl === elements.utc.errorMessage ? "block" : "none"
 }
 
-/**
- * Hides all timer error messages.
- */
-function hideErrors() {
-    elements.countdown.errorMessage.style.display = "none"
-    elements.utc.errorMessage.style.display = "none"
-}
+const hideErrors = () => showError()
 
 // Countdown Timer
 class CountdownTimer {
@@ -153,7 +150,7 @@ class UTCTimer {
         const hours = Number(elements.utc.hours.value) || 0
         const minutes = Number(elements.utc.minutes.value) || 0
 
-        if (hours < 0 || minutes < 0) {
+        if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
             showError(elements.utc.errorMessage)
             return
         }
@@ -161,6 +158,9 @@ class UTCTimer {
         const utcTime = new Date()
         utcTime.setUTCHours(hours, minutes, 0, 0)
         this.targetTime = utcTime.getTime()
+
+        // Already past today: count down to the same time tomorrow
+        if (this.targetTime <= Date.now()) this.targetTime += constants.MS_PER_DAY
 
         hideErrors()
         this.active = true
@@ -178,18 +178,19 @@ class UTCTimer {
     /**
      * Updates the display based on the remaining time until the target UTC time.
      *
-     * Automatically rolls over to the next day if the target time has passed.
+     * Stops at zero.
      */
     tick() {
         if (!this.active) return
 
-        let timeDiff = this.targetTime - Date.now()
-        if (timeDiff < 0) {
-            this.targetTime += 24 * 60 * 60 * 1000
-            timeDiff = this.targetTime - Date.now()
+        const timeDiff = this.targetTime - Date.now()
+        if (timeDiff <= 0) {
+            updateDisplay(0)
+            this.stop()
+            return
         }
 
-        updateDisplay(Math.floor(timeDiff / 1000))
+        updateDisplay(Math.ceil(timeDiff / 1000))
     }
 }
 
@@ -218,4 +219,4 @@ window.startUTCTimer = () => {
 setInterval(() => {
     countdownTimer.tick()
     utcTimer.tick()
-}, 1000)
+}, constants.COUNTDOWN_TICK_MS)

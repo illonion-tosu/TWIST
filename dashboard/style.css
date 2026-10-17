@@ -1,0 +1,285 @@
+:root {
+    --hover-colour: rgb(64 64 64);
+}
+
+body {
+    background-color: var(--solid-graphite-colour);
+    color: lightgray;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+}
+
+h1 {
+    font-family: "Super Mario Galaxy", sans-serif;
+    font-size: 2rem;
+    text-align: center;
+}
+
+p { text-align: center; }
+
+.team-red-colour { color: var(--team-red-colour); }
+.team-blue-colour { color: var(--team-blue-colour); }
+
+/* Page sections */
+.dashboard-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 10px 20px 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid gray;
+}
+
+.scene-control,
+.line-two,
+.line-three,
+.line-four,
+.mappool-select-section {
+    display: flex;
+    margin: 0 20px 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid gray;
+}
+.mappool-select-section { margin-bottom: 0; }
+
+.scene-control {
+    justify-content: space-between;
+}
+
+/* Automation toggles */
+.auto-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.auto-labels {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 10px;
+    border: 1px solid gray;
+    border-radius: 5px;
+}
+
+input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    background-color: transparent;
+    accent-color: red;
+}
+
+/* Left half of a section */
+.match-details-section,
+.class-activation-container {
+    width: 50%;
+    border-right: 2px solid gray;
+}
+
+.match-details {
+    width: calc(100% - 20px);
+    font-size: 1.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* Right half of a section */
+.hp-container,
+.targeting-container {
+    width: 50%;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+/* Per-player rows (HP inputs and target selects) */
+.team-hp-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.team-hp-wrapper-left {
+    display: flex;
+    flex-direction: column;
+}
+
+.team-hp-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.team-hp {
+    width: max-content;
+    margin-left: 20px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+/* Form controls */
+input[type="number"],
+select {
+    width: calc(100% - 20px);
+    border: 1px solid gray;
+    border-radius: 5px;
+    background-color: transparent;
+    color: lightgray;
+    font: inherit;
+    font-size: 1.25rem;
+    text-align: center;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+}
+
+button {
+    border: 1px solid gray;
+    border-radius: 5px;
+    background-color: transparent;
+    color: lightgray;
+    font: inherit;
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+.team-hp-button {
+    align-self: end;
+    width: 120px;
+    height: 180px;
+    transition: 200ms ease-in-out;
+}
+
+.select-next-picker-button,
+.mappool-select-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    padding: 10px;
+}
+.select-next-picker-button { width: 90px; }
+.mappool-select-button { width: 65px; }
+
+.mappool-select-button-red-ban {
+    background-color: darkred;
+    color: lightgray;
+    border: 2px solid lightgray;
+}
+
+.mappool-select-button-blue-ban {
+    background-color: darkblue;
+    color: lightgray;
+    border: 2px solid lightgray;
+}
+
+.mappool-select-button-red-pick {
+    background-color: var(--team-red-colour);
+    color: white;
+    border: 2px solid white;
+}
+
+.mappool-select-button-blue-pick {
+    background-color: var(--team-blue-colour);
+    color: white;
+    border: 2px solid white;
+}
+
+/* Hover / focus highlight */
+.auto-labels:hover,
+input[type="number"]:focus,
+select:focus,
+.team-hp-button:hover,
+.select-next-picker-button:hover,
+.mappool-select-button:hover {
+    background-color: var(--hover-colour);
+}
+
+/* Next picker */
+.select-next-picker { width: 100%; }
+.select-next-picker .current { font-size: 1.25rem; }
+
+.select-next-picker-button-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* Mappool select */
+.mappool-select-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* OBS Scenes */
+.scene-buttons {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+    justify-content: right;
+    flex-wrap: wrap;
+}
+
+.active-hp-button {
+    background-color: darkgreen;
+}
+
+@media screen and (width <= 1000px) {
+    .scene-control,
+    .line-two,
+    .line-three,
+    .line-four,
+    .mappool-select-section {
+        flex-direction: column;
+    }
+
+    .match-details-section,
+    .class-activation-container {
+        width: 100%;
+        border-right: none;
+        border-bottom: 2px solid gray;
+        padding-bottom: 20px;
+    }
+
+    .hp-container,
+    .targeting-container {
+        width: 100%;
+        font-size: 1.2rem;
+        text-align: center;
+    }
+
+    .scene-buttons {
+        justify-content: center;
+    }
+}
+
+/* Class activation */
+.class-activation-container {
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.class-panel-title {
+    text-align: center;
+}
+
+.class-controls .auto-labels {
+    margin: 5px 0 0 20px;
+}
+
+.class-submit-button {
+    height: 100px;
+}
+
+input[type="number"].maps-played-input {
+    width: calc(100% - 174px);
+}
+
+.class-player {
+    margin-bottom: 25px;
+}

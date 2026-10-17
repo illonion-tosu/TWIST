@@ -1,0 +1,52 @@
+:root {
+    --solid-graphite-colour: #31313B;
+    --team-red-colour: red;
+    --team-blue-colour: #0078FF;
+    --team-none-colour: gray;
+    --nm-colour: #4BC43B;
+    --hd-colour: #DB6D45;
+    --hr-colour: #C43B3B;
+    --dt-colour: #B540DB;
+    --fm-colour: #F5EB46;
+    --tb-colour: #FF6FB5;
+}
+
+/* Author display rules (flex, grid...) otherwise override the hidden attribute */
+[hidden] {
+    display: none !important;
+}
+
+@font-face {
+    font-family: "Super Mario Galaxy";
+    src: url("../../fonts/Super Mario Galaxy.ttf");
+}
+
+@font-face {
+    font-family: "Helvetica Neue";
+    src: url("../../fonts/Helvetica Neue Heavy.otf");
+    font-weight: 700;
+}
+
+/* Whole Page */
+.main {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    background: center / cover;
+    overflow: hidden;
+}
+
+/* Zero-size <svg> that only holds shared <defs> (filters, paths) */
+.svg-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+}
+
+/* Outlined SVG text (the outline itself comes from an SVG filter) */
+.outlined-text {
+    font-family: "Super Mario Galaxy", sans-serif;
+    fill: white;
+}
