@@ -10,32 +10,38 @@ const currentPlayers = {
     player1: {
         currentName: "",
         playerElement: document.getElementById("player-1-name"),
-        scoreElement: document.getElementById("player-1-score")
+        scoreElement: document.getElementById("player-1-score"),
+        hpBarElement: document.getElementById("player-1-hp-bar")
     },
     player2: {
         currentName: "",
         playerElement: document.getElementById("player-2-name"),
-        scoreElement: document.getElementById("player-2-score")
+        scoreElement: document.getElementById("player-2-score"),
+        hpBarElement: document.getElementById("player-2-hp-bar")
     },
     player3: {
         currentName: "",
         playerElement: document.getElementById("player-3-name"),
-        scoreElement: document.getElementById("player-3-score")
+        scoreElement: document.getElementById("player-3-score"),
+        hpBarElement: document.getElementById("player-3-hp-bar")
     },
     player4: {
         currentName: "",
         playerElement: document.getElementById("player-4-name"),
-        scoreElement: document.getElementById("player-4-score")
+        scoreElement: document.getElementById("player-4-score"),
+        hpBarElement: document.getElementById("player-4-hp-bar")
     },
     player5: {
         currentName: "",
         playerElement: document.getElementById("player-5-name"),
-        scoreElement: document.getElementById("player-5-score")
+        scoreElement: document.getElementById("player-5-score"),
+        hpBarElement: document.getElementById("player-5-hp-bar")
     },
     player6: {
         currentName: "",
         playerElement: document.getElementById("player-6-name"),
-        scoreElement: document.getElementById("player-6-score")
+        scoreElement: document.getElementById("player-6-score"),
+        hpBarElement: document.getElementById("player-6-hp-bar")
     }
 }
 
@@ -60,6 +66,9 @@ const animation = {
 let previousMaxHp, currentMaxHp
 let previousPlayerData, currentPlayerData
 let setHpInfo = false
+
+// Effective HP for a player: max HP minus incoming damage, floored at 0
+const getEffectiveHp = player => Math.max(0, Math.round(player.currentMaxHp - player.currentScoreAgainst))
 
 // Get Data
 function getData() {
@@ -96,16 +105,16 @@ function getData() {
     if (setHpInfo) {
         // Left HP
         const currentLeftHp =
-            effectiveHp(currentPlayerData.player1) +
-            effectiveHp(currentPlayerData.player2) +
-            effectiveHp(currentPlayerData.player3)
+            getEffectiveHp(currentPlayerData.player1) +
+            getEffectiveHp(currentPlayerData.player2) +
+            getEffectiveHp(currentPlayerData.player3)
         animation.hpLeft.update(currentLeftHp)
 
         // Right HP
         const currentRightHp =
-            effectiveHp(currentPlayerData.player4) +
-            effectiveHp(currentPlayerData.player5) +
-            effectiveHp(currentPlayerData.player6)
+            getEffectiveHp(currentPlayerData.player4) +
+            getEffectiveHp(currentPlayerData.player5) +
+            getEffectiveHp(currentPlayerData.player6)
         animation.hpRight.update(currentRightHp)
     }
 
@@ -117,13 +126,12 @@ function getData() {
         }
 
         // Player scores
-        animation[key].update(effectiveHp(currentPlayerData[key]))
+        const effectiveHp = getEffectiveHp(currentPlayerData[key])
+        animation[key].update(effectiveHp)
 
         // Player Score Bars
+        currentPlayers[key].hpBarElement.style.width = `${effectiveHp / currentMaxHp * 636}px`
     }
 }
-
-// Effective HP for a player: max HP minus incoming damage, floored at 0
-const effectiveHp = player => Math.max(0, Math.round(player.currentMaxHp - player.currentScoreAgainst))
 
 startPolling(getData, 100)
