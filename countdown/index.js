@@ -285,3 +285,39 @@ ComfyJS.onChat = (user, message, flags, self, extra) => {
 ComfyJS.onMessageDeleted = id => document.getElementById(id)?.remove()
 ComfyJS.onTimeout = extra => deleteAllMessagesFromUser(extra.timedOutUserId)
 ComfyJS.onBan = extra => deleteAllMessagesFromUser(extra.bannedUserId)
+
+// Marquee
+function setupMarquee(container) {
+    const track = container.querySelector(".marquee-track")
+    const original = track.querySelector(".marquee-item:not([data-clone])")
+
+    // remove old clones before re-measuring
+    track.querySelectorAll("[data-clone]").forEach(el => el.remove())
+
+    const itemWidth = original.getBoundingClientRect().width
+    if (!itemWidth) return
+
+    // enough copies to cover the container, plus one extra so the loop never shows a gap
+    const copies = Math.ceil(container.clientWidth / itemWidth) + 1
+    for (let i = 0; i < copies; i++) {
+        const clone = original.cloneNode(true)
+        clone.dataset.clone = ""
+        clone.setAttribute("aria-hidden", "true")
+        track.appendChild(clone)
+    }
+
+    // scroll exactly one item-width per cycle -> seamless loop
+    track.style.setProperty("--shift", `${itemWidth}px`)
+    track.style.setProperty("--duration", `${itemWidth / constants.NP_PIXELS_PER_SECOND}s`)
+}
+
+const container = document.querySelector(".now-playing-container")
+setupMarquee(container)
+new ResizeObserver(() => setupMarquee(container)).observe(container)
+
+// To change the text later:
+const nowPlayingTextEl = document.getElementById("now-playing-text")
+function setNowPlaying(artist, title) {
+    nowPlayingTextEl.textContent = `${artist} - ${title}`
+    setupMarquee(container)
+}
