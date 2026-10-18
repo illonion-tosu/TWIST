@@ -1,6 +1,6 @@
 import { constants } from "../_shared/js/constants.js"
 import { deepEqual, readSavedData, startPolling } from "../_shared/core/utils.js"
-import { getEffectiveHp, getHpBarWidth, getTeamHp } from "../_shared/core/match.js"
+import { getEffectiveHp, getHpBarWidth, getTeamHp, isPresent } from "../_shared/core/match.js"
 import { createCounter } from "../_shared/core/overlay.js"
 
 // Team names + scores
@@ -64,6 +64,11 @@ function getData() {
     for (const [key, player] of Object.entries(playerData)) {
         const els = players[key]
         if (!els) continue
+
+        // Empty slot (2-player team): hide the whole row
+        const present = isPresent(player)
+        els.nameElement.closest(".player-container").style.display = present ? "" : "none"
+        if (!present) continue
 
         // Player name
         if (els.currentName !== player.playerName) {

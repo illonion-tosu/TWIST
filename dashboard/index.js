@@ -2,6 +2,7 @@ import { constants } from "../_shared/js/constants.js"
 import { loadBeatmaps } from "../_shared/core/beatmaps.js"
 import { findTeam, loadTeams } from "../_shared/core/teams.js"
 import { createTosuWsSocket } from "../_shared/core/websocket.js"
+import { isPresent, isSlotFilled } from "../_shared/core/match.js"
 
 // Saved match state: read it before anything gets a chance to overwrite it
 let savedState = null
@@ -70,6 +71,8 @@ const newPlayer = (target) => ({
     currentScoreAgainst: 0,
     currentDeadRounds: 0,
     hasRevived: false,
+    // false = empty slot on a 2-player team: not in the match at all (no HP, no damage, no target)
+    present: true,
 })
 
 let playerData = Object.fromEntries(
@@ -98,14 +101,11 @@ loadBeatmaps().then(beatmaps => {
     }
 
     // Set all input values to max hp
-    for (let i = 0; i < teamHpIOnputNumberElements.length; i++) {
-        teamHpIOnputNumberElements[i].value = maxHp
-    }
-
-    // Set all player's current max hp
-    for (const key in playerData) {
-        playerData[key].currentMaxHp = maxHp
-    }
+    // Empty slots (2-player teams) stay at 0
+    Object.keys(playerData).forEach((key, i) => {
+        playerData[key].currentMaxHp = isPresent(playerData[key]) ? maxHp : 0
+        teamHpIOnputNumberElements[i].value = playerData[key].currentMaxHp
+    })
 
     mappoolSelectContainerEl.innerHTML = ""
     allBeatmaps.map(beatmap => {
@@ -382,6 +382,7 @@ function refreshClassSelects() {
 
         select.innerHTML = ""
         for (let i = 1; i <= 3; i++) {
+            if (!isPresent(playerData[`player${offset + i}`])) continue
             const option = document.createElement("option")
             option.value = offset + i
             option.textContent = playerLabel(offset + i)
@@ -667,6 +668,23 @@ function changeTeams(teamName, side) {
         teamHpPlayerElements[i].textContent = currentPlayerName
         teamMapTargetSelectionPlayerElements[i].textContent = currentPlayerName
 
+        // 2v2 / 2v3: an empty slot is out of the match entirely. HP / damage are never scaled, the team just has fewer players.
+        const filled = isSlotFilled(currentPlayer)
+        const wasPresent = currentPlayers[i].present
+        currentPlayers[i].present = filled
+        if (!filled) {
+            Object.assign(currentPlayers[i], {
+                currentMaxHp: 0, currentDeadRounds: 0, hasRevived: true,
+                currentScore: 0, effectiveScore: 0, currentScoreAgainst: 0,
+            })
+        } else if (wasPresent === false) {
+            // Slot filled again (a 3-player team after a 2-player one): fresh player
+            Object.assign(currentPlayers[i], { currentMaxHp: maxHp, currentDeadRounds: 0, hasRevived: false })
+        }
+        teamHpIOnputNumberElements[(side === "red" ? 0 : 3) + i].value = currentPlayers[i].currentMaxHp
+        teamHpPlayerElements[i].parentElement.style.display = filled ? "" : "none"
+        teamMapTargetSelectionPlayerElements[i].parentElement.style.display = filled ? "" : "none"
+
         // Fill each select's options with the matching team player
         // Value = player number (1-6), since that's what currentTarget uses
         const playerNumberOffset = side === "red" ? 0 : 3
@@ -676,12 +694,30 @@ function changeTeams(teamName, side) {
             if (!optionPlayer) continue
             options[j].textContent = optionPlayer.playerName
             options[j].value = playerNumberOffset + j + 1
+            // Nobody can target an empty slot
+            const optionFilled = isSlotFilled(optionPlayer)
+            options[j].disabled = !optionFilled
+            options[j].hidden = !optionFilled
         }
     }
 
+    retargetAbsentPlayers()
     refreshClassSelects()
     updateClassPanel(side)
     syncTargetSelects()
+}
+
+// Anyone aiming at an empty slot is pointed at the first opponent who is actually playing
+function retargetAbsentPlayers() {
+    for (const n of constants.PLAYER_NUMBERS) {
+        const player = playerData[`player${n}`]
+        const target = playerData[`player${player.currentTarget}`]
+        if (isPresent(target)) continue
+
+        const replacement = playersOf(otherSide(sideOf(n)))
+            .find(m => isPresent(playerData[`player${m}`]))
+        if (replacement) player.currentTarget = replacement
+    }
 }
 
 // Team HP Button
@@ -698,6 +734,12 @@ const teamHpIOnputNumberElements = [
 function setHpButton() {
     for (let i = 0; i < teamHpIOnputNumberElements.length; i++) {
         const player = playerData[`player${i + 1}`]
+        // Empty slots can't be given HP
+        if (!isPresent(player)) {
+            player.currentMaxHp = 0
+            teamHpIOnputNumberElements[i].value = 0
+            continue
+        }
         player.currentMaxHp = Number(teamHpIOnputNumberElements[i].value)
         if (player.currentMaxHp > 0) {
             player.currentDeadRounds = 0
@@ -716,6 +758,7 @@ function setTargetButton() {
         const value = Number(selectEl.value)
         // Ignore placeholder options that haven't been filled with a player yet
         if (Number.isNaN(value)) return
+        if (!isPresent(playerData[`player${value}`])) return
         playerData[`player${i + 1}`].currentTarget = value
     })
 }
@@ -865,7 +908,9 @@ function clearScores() {
 
 // A team is out when none of its players have any HP left
 function isTeamEliminated(playerNumbers) {
-    return playerNumbers.every(n => playerData[`player${n}`].currentMaxHp <= 0)
+    return playerNumbers
+        .filter(n => isPresent(playerData[`player${n}`]))
+        .every(n => playerData[`player${n}`].currentMaxHp <= 0)
 }
 
 // Apply damage
@@ -874,6 +919,17 @@ function applyDamage(playerData) {
     const duelLoser = getDuelLoser()
 
     Object.entries(playerData).forEach(([playerKey, player], i) => {
+        // Empty slot: never takes damage, never revives
+        if (!isPresent(player)) {
+            player.currentMaxHp = 0
+            player.currentDeadRounds = 0
+            player.currentScore = 0
+            player.effectiveScore = 0
+            player.currentScoreAgainst = 0
+            teamHpIOnputNumberElements[i].value = 0
+            return
+        }
+
         const wasAlive = player.currentMaxHp > 0
         const hpBefore = player.currentMaxHp
 
@@ -959,7 +1015,8 @@ function updatePlayerData(playerData, data) {
             client => client.user.id === player.id
         )
 
-        player.currentScore = client?.play.score ?? 0
+        // An empty slot has id 0, which could match an unused tosu client, so it never reads a score
+        player.currentScore = isPresent(player) ? (client?.play.score ?? 0) : 0
     })
 
     // Effective scores (class bonuses applied, sit-outs zeroed)

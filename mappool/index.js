@@ -1,7 +1,7 @@
 import { updateChat } from "../_shared/core/chat.js"
 import { constants } from "../_shared/js/constants.js"
 import { deepEqual, readSavedData, startPolling } from "../_shared/core/utils.js"
-import { getHpBarWidth, getTeamHp, playersOf } from "../_shared/core/match.js"
+import { getHpBarWidth, getTeamHp, getTeamMaxHp, playersOf } from "../_shared/core/match.js"
 import { createCounter, setTeamName, setToggleHpVisible } from "../_shared/core/overlay.js"
 
 // Round name
@@ -70,7 +70,7 @@ function getData() {
             hpCounters[side].update(hp)
 
             // A team's bar covers all 3 players' HP
-            const barWidth = getHpBarWidth(hp, data.maxHp * playersOf(side).length, constants.TEAM_HP_BAR_MAX_WIDTH)
+            const barWidth = getHpBarWidth(hp, getTeamMaxHp(playerData, side, data.maxHp), constants.TEAM_HP_BAR_MAX_WIDTH)
             teamEls[side].hpBar.style.width = `${barWidth}px`
         }
     }

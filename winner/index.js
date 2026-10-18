@@ -1,6 +1,6 @@
 import { constants } from "../_shared/js/constants.js"
 import { readSavedData, startPolling } from "../_shared/core/utils.js"
-import { playersOf } from "../_shared/core/match.js"
+import { isPresent, playersOf } from "../_shared/core/match.js"
 
 // Winner
 let currentWinnerSide, previousWinnerSide
@@ -71,6 +71,13 @@ function getData() {
     // Chibis + player names of the winning team
     const winners = playersOf(currentWinnerSide).map(n => playerData[`player${n}`])
     winners.forEach((player, i) => {
+        // A 2-player team only shows 2 chibis
+        const present = isPresent(player)
+        chibiWrapperEl.children[i].style.display = present ? "" : "none"
+        if (!present) {
+            setPlayerName(i + 1, "")
+            return
+        }
         setChibi(chibiWrapperEl.children[i].children[0], player.id)
         setPlayerName(i + 1, player.playerName ?? "")
     })
