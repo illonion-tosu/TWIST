@@ -1,5 +1,5 @@
 import { constants } from "../_shared/js/constants.js"
-import { deepEqual, getModDetails, readSavedData, startPolling } from "../_shared/core/utils.js"
+import { readSavedData, startPolling } from "../_shared/core/utils.js"
 
 
 // DOM Elements

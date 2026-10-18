@@ -190,9 +190,7 @@ position: absolute;
 .marquee {
     width: 100%;
     overflow: hidden;
-
-    /* soft fade at both edges */
-            mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
 }
 
 .marquee-track {
