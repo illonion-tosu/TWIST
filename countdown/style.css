@@ -149,3 +149,16 @@ position: absolute;
 }
 
 .chatbox-content { width: 100%; }
+
+/* Now Playing */
+.now-playing-rectangle {
+    position: absolute;
+    bottom: 45px;
+    right: 450px;
+}
+
+.now-playing-text {
+    position: absolute;
+    bottom: 125px;
+    right: 935px;
+}
