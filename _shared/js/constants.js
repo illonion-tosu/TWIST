@@ -107,5 +107,5 @@ export const constants = Object.freeze({
     // Countdown
     COUNTDOWN_TICK_MS: 1000,
     MS_PER_DAY: 24 * 60 * 60 * 1000,
-    NP_PIXELS_PER_SECOND: 30
+    NP_PIXELS_PER_SECOND: 45
 })

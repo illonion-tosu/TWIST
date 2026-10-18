@@ -1,4 +1,6 @@
 import { constants } from "../_shared/js/constants.js"
+import { deepEqual, getModDetails, readSavedData, startPolling } from "../_shared/core/utils.js"
+
 
 // DOM Elements
 const elements = {
@@ -321,3 +323,29 @@ function setNowPlaying(artist, title) {
     nowPlayingTextEl.textContent = `${artist} - ${title}`
     setupMarquee(container)
 }
+
+// Now Playing
+const nowPlayingContainerEl = document.getElementById("now-playing-container")
+let currentId, currentChecksum
+
+// Get Data
+function getData() {
+    const data = readSavedData()
+
+    // The dashboard hasn't saved anything (or hasn't heard from tosu) yet
+    if (!data || !data.tosuData) return
+
+    console.log(data)
+
+    // Now playing
+    const beatmapData = data.tosuData.beatmap
+    if (beatmapData && (currentId !== beatmapData.id || currentChecksum !== beatmapData.checksum)) {
+        currentId = beatmapData.id
+        currentChecksum = beatmapData.checksum
+
+        setNowPlaying(beatmapData.artist, beatmapData.title)
+        nowPlayingContainerEl.style.backgroundImage = `url("https://assets.ppy.sh/beatmaps/${beatmapData.set}/covers/cover.jpg")`
+    }
+}
+
+startPolling(getData)
