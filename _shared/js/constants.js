@@ -46,6 +46,9 @@ export const constants = Object.freeze({
 
     // Data files
     BEATMAPS_PATH: "../_data/beatmaps.json",
+    MAPPOOLS_PATH: "../_data/mappools.json",
+    // Which pool in mappools.json to use (its "id"). null = the first pool
+    ACTIVE_MAPPOOL_ID: null,
     SHOWCASE_BEATMAPS_PATH: "../_data/showcase-beatmaps.json",
     TEAMS_PATH: "../_data/teams.json",
 
@@ -71,10 +74,13 @@ export const constants = Object.freeze({
     SHOWCASE_ROUND_NAME_MAX_WIDTH: 350,
     SHOWCASE_ROUND_NAME_X: 210,
     SHOWCASE_ROUND_NAME_LINE_YS: { 1: [62.5], 2: [45, 80] },
+
+    // Twitch Chat
     TWITCH_CHANNEL: "purlstournaments",
     TWITCH_IGNORED_USERS: ["nightbot"],
     MAX_CHAT_MESSAGES: 100,
-    CHAT_COLOUR_MAX_BRIGHTNESS: 384,
+    SHOWCASE_CHAT_COLOUR_MAX_BRIGHTNESS: 384,
+    STARTING_SOON_CHAT_COLOUR_MIN_BRIGHTNESS: 384,
     CHAT_COLOUR_MAX_GREEN_RATIO: 0.8,
 
     // Winner
@@ -101,4 +107,5 @@ export const constants = Object.freeze({
     // Countdown
     COUNTDOWN_TICK_MS: 1000,
     MS_PER_DAY: 24 * 60 * 60 * 1000,
+    NP_PIXELS_PER_SECOND: 45
 })

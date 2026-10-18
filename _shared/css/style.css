@@ -9,6 +9,8 @@
     --dt-colour: #B540DB;
     --fm-colour: #F5EB46;
     --tb-colour: #FF6FB5;
+    --sd-colour: #E0453A;
+    --dthr-colour: #D63FA0;
 }
 
 /* Author display rules (flex, grid...) otherwise override the hidden attribute */
