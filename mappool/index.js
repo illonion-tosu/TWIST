@@ -112,12 +112,8 @@ function getData() {
 }
 
 function buildMapCards(beatmaps) {
+    const container = document.getElementById("mappool-map-container")
     for (const beatmap of beatmaps) {
-        const container = document.getElementById(`mappool-${beatmap.mod.toLowerCase()}-mod-container`)
-        if (!container) {
-            console.warn(`No mappool container for mod "${beatmap.mod}", skipping ${beatmap.mod}${beatmap.order}`)
-            continue
-        }
         container.append(createMapCard(beatmap))
     }
 }
@@ -174,17 +170,23 @@ function createBorder(borderColor) {
     return svg
 }
 
+// Stats only exist for maps found in beatmaps.json; show a dash otherwise
+function fmt(value, digits) {
+    return value === undefined || value === "" || isNaN(Number(value)) ? "-" : Number(value).toFixed(digits)
+}
+
 function createMapCard({
     beatmap_id = "",
     mod = "",
-    order = "",
+    label = "",
+    isTiebreaker = false,
     artist = "",
     title = "",
     version = "",
-    diff_size = 0,
-    diff_approach = 0,
-    diff_overall = 0,
-    difficultyrating = 0,
+    diff_size,
+    diff_approach,
+    diff_overall,
+    difficultyrating,
     beatmapset_id = "",
     borderColor = "red",
 } = {}) {
@@ -198,15 +200,15 @@ function createMapCard({
 
     const stats = el("div", "mappool-map-stats-container")
     stats.append(
-        el("div", "mappool-map-stats-cs", `CS: ${Number(diff_size).toFixed(1)}`),
-        el("div", "mappool-map-stats-ar", `AR: ${Number(diff_approach).toFixed(1)}`),
-        el("div", "mappool-map-stats-od", `OD: ${Number(diff_overall).toFixed(1)}`),
-        el("div", "mappool-map-stats-star mappool-map-stats-sr", `SR: ${Number(difficultyrating).toFixed(2)}`)
+        el("div", "mappool-map-stats-cs", `CS: ${fmt(diff_size, 1)}`),
+        el("div", "mappool-map-stats-ar", `AR: ${fmt(diff_approach, 1)}`),
+        el("div", "mappool-map-stats-od", `OD: ${fmt(diff_overall, 1)}`),
+        el("div", "mappool-map-stats-star mappool-map-stats-sr", `SR: ${fmt(difficultyrating, 2)}`)
     )
 
     container.append(
         bg,
-        el("div", `mappool-map-mod mappool-map-mod-${mod.toLowerCase()}`, `${mod}${order}`),
+        el("div", `mappool-map-mod mappool-map-mod-${isTiebreaker ? "tb" : mod.toLowerCase()}`, label),
         el("div", "mappool-map-metadata mappool-map-artist-title", `${artist} - ${title}`),
         el("div", "mappool-map-metadata mappool-map-version", `[${version}]`),
         stats,

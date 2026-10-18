@@ -46,6 +46,9 @@ export const constants = Object.freeze({
 
     // Data files
     BEATMAPS_PATH: "../_data/beatmaps.json",
+    MAPPOOLS_PATH: "../_data/mappools.json",
+    // Which pool in mappools.json to use (its "id"). null = the first pool
+    ACTIVE_MAPPOOL_ID: null,
     SHOWCASE_BEATMAPS_PATH: "../_data/showcase-beatmaps.json",
     TEAMS_PATH: "../_data/teams.json",
 
