@@ -1,6 +1,5 @@
-:root {
-    --page-background: url("static/background.png");
-}
+/* Whole Page */
+.main { background-image: url("static/background.png"); }
 
 /* Mappool Container */
 .mappool-container {
