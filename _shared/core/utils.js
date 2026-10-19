@@ -48,10 +48,16 @@ export function getModDetails(cs, ar, od, bpm, len, mod) {
 }
 
 // Read what the dashboard saved to localStorage (null until the dashboard has written something)
+// The parsed result is cached: polling fast is cheap because nothing is parsed until the saved text changes.
+let lastRawData = null
+let lastParsedData = null
 export function readSavedData() {
     try {
         const raw = localStorage.getItem(constants.STORAGE_KEY)
-        return raw ? JSON.parse(raw) : null
+        if (raw === lastRawData) return lastParsedData
+        lastRawData = raw
+        lastParsedData = raw ? JSON.parse(raw) : null
+        return lastParsedData
     } catch (error) {
         console.error("Could not read dashboard data:", error)
         return null
@@ -60,15 +66,22 @@ export function readSavedData() {
 
 // Run callback every `interval` ms, aligned to the clock.
 // An error in one tick is logged instead of killing the loop.
+// The dashboard's save also triggers it straight away (the "storage" event), so changes don't wait for the next tick.
 export function startPolling(callback, interval = constants.POLL_INTERVAL_MS) {
-    const tick = () => {
+    const run = () => {
         try {
             callback()
         } catch (error) {
             console.error(error)
         }
+    }
+    const tick = () => {
+        run()
         setTimeout(tick, interval - (Date.now() % interval))
     }
+    window.addEventListener("storage", event => {
+        if (event.key === constants.STORAGE_KEY) run()
+    })
     tick()
 }
 
@@ -101,4 +114,30 @@ export function truncateSVGText(element, maxWidth) {
 
         if (element.getComputedTextLength() <= maxWidth) break
     }
+}
+
+// Shrink an SVG <text> to fit maxWidth (down to minRatio of its original font size), then shorten it with "..." if it still doesn't
+export function fitSVGText(element, maxWidth, minRatio = constants.TEAM_NAME_MIN_FONT_RATIO) {
+    if (!element) return
+
+    const baseSize = Number(element.dataset.baseFontSize || parseFloat(element.getAttribute("font-size")))
+    element.dataset.baseFontSize = baseSize
+    element.setAttribute("font-size", `${baseSize}px`)
+
+    const originalText = element.textContent.trim()
+    element.textContent = originalText
+
+    const width = element.getComputedTextLength()
+    if (width > maxWidth) {
+        const ratio = Math.max(minRatio, maxWidth / width)
+        element.setAttribute("font-size", `${Math.floor(baseSize * ratio)}px`)
+    }
+
+    truncateSVGText(element, maxWidth)
+}
+
+// Mod name (NM, HD, DTHR...) -> CSS colour variable. Unknown mods fall back to gray.
+export function getModColourVar(mod) {
+    const key = String(mod ?? "").toLowerCase()
+    return constants.MOD_ORDER.map(m => m.toLowerCase()).includes(key) ? `var(--${key}-colour)` : "gray"
 }
