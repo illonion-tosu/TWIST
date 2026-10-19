@@ -12,7 +12,7 @@ export const otherSide = side => side === "red" ? "blue" : "red"
 export function getRoundMaxHp(roundName) {
     const name = String(roundName ?? "").toLowerCase()
     const round = constants.ROUND_MAX_HP.find(({ names }) => names.includes(name))
-    return round ? round.maxHp : null
+    return round ? round.maxHp : constants.DEFAULT_MAX_HP
 }
 
 // Teams can be 2 or 3 players. A 2-player team leaves its third slot empty (id 0, no name) in teams.json.
