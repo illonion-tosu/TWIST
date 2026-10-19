@@ -27,12 +27,13 @@ export const constants = Object.freeze({
     MAPS_PER_MULTIPLIER_STEP: 1,
 
     // Class abilities
-    CLASSES_WITH_CONTROLS: ["human", "demigod", "soulweaver"],
+    CLASSES_WITH_CONTROLS: ["human", "demigod", "soulweaver", "witch"],
     DEMIGOD_MULTIPLIERS: { 3: 2.5, 2: 2, 1: 1.5 },
     SOULWEAVER_CHALLENGER_MULTIPLIER: 1.1,
     SOULWEAVER_CHALLENGED_MULTIPLIER: 0.9,
     SOULWEAVER_LOSER_HP_LOSS_RATIO: 0.75,
     HUMAN_HEAL_AMOUNT: 30000,
+    CLASS_IMAGE_FOLDER: "static/classes",
 
     // tosu
     TOSU_WS_PATH: "/websocket/v2",

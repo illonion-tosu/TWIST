@@ -204,6 +204,37 @@ const classOf = playerNumber => playerData[`player${playerNumber}`]?.class ?? ""
 const abilities = {
     demigod: null, // { player, mode, target }, cleared after every map
     soulweaver: null, // { challenger, challenged }, cleared after every map
+    witch: null, // { player }, cleared after every map. Display only: it has no effect on damage
+}
+
+// Which class image each team's overlay shows (the latest activation on that side wins).
+// Cleared after every map. Human sets it when the heal button is used.
+const classDisplay = { red: null, blue: null }
+
+// Who "owns" each per-map ability (the player that activated it)
+const abilityOwner = {
+    demigod: ability => ability.player,
+    soulweaver: ability => ability.challenger,
+    witch: ability => ability.player,
+}
+
+// Compare the abilities before / after a change: anything newly activated takes over its team's image,
+// anything switched off gives the image up (falling back to another ability still active on that team).
+function syncClassDisplay(before) {
+    for (const name of Object.keys(abilityOwner)) {
+        const was = before[name]
+        const now = abilities[name]
+
+        if (now && (!was || abilityOwner[name](now) !== abilityOwner[name](was))) {
+            classDisplay[sideOf(abilityOwner[name](now))] = name
+        } else if (!now && was) {
+            const side = sideOf(abilityOwner[name](was))
+            if (classDisplay[side] !== name) continue
+            classDisplay[side] = Object.keys(abilityOwner).find(other =>
+                abilities[other] && sideOf(abilityOwner[other](abilities[other])) === side
+            ) ?? null
+        }
+    }
 }
 
 const classPanelsEl = document.getElementById("class-panels")
@@ -344,6 +375,10 @@ function buildClassPanel(side) {
             controls(n, "soulweaver",
                 checkbox(`soulweaver-${n}-active`, "Duel this map", true),
                 row("Challenged:", select(`soulweaver-${n}-challenged`, "opp"))
+            ),
+
+            controls(n, "witch",
+                checkbox(`witch-${n}-active`, "Activate this map", true)
             )
         )
 
@@ -439,6 +474,7 @@ function evaluateClasses() {
     const next = {
         demigod: null,
         soulweaver: null,
+        witch: null,
     }
     let demigodSide = null
     let soulweaverSide = null
@@ -496,6 +532,14 @@ function evaluateClasses() {
                 next.soulweaver = { challenger: n, challenged }
                 soulweaverSide ??= side
             }
+
+            // Witch: only shows her image on the overlay, nothing else to validate
+            if (className === "witch" && checked(`witch-${n}-active`)) {
+                if (!isAlive(n)) {
+                    errors[side].push(`${playerLabel(n)} is dead and can't activate.`)
+                }
+                next.witch = { player: n }
+            }
         }
     }
 
@@ -526,8 +570,11 @@ function applyClasses(changedBlock) {
     }
 
     if (!hasErrors(result)) {
+        const before = { ...abilities }
         abilities.demigod = result.next.demigod
         abilities.soulweaver = result.next.soulweaver
+        abilities.witch = result.next.witch
+        syncClassDisplay(before)
     }
 
     showClassError("red", rejected ? shownErrors.red : [])
@@ -540,6 +587,9 @@ function applyClasses(changedBlock) {
 function resetMapAbilities() {
     abilities.demigod = null
     abilities.soulweaver = null
+    abilities.witch = null
+    classDisplay.red = null
+    classDisplay.blue = null
     document.querySelectorAll(".per-map-ability").forEach(checkboxEl => { checkboxEl.checked = false })
     showClassError("red", [])
     showClassError("blue", [])
@@ -565,6 +615,9 @@ function healTeam(humanNumber) {
     }
 
     showClassError(side, [])
+
+    // Human's image stays until the map ends or another class on this team takes over
+    classDisplay[side] = "human"
     refreshDamage()
 }
 
@@ -1025,6 +1078,8 @@ function saveState(force = false) {
         mapsPlayed: mapsPlayed,
         damageMultiplier: getDamageMultiplier(),
         nextPicker: nextPicker,
+        // Class image shown per team on the main overlay (null = none)
+        classImages: { red: classDisplay.red, blue: classDisplay.blue },
     }
 
     try {

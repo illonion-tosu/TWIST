@@ -58,6 +58,13 @@ let chatLen
 // HP toggle
 let currentToggleHp
 
+// Class activated image per team (no src when nothing is activated)
+const classImageEls = {
+    red: document.getElementById("team-left-class-activated"),
+    blue: document.getElementById("team-right-class-activated"),
+}
+const currentClassImages = { red: undefined, blue: undefined }
+
 const displayScore = player => player.effectiveScore ?? player.currentScore
 
 function getTeamScore(playerData, side) {
@@ -159,6 +166,19 @@ function getData() {
     const chatData = tourneyData.chat ?? []
     if (chatLen !== chatData.length) {
         chatLen = updateChat(chatLen, chatData, chatboxContainerEl)
+    }
+
+    // Class activated images
+    for (const side of constants.SIDES) {
+        const className = data.classImages?.[side] ?? null
+        if (currentClassImages[side] === className) continue
+        currentClassImages[side] = className
+
+        if (className) {
+            classImageEls[side].src = `${constants.CLASS_IMAGE_FOLDER}/${className}.png`
+        } else {
+            classImageEls[side].removeAttribute("src")
+        }
     }
 
     // HP toggle

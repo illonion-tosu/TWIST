@@ -147,6 +147,7 @@ socket.onmessage = async event => {
         // Mod info
         const showcaseBeatmap = findShowcaseBeatmap(beatmapData.title, beatmapData.version, beatmapData.mapper, beatmapData.id)
         if (showcaseBeatmap) {
+            // Labelled like the mappool: the chip shows the label, the colour comes from the mod
             const label = showcaseBeatmap.label ?? showcaseBeatmap.modId ?? ""
             const mod = showcaseBeatmap.mod ?? label.replace(/\d+$/, "")
             nowPlayingEls.mod.style.backgroundColor = getModColourVar(showcaseBeatmap.isTiebreaker ? "TB" : mod)
