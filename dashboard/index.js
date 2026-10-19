@@ -111,7 +111,7 @@ loadBeatmaps().then(beatmaps => {
     allBeatmaps.map(beatmap => {
         const button = document.createElement("button")
         button.classList.add("mappool-select-button")
-        button.textContent = `${beatmap.mod}${beatmap.order}`
+        button.textContent = `${beatmap.label}`
         button.setAttribute("id", beatmap.beatmap_id)
         button.addEventListener("mousedown", mapClickEvent)
         button.addEventListener("contextmenu", event => event.preventDefault())
@@ -846,7 +846,6 @@ let currentId, currentChecksum
 let mappoolMapFound = false
 let mappoolMapLabel
 let currentBeatmap
-let mappoolMapModId
 
 // Team Names
 const teamRedNameEl = document.getElementById("team-red-name")
@@ -954,8 +953,9 @@ socket.onmessage = event => {
         // Mappool map found
         if (currentBeatmap) {
             mappoolMapFound = true
-            mappoolMapModId = currentBeatmap.label
-            currentModIdEl.textContent = mappoolMapModId
+            // Maps are identified by their label (B1, B2...) in the pool data
+            mappoolMapLabel = currentBeatmap.label
+            currentModIdEl.textContent = mappoolMapLabel
         } else {
             // Not a pool map: previously the old flag stayed true and main/ crashed on the missing beatmap
             mappoolMapFound = false

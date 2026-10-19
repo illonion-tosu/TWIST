@@ -34,7 +34,6 @@ async function getBeatmaps() {
         }
         responseJson[0].label = allBeatmaps[i].label
         responseJson[0].mod = allBeatmaps[i].mod
-        responseJson[0].label = allBeatmaps[i].label
         responseJson[0].isTiebreaker = Boolean(allBeatmaps[i].isTiebreaker)
         if (["FM", "FCM", "TB", "FLX"].includes(allBeatmaps[i].mod)) responseJson[0].EZMultiplier = allBeatmaps[i].EZMultiplier
         

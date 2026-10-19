@@ -128,16 +128,21 @@ function getData() {
             nowPlayingEls.mod.style.backgroundColor = `var(--team-${mappoolInfo.currentPicker}-colour)`
             nowPlayingEls.mod.textContent = mappoolInfo.mappoolMapLabel ?? currentBeatmap.label ?? ""
 
-            const stats = getModDetails(
-                currentBeatmap.diff_size,
-                currentBeatmap.diff_approach,
-                currentBeatmap.diff_overall,
-                currentBeatmap.bpm,
-                currentBeatmap.total_length,
-                currentBeatmap.mod
-            )
-            setNowPlayingStats(nowPlayingEls, { ...stats, sr: currentBeatmap.difficultyrating })
-            updateStats = false
+            if (currentBeatmap.diff_size !== undefined) {
+                const stats = getModDetails(
+                    currentBeatmap.diff_size,
+                    currentBeatmap.diff_approach,
+                    currentBeatmap.diff_overall,
+                    currentBeatmap.bpm,
+                    currentBeatmap.total_length,
+                    currentBeatmap.mod
+                )
+                setNowPlayingStats(nowPlayingEls, { ...stats, sr: currentBeatmap.difficultyrating })
+                updateStats = false
+            } else {
+                statsUpdateAt = Date.now() + constants.STATS_DELAY_MS
+                updateStats = true
+            }
         } else {
             nowPlayingEls.mod.style.backgroundColor = "gray"
             nowPlayingEls.mod.textContent = ""

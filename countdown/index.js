@@ -335,8 +335,6 @@ function getData() {
     // The dashboard hasn't saved anything (or hasn't heard from tosu) yet
     if (!data || !data.tosuData) return
 
-    console.log(data)
-
     // Now playing
     const beatmapData = data.tosuData.beatmap
     if (beatmapData && (currentId !== beatmapData.id || currentChecksum !== beatmapData.checksum)) {

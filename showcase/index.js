@@ -70,7 +70,7 @@ function getChatColour(username) {
         g = Math.floor(Math.random() * 256)
         b = Math.floor(Math.random() * 256)
     } while (!(
-        r + g + b <= constants.STARTING_SOON_CHAT_COLOUR_MIN_BRIGHTNESS &&
+        r + g + b <= constants.SHOWCASE_CHAT_COLOUR_MAX_BRIGHTNESS &&
         g <= (r + b) * constants.CHAT_COLOUR_MAX_GREEN_RATIO
     ))
 
