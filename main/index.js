@@ -125,8 +125,6 @@ function getData() {
         if (mappoolInfo.mappoolMapFound && mappoolInfo.currentBeatmap) {
             // Pool map: stats come from the mappool data
             const currentBeatmap = mappoolInfo.currentBeatmap
-            nowPlayingEls.mod.style.backgroundColor = `var(--team-${mappoolInfo.currentPicker}-colour)`
-            nowPlayingEls.mod.textContent = mappoolInfo.mappoolMapLabel ?? currentBeatmap.label ?? ""
 
             if (currentBeatmap.diff_size !== undefined) {
                 const stats = getModDetails(
@@ -144,13 +142,19 @@ function getData() {
                 updateStats = true
             }
         } else {
-            nowPlayingEls.mod.style.backgroundColor = "gray"
-            nowPlayingEls.mod.textContent = ""
-
             // Wait a moment, then take the stats from tosu (no await, so the rest of the overlay keeps updating)
             statsUpdateAt = Date.now() + constants.STATS_DELAY_MS
             updateStats = true
         }
+    }
+
+    if (mappoolInfo.mappoolMapFound && mappoolInfo.currentBeatmap) {
+        const picker = mappoolInfo.currentPicker ?? "none"
+        nowPlayingEls.mod.style.backgroundColor = `var(--team-${picker}-colour)`
+        nowPlayingEls.mod.textContent = mappoolInfo.mappoolMapLabel ?? mappoolInfo.currentBeatmap.label ?? ""
+    } else {
+        nowPlayingEls.mod.style.backgroundColor = "gray"
+        nowPlayingEls.mod.textContent = ""
     }
 
     // Stats from tosu
