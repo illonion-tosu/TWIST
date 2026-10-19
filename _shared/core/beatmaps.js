@@ -23,6 +23,9 @@ export async function loadShowcaseBeatmaps() {
     return showcaseBeatmaps
 }
 
-export function findShowcaseBeatmap(songName, difficultyName, mapper) {
-    return showcaseBeatmaps.beatmaps.find(beatmap => beatmap.songName === songName && beatmap.difficultyName === difficultyName && beatmap.mapper === mapper)
+// Match a showcase map. Prefer the beatmap id when the entry has one, otherwise song + difficulty + mapper.
+export function findShowcaseBeatmap(songName, difficultyName, mapper, beatmapId) {
+    const maps = showcaseBeatmaps.beatmaps ?? []
+    const byId = beatmapId ? maps.find(beatmap => Number(beatmap.beatmap_id) === Number(beatmapId)) : undefined
+    return byId ?? maps.find(beatmap => beatmap.songName === songName && beatmap.difficultyName === difficultyName && beatmap.mapper === mapper)
 }
