@@ -91,6 +91,7 @@ export const constants = Object.freeze({
     CHIBI_FOLDER: "static/chibis",
     PLACEHOLDER_CHIBI: "static/placeholder chibi.png",
     WINNER_NAME_MAX_WIDTH: 330,
+    WINNER_TEAM_NAME_MAX_WIDTH: 570,
     WINNER_NAME_MAX_LINES: 2,
     WINNER_NAME_X: 183,
     WINNER_NAME_LINE_YS: { 1: [260], 2: [235, 285] },

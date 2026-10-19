@@ -1,5 +1,5 @@
 import { constants } from "../_shared/js/constants.js"
-import { readSavedData, startPolling } from "../_shared/core/utils.js"
+import { fitSVGText, readSavedData, startPolling } from "../_shared/core/utils.js"
 import { isPresent, playersOf } from "../_shared/core/match.js"
 
 // Winner
@@ -67,6 +67,7 @@ function getData() {
 
     // Team name
     winnerNameEl.textContent = currentTeamNames[currentWinnerSide] ?? ""
+    fitSVGText(winnerNameEl, constants.WINNER_TEAM_NAME_MAX_WIDTH)
 
     // Chibis + player names of the winning team
     const winners = playersOf(currentWinnerSide).map(n => playerData[`player${n}`])
@@ -74,6 +75,7 @@ function getData() {
         // A 2-player team only shows 2 chibis
         const present = isPresent(player)
         chibiWrapperEl.children[i].style.display = present ? "" : "none"
+        document.getElementById(`player-${i + 1}-name`).closest("svg").style.display = present ? "" : "none"
         if (!present) {
             setPlayerName(i + 1, "")
             return
