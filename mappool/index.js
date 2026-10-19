@@ -1,6 +1,6 @@
 import { updateChat } from "../_shared/core/chat.js"
 import { constants } from "../_shared/js/constants.js"
-import { deepEqual, readSavedData, startPolling } from "../_shared/core/utils.js"
+import { deepEqual, getModColourVar, readSavedData, startPolling } from "../_shared/core/utils.js"
 import { getHpBarWidth, getTeamHp, getTeamMaxHp, playersOf } from "../_shared/core/match.js"
 import { createCounter, setTeamName, setToggleHpVisible } from "../_shared/core/overlay.js"
 
@@ -111,15 +111,10 @@ function getData() {
     }
 }
 
+// One card per map, in pool order. Each card shows the map's label (B1, B2...) and is coloured by its mod.
 function buildMapCards(beatmaps) {
-    for (const beatmap of beatmaps) {
-        const container = document.getElementById(`mappool-${beatmap.mod.toLowerCase()}-mod-container`)
-        if (!container) {
-            console.warn(`No mappool container for mod "${beatmap.mod}", skipping ${beatmap.mod}${beatmap.order}`)
-            continue
-        }
-        container.append(createMapCard(beatmap))
-    }
+    const container = document.getElementById("mappool-maps-container")
+    container.replaceChildren(...beatmaps.map(createMapCard))
 }
 
 // Show "PICKED BY ..." / "BANNED BY ..." on each card
@@ -174,10 +169,17 @@ function createBorder(borderColor) {
     return svg
 }
 
+function modChip(text, mod) {
+    const chip = el("div", "mappool-map-mod", text)
+    chip.style.backgroundColor = getModColourVar(mod)
+    return chip
+}
+
 function createMapCard({
     beatmap_id = "",
+    label = "",
     mod = "",
-    order = "",
+    isTiebreaker = false,
     artist = "",
     title = "",
     version = "",
@@ -206,7 +208,7 @@ function createMapCard({
 
     container.append(
         bg,
-        el("div", `mappool-map-mod mappool-map-mod-${mod.toLowerCase()}`, `${mod}${order}`),
+        modChip(label || mod, isTiebreaker ? "TB" : mod),
         el("div", "mappool-map-metadata mappool-map-artist-title", `${artist} - ${title}`),
         el("div", "mappool-map-metadata mappool-map-version", `[${version}]`),
         stats,
