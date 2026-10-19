@@ -1,6 +1,6 @@
 import { constants } from "../_shared/js/constants.js"
 import { findShowcaseBeatmap, loadShowcaseBeatmaps } from "../_shared/core/beatmaps.js"
-import { delay } from "../_shared/core/utils.js"
+import { delay, getModColourVar } from "../_shared/core/utils.js"
 import { createTosuWsSocket } from "../_shared/core/websocket.js"
 import {
     getNowPlayingElements,
@@ -145,10 +145,12 @@ socket.onmessage = async event => {
         setNowPlayingMetadata(nowPlayingEls, beatmapData, data.directPath)
 
         // Mod info
-        const showcaseBeatmap = findShowcaseBeatmap(beatmapData.title, beatmapData.version, beatmapData.mapper)
+        const showcaseBeatmap = findShowcaseBeatmap(beatmapData.title, beatmapData.version, beatmapData.mapper, beatmapData.id)
         if (showcaseBeatmap) {
-            nowPlayingEls.mod.style.backgroundColor = `var(--${showcaseBeatmap.modId.replace(/\d+$/, "").toLowerCase()}-colour)`
-            nowPlayingEls.mod.textContent = showcaseBeatmap.modId
+            const label = showcaseBeatmap.label ?? showcaseBeatmap.modId ?? ""
+            const mod = showcaseBeatmap.mod ?? label.replace(/\d+$/, "")
+            nowPlayingEls.mod.style.backgroundColor = getModColourVar(showcaseBeatmap.isTiebreaker ? "TB" : mod)
+            nowPlayingEls.mod.textContent = label
         } else {
             nowPlayingEls.mod.style.backgroundColor = "gray"
             nowPlayingEls.mod.textContent = ""

@@ -119,7 +119,7 @@ function getData() {
             // Pool map: stats come from the mappool data
             const currentBeatmap = mappoolInfo.currentBeatmap
             nowPlayingEls.mod.style.backgroundColor = `var(--team-${mappoolInfo.currentPicker}-colour)`
-            nowPlayingEls.mod.textContent = mappoolInfo.mappoolMapModId
+            nowPlayingEls.mod.textContent = mappoolInfo.mappoolMapLabel ?? currentBeatmap.label ?? ""
 
             const stats = getModDetails(
                 currentBeatmap.diff_size,
@@ -127,7 +127,7 @@ function getData() {
                 currentBeatmap.diff_overall,
                 currentBeatmap.bpm,
                 currentBeatmap.total_length,
-                mappoolInfo.mappoolMapModId
+                currentBeatmap.mod
             )
             setNowPlayingStats(nowPlayingEls, { ...stats, sr: currentBeatmap.difficultyrating })
             updateStats = false
