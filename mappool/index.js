@@ -1,7 +1,7 @@
 import { updateChat } from "../_shared/core/chat.js"
 import { constants } from "../_shared/js/constants.js"
 import { deepEqual, getModColourVar, readSavedData, startPolling } from "../_shared/core/utils.js"
-import { getHpBarWidth, getTeamHp, getTeamMaxHp, playersOf } from "../_shared/core/match.js"
+import { getHpBarWidth, getTeamHp, getTeamMaxHp } from "../_shared/core/match.js"
 import { createCounter, setTeamName, setToggleHpVisible } from "../_shared/core/overlay.js"
 
 // Round name
@@ -173,6 +173,11 @@ function modChip(text, mod) {
     const chip = el("div", "mappool-map-mod", text)
     chip.style.backgroundColor = getModColourVar(mod)
     return chip
+}
+
+// Stats only exist for maps found in beatmaps.json; show a dash otherwise
+function fmt(value, digits) {
+    return value === undefined || value === "" || isNaN(Number(value)) ? "-" : Number(value).toFixed(digits)
 }
 
 function createMapCard({

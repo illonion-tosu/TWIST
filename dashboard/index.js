@@ -846,6 +846,7 @@ let currentId, currentChecksum
 let mappoolMapFound = false
 let mappoolMapLabel
 let currentBeatmap
+let mappoolMapModId
 
 // Team Names
 const teamRedNameEl = document.getElementById("team-red-name")
