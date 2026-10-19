@@ -1,7 +1,7 @@
 import { updateChat } from "../_shared/core/chat.js"
 import { constants } from "../_shared/js/constants.js"
-import { deepEqual, readSavedData, startPolling } from "../_shared/core/utils.js"
-import { getHpBarWidth, getTeamHp, playersOf } from "../_shared/core/match.js"
+import { deepEqual, getModColourVar, getModDetails, readSavedData, startPolling } from "../_shared/core/utils.js"
+import { getHpBarWidth, getTeamHp, getTeamMaxHp } from "../_shared/core/match.js"
 import { createCounter, setTeamName, setToggleHpVisible } from "../_shared/core/overlay.js"
 
 // Round name
@@ -70,7 +70,7 @@ function getData() {
             hpCounters[side].update(hp)
 
             // A team's bar covers all 3 players' HP
-            const barWidth = getHpBarWidth(hp, data.maxHp * playersOf(side).length, constants.TEAM_HP_BAR_MAX_WIDTH)
+            const barWidth = getHpBarWidth(hp, getTeamMaxHp(playerData, side, data.maxHp), constants.TEAM_HP_BAR_MAX_WIDTH)
             teamEls[side].hpBar.style.width = `${barWidth}px`
         }
     }
@@ -111,11 +111,10 @@ function getData() {
     }
 }
 
+// One card per map, in pool order. Each card shows the map's label (B1, B2...) and is coloured by its mod.
 function buildMapCards(beatmaps) {
-    const container = document.getElementById("mappool-map-container")
-    for (const beatmap of beatmaps) {
-        container.append(createMapCard(beatmap))
-    }
+    const container = document.getElementById("mappool-maps-container")
+    container.replaceChildren(...beatmaps.map(createMapCard))
 }
 
 // Show "PICKED BY ..." / "BANNED BY ..." on each card
@@ -170,6 +169,12 @@ function createBorder(borderColor) {
     return svg
 }
 
+function modChip(text, mod) {
+    const chip = el("div", "mappool-map-mod", text)
+    chip.style.backgroundColor = getModColourVar(mod)
+    return chip
+}
+
 // Stats only exist for maps found in beatmaps.json; show a dash otherwise
 function fmt(value, digits) {
     return value === undefined || value === "" || isNaN(Number(value)) ? "-" : Number(value).toFixed(digits)
@@ -177,8 +182,8 @@ function fmt(value, digits) {
 
 function createMapCard({
     beatmap_id = "",
-    mod = "",
     label = "",
+    mod = "",
     isTiebreaker = false,
     artist = "",
     title = "",
@@ -187,16 +192,25 @@ function createMapCard({
     diff_approach,
     diff_overall,
     difficultyrating,
+    bpm,
+    total_length,
     beatmapset_id = "",
     borderColor = "red",
 } = {}) {
+    if (diff_size !== undefined && diff_size !== "") {
+        ({ cs: diff_size, ar: diff_approach, od: diff_overall } =
+            getModDetails(diff_size, diff_approach, diff_overall, bpm, total_length, mod))
+    }
+
     const wrapper = el("div", "mappool-map-wrapper")
     wrapper.setAttribute("id", beatmap_id)
     const container = el("div", "mappool-map-container")
 
     const bg = el("div", "mappool-map-background")
     bg.append(el("div", "mappool-map-background-overlay"))
-    if (beatmapset_id) bg.style.backgroundImage = `url("${constants.BEATMAP_COVER_URL.replace("{id}", beatmapset_id)}")`
+    bg.style.backgroundImage = beatmapset_id
+        ? `url("${constants.BEATMAP_COVER_URL.replace("{id}", beatmapset_id)}")`
+        : "none"
 
     const stats = el("div", "mappool-map-stats-container")
     stats.append(
@@ -208,7 +222,7 @@ function createMapCard({
 
     container.append(
         bg,
-        el("div", `mappool-map-mod mappool-map-mod-${isTiebreaker ? "tb" : mod.toLowerCase()}`, label),
+        modChip(label || mod, isTiebreaker ? "TB" : mod),
         el("div", "mappool-map-metadata mappool-map-artist-title", `${artist} - ${title}`),
         el("div", "mappool-map-metadata mappool-map-version", `[${version}]`),
         stats,

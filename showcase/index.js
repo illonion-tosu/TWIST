@@ -1,6 +1,6 @@
 import { constants } from "../_shared/js/constants.js"
 import { findShowcaseBeatmap, loadShowcaseBeatmaps } from "../_shared/core/beatmaps.js"
-import { delay } from "../_shared/core/utils.js"
+import { getModColourVar } from "../_shared/core/utils.js"
 import { createTosuWsSocket } from "../_shared/core/websocket.js"
 import {
     getNowPlayingElements,
@@ -70,7 +70,7 @@ function getChatColour(username) {
         g = Math.floor(Math.random() * 256)
         b = Math.floor(Math.random() * 256)
     } while (!(
-        r + g + b <= constants.STARTING_SOON_CHAT_COLOUR_MIN_BRIGHTNESS &&
+        r + g + b <= constants.SHOWCASE_CHAT_COLOUR_MAX_BRIGHTNESS &&
         g <= (r + b) * constants.CHAT_COLOUR_MAX_GREEN_RATIO
     ))
 
@@ -118,16 +118,17 @@ ComfyJS.onChat = (user, message, flags, self, extra) => {
 }
 
 ComfyJS.onMessageDeleted = id => document.getElementById(id)?.remove()
-ComfyJS.onTimeout = extra => deleteAllMessagesFromUser(extra.timedOutUserId)
-ComfyJS.onBan = extra => deleteAllMessagesFromUser(extra.bannedUserId)
+ComfyJS.onTimeout = (user, duration, extra) => deleteAllMessagesFromUser(extra.timedOutUserId)
+ComfyJS.onBan = (user, extra) => deleteAllMessagesFromUser(extra.bannedUserId)
 
 // Now playing (straight from tosu)
 const nowPlayingEls = getNowPlayingElements()
 let currentId, currentChecksum
 let updateStats = false
+let statsUpdateAt = 0
 
 const socket = createTosuWsSocket()
-socket.onmessage = async event => {
+socket.onmessage = event => {
     const data = JSON.parse(event.data)
 
     const beatmapData = data.beatmap
@@ -138,21 +139,24 @@ socket.onmessage = async event => {
         setNowPlayingMetadata(nowPlayingEls, beatmapData, data.directPath)
 
         // Mod info
-        const showcaseBeatmap = findShowcaseBeatmap(beatmapData.title, beatmapData.version, beatmapData.mapper)
+        const showcaseBeatmap = findShowcaseBeatmap(beatmapData.title, beatmapData.version, beatmapData.mapper, beatmapData.id)
         if (showcaseBeatmap) {
-            nowPlayingEls.mod.style.backgroundColor = `var(--${showcaseBeatmap.modId.replace(/\d+$/, "").toLowerCase()}-colour)`
-            nowPlayingEls.mod.textContent = showcaseBeatmap.modId
+            // Labelled like the mappool: the chip shows the label, the colour comes from the mod
+            const label = showcaseBeatmap.label ?? showcaseBeatmap.modId ?? ""
+            const mod = showcaseBeatmap.mod ?? label.replace(/\d+$/, "")
+            nowPlayingEls.mod.style.backgroundColor = getModColourVar(showcaseBeatmap.isTiebreaker ? "TB" : mod)
+            nowPlayingEls.mod.textContent = label
         } else {
             nowPlayingEls.mod.style.backgroundColor = "gray"
             nowPlayingEls.mod.textContent = ""
         }
 
-        await delay(constants.STATS_DELAY_MS)
+        statsUpdateAt = Date.now() + constants.STATS_DELAY_MS
         updateStats = true
     }
 
     // Stats from tosu
-    if (updateStats && data.beatmap?.stats) {
+    if (updateStats && Date.now() >= statsUpdateAt && data.beatmap?.stats) {
         updateStats = false
         setNowPlayingStatsFromTosu(nowPlayingEls, data.beatmap.stats)
     }

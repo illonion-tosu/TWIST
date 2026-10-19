@@ -1,7 +1,7 @@
 import { updateChat } from "../_shared/core/chat.js"
 import { constants } from "../_shared/js/constants.js"
 import { deepEqual, getModDetails, readSavedData, startPolling } from "../_shared/core/utils.js"
-import { getHpBarWidth, getTeamHp, playersOf } from "../_shared/core/match.js"
+import { getHpBarWidth, getTeamHp, getTeamMaxHp, playersOf } from "../_shared/core/match.js"
 import {
     createCounter,
     getNowPlayingElements,
@@ -58,6 +58,13 @@ let chatLen
 // HP toggle
 let currentToggleHp
 
+// Class activated image per team (no src when nothing is activated)
+const classImageEls = {
+    red: document.getElementById("team-left-class-activated"),
+    blue: document.getElementById("team-right-class-activated"),
+}
+const currentClassImages = { red: undefined, blue: undefined }
+
 const displayScore = player => player.effectiveScore ?? player.currentScore
 
 function getTeamScore(playerData, side) {
@@ -90,7 +97,7 @@ function getData() {
             counters[side].hp.update(hp)
 
             // A team's bar covers all 3 players' HP
-            const barWidth = getHpBarWidth(hp, data.maxHp * playersOf(side).length, constants.TEAM_HP_BAR_MAX_WIDTH)
+            const barWidth = getHpBarWidth(hp, getTeamMaxHp(playerData, side, data.maxHp), constants.TEAM_HP_BAR_MAX_WIDTH)
             teamEls[side].hpBar.style.width = `${barWidth}px`
         }
     }
@@ -118,27 +125,36 @@ function getData() {
         if (mappoolInfo.mappoolMapFound && mappoolInfo.currentBeatmap) {
             // Pool map: stats come from the mappool data
             const currentBeatmap = mappoolInfo.currentBeatmap
-            nowPlayingEls.mod.style.backgroundColor = `var(--team-${mappoolInfo.currentPicker}-colour)`
-            nowPlayingEls.mod.textContent = mappoolInfo.mappoolMapModId
 
-            const stats = getModDetails(
-                currentBeatmap.diff_size,
-                currentBeatmap.diff_approach,
-                currentBeatmap.diff_overall,
-                currentBeatmap.bpm,
-                currentBeatmap.total_length,
-                mappoolInfo.mappoolMapModId
-            )
-            setNowPlayingStats(nowPlayingEls, { ...stats, sr: currentBeatmap.difficultyrating })
-            updateStats = false
+            if (currentBeatmap.diff_size !== undefined) {
+                const stats = getModDetails(
+                    currentBeatmap.diff_size,
+                    currentBeatmap.diff_approach,
+                    currentBeatmap.diff_overall,
+                    currentBeatmap.bpm,
+                    currentBeatmap.total_length,
+                    currentBeatmap.mod
+                )
+                setNowPlayingStats(nowPlayingEls, { ...stats, sr: currentBeatmap.difficultyrating })
+                updateStats = false
+            } else {
+                statsUpdateAt = Date.now() + constants.STATS_DELAY_MS
+                updateStats = true
+            }
         } else {
-            nowPlayingEls.mod.style.backgroundColor = "gray"
-            nowPlayingEls.mod.textContent = ""
-
             // Wait a moment, then take the stats from tosu (no await, so the rest of the overlay keeps updating)
             statsUpdateAt = Date.now() + constants.STATS_DELAY_MS
             updateStats = true
         }
+    }
+
+    if (mappoolInfo.mappoolMapFound && mappoolInfo.currentBeatmap) {
+        const picker = mappoolInfo.currentPicker ?? "none"
+        nowPlayingEls.mod.style.backgroundColor = `var(--team-${picker}-colour)`
+        nowPlayingEls.mod.textContent = mappoolInfo.mappoolMapLabel ?? mappoolInfo.currentBeatmap.label ?? ""
+    } else {
+        nowPlayingEls.mod.style.backgroundColor = "gray"
+        nowPlayingEls.mod.textContent = ""
     }
 
     // Stats from tosu
@@ -159,6 +175,19 @@ function getData() {
     const chatData = tourneyData.chat ?? []
     if (chatLen !== chatData.length) {
         chatLen = updateChat(chatLen, chatData, chatboxContainerEl)
+    }
+
+    // Class activated images
+    for (const side of constants.SIDES) {
+        const className = data.classImages?.[side] ?? null
+        if (currentClassImages[side] === className) continue
+        currentClassImages[side] = className
+
+        if (className) {
+            classImageEls[side].src = `${constants.CLASS_IMAGE_FOLDER}/${className}.png`
+        } else {
+            classImageEls[side].removeAttribute("src")
+        }
     }
 
     // HP toggle

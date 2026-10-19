@@ -148,7 +148,10 @@
 .now-playing-mod-hd { background-color: var(--hd-colour); }
 .now-playing-mod-hr { background-color: var(--hr-colour); }
 .now-playing-mod-dt { background-color: var(--dt-colour); }
+.now-playing-mod-sd { background-color: var(--sd-colour); }
+.now-playing-mod-dthr { background-color: var(--dthr-colour); }
 .now-playing-mod-fm { background-color: var(--fm-colour); }
+.now-playing-mod-tb { background-color: var(--tb-colour); }
 
 .now-playing-metadata {
     position: absolute;

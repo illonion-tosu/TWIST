@@ -1,6 +1,6 @@
 import { constants } from "../_shared/js/constants.js"
-import { deepEqual, readSavedData, startPolling } from "../_shared/core/utils.js"
-import { getEffectiveHp, getHpBarWidth, getTeamHp } from "../_shared/core/match.js"
+import { deepEqual, fitSVGText, readSavedData, startPolling } from "../_shared/core/utils.js"
+import { getEffectiveHp, getHpBarWidth, getTeamHp, isPresent } from "../_shared/core/match.js"
 import { createCounter } from "../_shared/core/overlay.js"
 
 // Team names + scores
@@ -41,11 +41,13 @@ function getData() {
     if (!data || !data.tosuData || !data.playerData) return
 
     // Team names
-    const teamNames = { red: data.teamName.redTeamName, blue: data.teamName.blueTeamName }
+    const teamNames = { red: data.teamName?.redTeamName ?? "", blue: data.teamName?.blueTeamName ?? "" }
     for (const side of constants.SIDES) {
         if (currentTeamNames[side] !== teamNames[side]) {
             currentTeamNames[side] = teamNames[side]
             teamEls[side].name.textContent = teamNames[side]
+            // Long names shrink to fit the box (then get "..." as a last resort) instead of being cut off
+            fitSVGText(teamEls[side].name, constants.HP_BAR_TEAM_NAME_MAX_WIDTH)
         }
     }
 
@@ -64,6 +66,11 @@ function getData() {
     for (const [key, player] of Object.entries(playerData)) {
         const els = players[key]
         if (!els) continue
+
+        // Empty slot (2-player team): hide the whole row
+        const present = isPresent(player)
+        els.nameElement.closest(".player-container").style.display = present ? "" : "none"
+        if (!present) continue
 
         // Player name
         if (els.currentName !== player.playerName) {

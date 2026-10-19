@@ -206,15 +206,16 @@
     line-height: 92px;
     -webkit-text-stroke: 6px black;
     paint-order: stroke fill;
+    background-color: gray;
 }
 
 .mappool-map-mod-nm { background-color: var(--nm-colour); }
 .mappool-map-mod-hd { background-color: var(--hd-colour); }
 .mappool-map-mod-hr { background-color: var(--hr-colour); }
 .mappool-map-mod-dt { background-color: var(--dt-colour); }
-.mappool-map-mod-fm { background-color: var(--fm-colour); }
 .mappool-map-mod-sd { background-color: var(--sd-colour); }
 .mappool-map-mod-dthr { background-color: var(--dthr-colour); }
+.mappool-map-mod-fm { background-color: var(--fm-colour); }
 .mappool-map-mod-tb { background-color: var(--tb-colour); }
 
 .now-playing-metadata,

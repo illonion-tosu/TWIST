@@ -8,13 +8,12 @@ async function getApi() {
     osuApi = responseJson.api
 }
 
-let allBeatmapsJson = []
-let fullJson = []
-
 async function getBeatmaps() {
+    const allBeatmapsJson = []
     const response = await fetch("../_data/beatmaps-base.json")
     const responseJson = await response.json()
     const allBeatmaps = responseJson.beatmaps
+    const roundName = responseJson.roundName
 
     for (let i = 0; i < allBeatmaps.length; i++) {
         // Set mod number
@@ -33,14 +32,14 @@ async function getBeatmaps() {
         }
         responseJson[0].label = allBeatmaps[i].label
         responseJson[0].mod = allBeatmaps[i].mod
-        responseJson[0].isTiebreaker = allBeatmaps[i].isTiebreaker ?? false
-        if (allBeatmaps[i].mod === "FM" || allBeatmaps[i].mod === "FCM" || allBeatmaps[i].mod === "TB" || allBeatmaps[i].mod === "FLX") responseJson[0].EZMultiplier = allBeatmaps[i].EZMultiplier
+        responseJson[0].isTiebreaker = Boolean(allBeatmaps[i].isTiebreaker)
+        if (["FM", "FCM", "TB", "FLX"].includes(allBeatmaps[i].mod)) responseJson[0].EZMultiplier = allBeatmaps[i].EZMultiplier
         
         allBeatmapsJson.push(responseJson[0])
     }
 
-    fullJson = {
-        "roundName": responseJson.roundName,
+    const fullJson = {
+        "roundName": roundName,
         "beatmaps": allBeatmapsJson
     }
 

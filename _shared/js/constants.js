@@ -27,12 +27,13 @@ export const constants = Object.freeze({
     MAPS_PER_MULTIPLIER_STEP: 1,
 
     // Class abilities
-    CLASSES_WITH_CONTROLS: ["human", "demigod", "soulweaver"],
+    CLASSES_WITH_CONTROLS: ["human", "demigod", "soulweaver", "witch"],
     DEMIGOD_MULTIPLIERS: { 3: 2.5, 2: 2, 1: 1.5 },
     SOULWEAVER_CHALLENGER_MULTIPLIER: 1.1,
     SOULWEAVER_CHALLENGED_MULTIPLIER: 0.9,
     SOULWEAVER_LOSER_HP_LOSS_RATIO: 0.75,
     HUMAN_HEAL_AMOUNT: 30000,
+    CLASS_IMAGE_FOLDER: "static/classes",
 
     // tosu
     TOSU_WS_PATH: "/websocket/v2",
@@ -43,6 +44,7 @@ export const constants = Object.freeze({
     STORAGE_KEY: "data",
     POLL_INTERVAL_MS: 100,
     SAVE_INTERVAL_MS: 100,
+    SAVE_THROTTLE_MS: 25,
 
     // Data files
     BEATMAPS_PATH: "../_data/beatmaps.json",
@@ -68,6 +70,8 @@ export const constants = Object.freeze({
     TEAM_HP_BAR_MAX_WIDTH: 238,
     PLAYER_HP_BAR_MAX_WIDTH: 636,
     COUNT_UP_DURATION: 0.2,
+    TEAM_NAME_MIN_FONT_RATIO: 0.55,
+    HP_BAR_TEAM_NAME_MAX_WIDTH: 570,
     COUNT_UP_OPTIONS: { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: "" },
 
     // Showcase
@@ -87,11 +91,13 @@ export const constants = Object.freeze({
     CHIBI_FOLDER: "static/chibis",
     PLACEHOLDER_CHIBI: "static/placeholder chibi.png",
     WINNER_NAME_MAX_WIDTH: 330,
+    WINNER_TEAM_NAME_MAX_WIDTH: 570,
     WINNER_NAME_MAX_LINES: 2,
     WINNER_NAME_X: 183,
     WINNER_NAME_LINE_YS: { 1: [260], 2: [235, 285] },
 
     // Mappool
+    MOD_ORDER: ["NM", "HD", "SD", "HR", "DT", "DTHR", "FM", "TB"],
     SVG_NS: "http://www.w3.org/2000/svg",
     BEATMAP_COVER_URL: "https://assets.ppy.sh/beatmaps/{id}/covers/cover.jpg",
     MAP_BORDER_VIEWBOX: "0 0 680 91",

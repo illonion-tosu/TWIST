@@ -7,10 +7,10 @@
     --hd-colour: #DB6D45;
     --hr-colour: #C43B3B;
     --dt-colour: #B540DB;
+    --sd-colour: #E0E0E0;
+    --dthr-colour: #8E2FB0;
     --fm-colour: #F5EB46;
     --tb-colour: #FF6FB5;
-    --sd-colour: #E0453A;
-    --dthr-colour: #D63FA0;
 }
 
 /* Author display rules (flex, grid...) otherwise override the hidden attribute */
@@ -52,3 +52,4 @@
     font-family: "Super Mario Galaxy", sans-serif;
     fill: white;
 }
+

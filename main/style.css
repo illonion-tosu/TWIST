@@ -3,6 +3,7 @@
     --greenscreen-width: 480px;
     --greenscreen-height: 360px;
     --team-score-container-x: 941px;
+    --team-score-activated-x: 339px;
 }
 
 /* Whole Page */
@@ -78,3 +79,12 @@
 
 /* Mod colour is set from index.js */
 .now-playing-mod { background-color: #3b7cc4; }
+
+/* Team Class Activated */
+.team-class-activated {
+    position: absolute;
+    bottom: 0;
+    width: 276px;
+}
+.team-left-class-activated { left: var(--team-score-activated-x); }
+.team-right-class-activated { right: var(--team-score-activated-x); }

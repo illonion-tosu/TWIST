@@ -2,6 +2,7 @@ import { constants } from "../_shared/js/constants.js"
 import { loadBeatmaps } from "../_shared/core/beatmaps.js"
 import { findTeam, loadTeams } from "../_shared/core/teams.js"
 import { createTosuWsSocket } from "../_shared/core/websocket.js"
+import { isPresent, isSlotFilled } from "../_shared/core/match.js"
 
 // Saved match state: read it before anything gets a chance to overwrite it
 let savedState = null
@@ -70,6 +71,8 @@ const newPlayer = (target) => ({
     currentScoreAgainst: 0,
     currentDeadRounds: 0,
     hasRevived: false,
+    // false = empty slot on a 2-player team: not in the match at all (no HP, no damage, no target)
+    present: true,
 })
 
 let playerData = Object.fromEntries(
@@ -86,7 +89,7 @@ loadBeatmaps().then(beatmaps => {
     allBeatmaps = beatmaps.beatmaps
 
     // Set Max HP
-    const normalisedRoundName = roundName.toLowerCase().trim()
+    const normalisedRoundName = String(roundName ?? "").toLowerCase().trim()
     const roundConfig = constants.ROUND_MAX_HP.find(round =>
         round.names.includes(normalisedRoundName)
     )
@@ -98,20 +101,17 @@ loadBeatmaps().then(beatmaps => {
     }
 
     // Set all input values to max hp
-    for (let i = 0; i < teamHpIOnputNumberElements.length; i++) {
-        teamHpIOnputNumberElements[i].value = maxHp
-    }
-
-    // Set all player's current max hp
-    for (const key in playerData) {
-        playerData[key].currentMaxHp = maxHp
-    }
+    // Empty slots (2-player teams) stay at 0
+    Object.keys(playerData).forEach((key, i) => {
+        playerData[key].currentMaxHp = isPresent(playerData[key]) ? maxHp : 0
+        teamHpIOnputNumberElements[i].value = playerData[key].currentMaxHp
+    })
 
     mappoolSelectContainerEl.innerHTML = ""
     allBeatmaps.map(beatmap => {
         const button = document.createElement("button")
         button.classList.add("mappool-select-button")
-        button.textContent = beatmap.label
+        button.textContent = `${beatmap.label}`
         button.setAttribute("id", beatmap.beatmap_id)
         button.addEventListener("mousedown", mapClickEvent)
         button.addEventListener("contextmenu", event => event.preventDefault())
@@ -177,6 +177,8 @@ function mapClickEvent(event) {
         this.classList.add("mappool-select-button-blue-pick")
         setCurrentPicker(team)
     }
+
+    saveState(true)
 }
 
 const mapsPlayedInputEl = document.getElementById("maps-played-input")
@@ -202,6 +204,37 @@ const classOf = playerNumber => playerData[`player${playerNumber}`]?.class ?? ""
 const abilities = {
     demigod: null, // { player, mode, target }, cleared after every map
     soulweaver: null, // { challenger, challenged }, cleared after every map
+    witch: null, // { player }, cleared after every map. Display only: it has no effect on damage
+}
+
+// Which class image each team's overlay shows (the latest activation on that side wins).
+// Cleared after every map. Human sets it when the heal button is used.
+const classDisplay = { red: null, blue: null }
+
+// Who "owns" each per-map ability (the player that activated it)
+const abilityOwner = {
+    demigod: ability => ability.player,
+    soulweaver: ability => ability.challenger,
+    witch: ability => ability.player,
+}
+
+// Compare the abilities before / after a change: anything newly activated takes over its team's image,
+// anything switched off gives the image up (falling back to another ability still active on that team).
+function syncClassDisplay(before) {
+    for (const name of Object.keys(abilityOwner)) {
+        const was = before[name]
+        const now = abilities[name]
+
+        if (now && (!was || abilityOwner[name](now) !== abilityOwner[name](was))) {
+            classDisplay[sideOf(abilityOwner[name](now))] = name
+        } else if (!now && was) {
+            const side = sideOf(abilityOwner[name](was))
+            if (classDisplay[side] !== name) continue
+            classDisplay[side] = Object.keys(abilityOwner).find(other =>
+                abilities[other] && sideOf(abilityOwner[other](abilities[other])) === side
+            ) ?? null
+        }
+    }
 }
 
 const classPanelsEl = document.getElementById("class-panels")
@@ -267,6 +300,7 @@ function restoreSavedState() {
 mapsPlayedInputEl.addEventListener("input", () => {
     mapsPlayed = Math.max(0, Math.floor(Number(mapsPlayedInputEl.value)) || 0)
     damageMultiplierEl.textContent = `${getDamageMultiplier()}x`
+    refreshDamage()
 })
 
 function el(tag, props = {}, ...children) {
@@ -341,6 +375,10 @@ function buildClassPanel(side) {
             controls(n, "soulweaver",
                 checkbox(`soulweaver-${n}-active`, "Duel this map", true),
                 row("Challenged:", select(`soulweaver-${n}-challenged`, "opp"))
+            ),
+
+            controls(n, "witch",
+                checkbox(`witch-${n}-active`, "Activate this map", true)
             )
         )
 
@@ -382,6 +420,7 @@ function refreshClassSelects() {
 
         select.innerHTML = ""
         for (let i = 1; i <= 3; i++) {
+            if (!isPresent(playerData[`player${offset + i}`])) continue
             const option = document.createElement("option")
             option.value = offset + i
             option.textContent = playerLabel(offset + i)
@@ -435,6 +474,7 @@ function evaluateClasses() {
     const next = {
         demigod: null,
         soulweaver: null,
+        witch: null,
     }
     let demigodSide = null
     let soulweaverSide = null
@@ -492,6 +532,14 @@ function evaluateClasses() {
                 next.soulweaver = { challenger: n, challenged }
                 soulweaverSide ??= side
             }
+
+            // Witch: only shows her image on the overlay, nothing else to validate
+            if (className === "witch" && checked(`witch-${n}-active`)) {
+                if (!isAlive(n)) {
+                    errors[side].push(`${playerLabel(n)} is dead and can't activate.`)
+                }
+                next.witch = { player: n }
+            }
         }
     }
 
@@ -522,18 +570,26 @@ function applyClasses(changedBlock) {
     }
 
     if (!hasErrors(result)) {
+        const before = { ...abilities }
         abilities.demigod = result.next.demigod
         abilities.soulweaver = result.next.soulweaver
+        abilities.witch = result.next.witch
+        syncClassDisplay(before)
     }
 
     showClassError("red", rejected ? shownErrors.red : [])
     showClassError("blue", rejected ? shownErrors.blue : [])
+
+    refreshDamage()
 }
 
 // Demigod / Soulweaver only last one map.
 function resetMapAbilities() {
     abilities.demigod = null
     abilities.soulweaver = null
+    abilities.witch = null
+    classDisplay.red = null
+    classDisplay.blue = null
     document.querySelectorAll(".per-map-ability").forEach(checkboxEl => { checkboxEl.checked = false })
     showClassError("red", [])
     showClassError("blue", [])
@@ -559,6 +615,10 @@ function healTeam(humanNumber) {
     }
 
     showClassError(side, [])
+
+    // Human's image stays until the map ends or another class on this team takes over
+    classDisplay[side] = "human"
+    refreshDamage()
 }
 
 function countAlive(side) {
@@ -655,7 +715,7 @@ function changeTeams(teamName, side) {
 
     // Set players
     for (let i = 0; i < currentPlayers.length; i++) {
-        const currentPlayer = currentTeam[`player${i + 1}`]
+        const currentPlayer = currentTeam[`player${i + 1}`] ?? { id: 0, playerName: "", class: "" }
         const currentPlayerId = currentPlayer.id
         const currentPlayerName = currentPlayer.playerName
         currentPlayers[i].id = currentPlayerId
@@ -667,6 +727,23 @@ function changeTeams(teamName, side) {
         teamHpPlayerElements[i].textContent = currentPlayerName
         teamMapTargetSelectionPlayerElements[i].textContent = currentPlayerName
 
+        // 2v2 / 2v3: an empty slot is out of the match entirely. HP / damage are never scaled, the team just has fewer players.
+        const filled = isSlotFilled(currentPlayer)
+        const wasPresent = currentPlayers[i].present
+        currentPlayers[i].present = filled
+        if (!filled) {
+            Object.assign(currentPlayers[i], {
+                currentMaxHp: 0, currentDeadRounds: 0, hasRevived: true,
+                currentScore: 0, effectiveScore: 0, currentScoreAgainst: 0,
+            })
+        } else if (wasPresent === false) {
+            // Slot filled again (a 3-player team after a 2-player one): fresh player
+            Object.assign(currentPlayers[i], { currentMaxHp: maxHp, currentDeadRounds: 0, hasRevived: false })
+        }
+        teamHpIOnputNumberElements[(side === "red" ? 0 : 3) + i].value = currentPlayers[i].currentMaxHp
+        teamHpPlayerElements[i].parentElement.style.display = filled ? "" : "none"
+        teamMapTargetSelectionPlayerElements[i].parentElement.style.display = filled ? "" : "none"
+
         // Fill each select's options with the matching team player
         // Value = player number (1-6), since that's what currentTarget uses
         const playerNumberOffset = side === "red" ? 0 : 3
@@ -676,12 +753,30 @@ function changeTeams(teamName, side) {
             if (!optionPlayer) continue
             options[j].textContent = optionPlayer.playerName
             options[j].value = playerNumberOffset + j + 1
+            // Nobody can target an empty slot
+            const optionFilled = isSlotFilled(optionPlayer)
+            options[j].disabled = !optionFilled
+            options[j].hidden = !optionFilled
         }
     }
 
+    retargetAbsentPlayers()
     refreshClassSelects()
     updateClassPanel(side)
     syncTargetSelects()
+}
+
+// Anyone aiming at an empty slot is pointed at the first opponent who is actually playing
+function retargetAbsentPlayers() {
+    for (const n of constants.PLAYER_NUMBERS) {
+        const player = playerData[`player${n}`]
+        const target = playerData[`player${player.currentTarget}`]
+        if (isPresent(target)) continue
+
+        const replacement = playersOf(otherSide(sideOf(n)))
+            .find(m => isPresent(playerData[`player${m}`]))
+        if (replacement) player.currentTarget = replacement
+    }
 }
 
 // Team HP Button
@@ -698,11 +793,18 @@ const teamHpIOnputNumberElements = [
 function setHpButton() {
     for (let i = 0; i < teamHpIOnputNumberElements.length; i++) {
         const player = playerData[`player${i + 1}`]
+        // Empty slots can't be given HP
+        if (!isPresent(player)) {
+            player.currentMaxHp = 0
+            teamHpIOnputNumberElements[i].value = 0
+            continue
+        }
         player.currentMaxHp = Number(teamHpIOnputNumberElements[i].value)
         if (player.currentMaxHp > 0) {
             player.currentDeadRounds = 0
         }
     }
+    refreshDamage()
 }
 
 // Map Target Button
@@ -716,8 +818,10 @@ function setTargetButton() {
         const value = Number(selectEl.value)
         // Ignore placeholder options that haven't been filled with a player yet
         if (Number.isNaN(value)) return
+        if (!isPresent(playerData[`player${value}`])) return
         playerData[`player${i + 1}`].currentTarget = value
     })
+    refreshDamage()
 }
 
 // Make dropdowns reflect what's actually in playerData
@@ -740,7 +844,7 @@ let checkedWinner = false
 // Mappool Map Found
 let currentId, currentChecksum
 let mappoolMapFound = false
-let mappoolMapModId
+let mappoolMapLabel
 let currentBeatmap
 
 // Team Names
@@ -772,10 +876,48 @@ socket.onmessage = event => {
         }
     }
 
+    // Beatmap first, so everything saved below already knows about the new map
+    if (socketData.beatmap && (currentId !== socketData.beatmap.id || currentChecksum !== socketData.beatmap.checksum)) {
+        currentId = socketData.beatmap.id
+        currentChecksum = socketData.beatmap.checksum
+
+        currentBeatmap = allBeatmaps.find(beatmap => Number(beatmap.beatmap_id) === Number(socketData.beatmap.id))
+        currentMapEl.textContent = `${socketData.beatmap.artist} - ${socketData.beatmap.title}`
+
+        // Autopicking
+        // (it used to check currentPicker here, so "None" as next picker still auto picked for blue)
+        const targetElement = document.getElementById(`${currentId}`)
+        if (currentBeatmap && targetElement && autoPickButtonEl.checked && nextPicker !== "none") {
+            const event = new MouseEvent('mousedown', {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                button: nextPicker === "red" ? 0 : 2
+            })
+            targetElement.dispatchEvent(event)
+            setCurrentPicker(nextPicker)
+            setNextPicker(nextPicker === "red" ? "Blue" : "Red")
+        }
+
+        // Mappool map found
+        if (currentBeatmap) {
+            mappoolMapFound = true
+            // Maps are identified by their label (B1, B2...) in the pool data
+            mappoolMapLabel = currentBeatmap.label
+            currentModIdEl.textContent = mappoolMapLabel
+        } else {
+            // Not a pool map: previously the old flag stayed true and main/ crashed on the missing beatmap
+            mappoolMapFound = false
+            mappoolMapLabel = undefined
+            currentModIdEl.textContent = ""
+        }
+    }
+
     // Set score against information
-    if (currentIpcState !== socketData.tourney.ipcState) {
+    const incomingIpcState = socketData.tourney?.ipcState
+    if (incomingIpcState !== undefined && currentIpcState !== incomingIpcState) {
         previousIpcState = currentIpcState
-        currentIpcState = socketData.tourney.ipcState
+        currentIpcState = incomingIpcState
 
         // Calculate scores
         if (isMapRunning(currentIpcState)) {
@@ -811,6 +953,9 @@ socket.onmessage = event => {
         if (currentIpcState === IPC.IDLE && (previousIpcState === IPC.WAITING_FOR_CLIENTS || previousIpcState === IPC.PLAYING)) {
             clearScores()
         }
+
+        // A state change (map start / end, damage applied) always goes out immediately
+        saveState(true)
     }
 
     // Keep scores updating live while the map is being played
@@ -818,40 +963,9 @@ socket.onmessage = event => {
         updatePlayerData(playerData, socketData)
     }
 
-    if (socketData.beatmap && (currentId !== socketData.beatmap.id || currentChecksum !== socketData.beatmap.checksum)) {
-        currentId = socketData.beatmap.id
-        currentChecksum = socketData.beatmap.checksum
+    // Straight to the overlays (throttled)
+    saveState()
 
-        currentBeatmap = allBeatmaps.find(beatmap => Number(beatmap.beatmap_id) === Number(socketData.beatmap.id))
-        currentMapEl.textContent = `${socketData.beatmap.artist} - ${socketData.beatmap.title}`
-
-        // Autopicking
-        // (it used to check currentPicker here, so "None" as next picker still auto picked for blue)
-        const targetElement = document.getElementById(`${currentId}`)
-        if (currentBeatmap && targetElement && autoPickButtonEl.checked && nextPicker !== "none") {
-            const event = new MouseEvent('mousedown', {
-                bubbles: true,
-                cancelable: true,
-                view: window,
-                button: nextPicker === "red" ? 0 : 2
-            })
-            targetElement.dispatchEvent(event)
-            setCurrentPicker(nextPicker)
-            setNextPicker(nextPicker === "red" ? "Blue" : "Red")
-        }
-
-        // Mappool map found
-        if (currentBeatmap) {
-            mappoolMapFound = true
-            mappoolMapModId = currentBeatmap.label
-            currentModIdEl.textContent = mappoolMapModId
-        } else {
-            // Not a pool map: previously the old flag stayed true and main/ crashed on the missing beatmap
-            mappoolMapFound = false
-            mappoolMapModId = undefined
-            currentModIdEl.textContent = ""
-        }
-    }
 }
 
 // Clear scores
@@ -865,7 +979,9 @@ function clearScores() {
 
 // A team is out when none of its players have any HP left
 function isTeamEliminated(playerNumbers) {
-    return playerNumbers.every(n => playerData[`player${n}`].currentMaxHp <= 0)
+    return playerNumbers
+        .filter(n => isPresent(playerData[`player${n}`]))
+        .every(n => playerData[`player${n}`].currentMaxHp <= 0)
 }
 
 // Apply damage
@@ -874,6 +990,17 @@ function applyDamage(playerData) {
     const duelLoser = getDuelLoser()
 
     Object.entries(playerData).forEach(([playerKey, player], i) => {
+        // Empty slot: never takes damage, never revives
+        if (!isPresent(player)) {
+            player.currentMaxHp = 0
+            player.currentDeadRounds = 0
+            player.currentScore = 0
+            player.effectiveScore = 0
+            player.currentScoreAgainst = 0
+            teamHpIOnputNumberElements[i].value = 0
+            return
+        }
+
         const wasAlive = player.currentMaxHp > 0
         const hpBefore = player.currentMaxHp
 
@@ -913,11 +1040,19 @@ function applyDamage(playerData) {
     refreshDamageMultiplierUi()
 }
 
-setInterval(() => {
+// Write everything the overlays read to localStorage.
+// Runs on a timer, right after every tosu message, and right after every change made in the dashboard,
+// so the overlays don't have to wait for the next timer tick. `force` skips the throttle.
+let lastSaveAt = 0
+function saveState(force = false) {
     teamRedNameEl.textContent = redTeamName ?? ""
     teamBlueNameEl.textContent = blueTeamName ?? ""
 
     if (!stateReady) return
+
+    const now = performance.now()
+    if (!force && now - lastSaveAt < constants.SAVE_THROTTLE_MS) return
+    lastSaveAt = now
 
     // Save information
     const savedInfo = {
@@ -931,7 +1066,7 @@ setInterval(() => {
         },
         mappoolInfo: {
             mappoolMapFound: mappoolMapFound,
-            mappoolMapModId: mappoolMapModId,
+            mappoolMapLabel: mappoolMapLabel,
             currentPicker: currentPicker,
             currentBeatmap: currentBeatmap
         },
@@ -946,10 +1081,24 @@ setInterval(() => {
         mapsPlayed: mapsPlayed,
         damageMultiplier: getDamageMultiplier(),
         nextPicker: nextPicker,
+        // Class image shown per team on the main overlay (null = none)
+        classImages: { red: classDisplay.red, blue: classDisplay.blue },
     }
 
-    localStorage.setItem(constants.STORAGE_KEY, JSON.stringify(savedInfo))
-}, constants.SAVE_INTERVAL_MS)
+    try {
+        localStorage.setItem(constants.STORAGE_KEY, JSON.stringify(savedInfo))
+    } catch (error) {
+        console.error("Could not save dashboard data:", error)
+    }
+}
+setInterval(saveState, constants.SAVE_INTERVAL_MS)
+
+// Work out the damage again right now (instead of waiting for tosu's next message) and push it to the overlays.
+// Used whenever something that feeds into damage changes in the dashboard.
+function refreshDamage() {
+    if (socketData && isMapRunning(currentIpcState)) updatePlayerData(playerData, socketData)
+    saveState(true)
+}
 
 
 function updatePlayerData(playerData, data) {
@@ -959,7 +1108,8 @@ function updatePlayerData(playerData, data) {
             client => client.user.id === player.id
         )
 
-        player.currentScore = client?.play.score ?? 0
+        // An empty slot has id 0, which could match an unused tosu client, so it never reads a score
+        player.currentScore = isPresent(player) ? (client?.play?.score ?? 0) : 0
     })
 
     // Effective scores (class bonuses applied, sit-outs zeroed)
@@ -1053,6 +1203,7 @@ function setDemigodDamage() {
     selectCurrentPickerButtonBlueEl.addEventListener("click", () => setCurrentPicker("Blue"))
     selectCurrentPickerButtonNoneEl.addEventListener("click", () => setCurrentPicker("None"))
     teamHpButtonEl.addEventListener("click", () => setHpButton())
+    toggleHpEl.addEventListener("change", () => refreshDamage())
     mapTargetButtonEl.addEventListener("click", () => setTargetButton())
     // Class abilities apply as soon as a control changes (no Submit button)
     classPanelsEl.addEventListener("change", event => applyClasses(event.target.closest(".class-player")))

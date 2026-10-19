@@ -1,6 +1,6 @@
 import { constants } from "../js/constants.js"
 
-let allBeatmaps = []
+let allBeatmaps = { roundName: "", poolName: "", beatmaps: [] }
 
 // Load beatmaps: the tiles come from mappools.json (label + mods), and the osu! stats
 // (CS / AR / OD / SR / cover) are filled in from beatmaps.json when the map is in there
@@ -56,6 +56,9 @@ export async function loadShowcaseBeatmaps() {
     return showcaseBeatmaps
 }
 
-export function findShowcaseBeatmap(songName, difficultyName, mapper) {
-    return showcaseBeatmaps.beatmaps.find(beatmap => beatmap.songName === songName && beatmap.difficultyName === difficultyName && beatmap.mapper === mapper)
+// Match a showcase map. Prefer the beatmap id when the entry has one, otherwise song + difficulty + mapper.
+export function findShowcaseBeatmap(songName, difficultyName, mapper, beatmapId) {
+    const maps = showcaseBeatmaps.beatmaps ?? []
+    const byId = beatmapId ? maps.find(beatmap => Number(beatmap.beatmap_id) === Number(beatmapId)) : undefined
+    return byId ?? maps.find(beatmap => beatmap.songName === songName && beatmap.difficultyName === difficultyName && beatmap.mapper === mapper)
 }
