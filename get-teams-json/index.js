@@ -1,29 +1,25 @@
 const textareaEl = document.getElementById("textarea")
 const buttonEl = document.getElementById("button")
-let teams = []
 async function submit() {
+    // Local, so pressing Submit twice doesn't download every team twice
+    const teams = []
     const textareaElValue = textareaEl.value
-    const textAreaElValueSplit = textareaElValue.split("\n")
+    const textAreaElValueSplit = textareaElValue.split(/\r?\n/)
     for (let i = 1; i < textAreaElValueSplit.length; i++) {
-        const textAreaElValueSplitSplit = textAreaElValueSplit[i].split("\t")
+        if (!textAreaElValueSplit[i].trim()) continue
+
+        const textAreaElValueSplitSplit = textAreaElValueSplit[i].split("\t").map(cell => cell.trim())
+        const cell = index => textAreaElValueSplitSplit[index] ?? ""
+        const player = index => ({
+            "id": Number(cell(index)) || 0,
+            "playerName": cell(index + 1),
+            "class": cell(index + 2)
+        })
         const teamStat = {
-            "teamName": textAreaElValueSplitSplit[0],
-            "player1": {
-                "id": Number(textAreaElValueSplitSplit[1]),
-                "playerName": textAreaElValueSplitSplit[2],
-                "class": textAreaElValueSplitSplit[3]
-            },
-            "player2": {
-                "id": Number(textAreaElValueSplitSplit[4]),
-                "playerName": textAreaElValueSplitSplit[5],
-                "class": textAreaElValueSplitSplit[6]
-            },
-            "player3": {
-                "id": Number(textAreaElValueSplitSplit[7]),
-                "playerName": textAreaElValueSplitSplit[8],
-                "class": textAreaElValueSplitSplit[9]
-            }
-            
+            "teamName": cell(0),
+            "player1": player(1),
+            "player2": player(4),
+            "player3": player(7)
         }
         teams.push(teamStat)
     }
