@@ -8,10 +8,8 @@ async function getApi() {
     osuApi = responseJson.api
 }
 
-let allBeatmapsJson = []
-let fullJson = []
-
 async function getBeatmaps() {
+    const allBeatmapsJson = []
     const response = await fetch("../_data/beatmaps-base.json")
     const responseJson = await response.json()
     const allBeatmaps = responseJson.beatmaps
@@ -40,7 +38,7 @@ async function getBeatmaps() {
         allBeatmapsJson.push(responseJson[0])
     }
 
-    fullJson = {
+    const fullJson = {
         "roundName": roundName,
         "beatmaps": allBeatmapsJson
     }
