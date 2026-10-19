@@ -1,6 +1,6 @@
 import { constants } from "../js/constants.js"
 
-let allBeatmaps = []
+let allBeatmaps = { roundName: "", poolName: "", beatmaps: [] }
 
 // Load beatmaps: the tiles come from mappools.json (label + mods), and the osu! stats
 // (CS / AR / OD / SR / cover) are filled in from beatmaps.json when the map is in there
