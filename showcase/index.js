@@ -1,6 +1,6 @@
 import { constants } from "../_shared/js/constants.js"
 import { findShowcaseBeatmap, loadShowcaseBeatmaps } from "../_shared/core/beatmaps.js"
-import { delay, getModColourVar } from "../_shared/core/utils.js"
+import { getModColourVar } from "../_shared/core/utils.js"
 import { createTosuWsSocket } from "../_shared/core/websocket.js"
 import {
     getNowPlayingElements,
@@ -118,16 +118,17 @@ ComfyJS.onChat = (user, message, flags, self, extra) => {
 }
 
 ComfyJS.onMessageDeleted = id => document.getElementById(id)?.remove()
-ComfyJS.onTimeout = extra => deleteAllMessagesFromUser(extra.timedOutUserId)
-ComfyJS.onBan = extra => deleteAllMessagesFromUser(extra.bannedUserId)
+ComfyJS.onTimeout = (user, duration, extra) => deleteAllMessagesFromUser(extra.timedOutUserId)
+ComfyJS.onBan = (user, extra) => deleteAllMessagesFromUser(extra.bannedUserId)
 
 // Now playing (straight from tosu)
 const nowPlayingEls = getNowPlayingElements()
 let currentId, currentChecksum
 let updateStats = false
+let statsUpdateAt = 0
 
 const socket = createTosuWsSocket()
-socket.onmessage = async event => {
+socket.onmessage = event => {
     const data = JSON.parse(event.data)
 
     const beatmapData = data.beatmap
@@ -150,12 +151,12 @@ socket.onmessage = async event => {
             nowPlayingEls.mod.textContent = ""
         }
 
-        await delay(constants.STATS_DELAY_MS)
+        statsUpdateAt = Date.now() + constants.STATS_DELAY_MS
         updateStats = true
     }
 
     // Stats from tosu
-    if (updateStats && data.beatmap?.stats) {
+    if (updateStats && Date.now() >= statsUpdateAt && data.beatmap?.stats) {
         updateStats = false
         setNowPlayingStatsFromTosu(nowPlayingEls, data.beatmap.stats)
     }
