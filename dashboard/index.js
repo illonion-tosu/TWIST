@@ -89,7 +89,7 @@ loadBeatmaps().then(beatmaps => {
     allBeatmaps = beatmaps.beatmaps
 
     // Set Max HP
-    const normalisedRoundName = roundName.toLowerCase().trim()
+    const normalisedRoundName = String(roundName ?? "").toLowerCase().trim()
     const roundConfig = constants.ROUND_MAX_HP.find(round =>
         round.names.includes(normalisedRoundName)
     )
@@ -715,7 +715,7 @@ function changeTeams(teamName, side) {
 
     // Set players
     for (let i = 0; i < currentPlayers.length; i++) {
-        const currentPlayer = currentTeam[`player${i + 1}`]
+        const currentPlayer = currentTeam[`player${i + 1}`] ?? { id: 0, playerName: "", class: "" }
         const currentPlayerId = currentPlayer.id
         const currentPlayerName = currentPlayer.playerName
         currentPlayers[i].id = currentPlayerId
@@ -876,10 +876,48 @@ socket.onmessage = event => {
         }
     }
 
+    // Beatmap first, so everything saved below already knows about the new map
+    if (socketData.beatmap && (currentId !== socketData.beatmap.id || currentChecksum !== socketData.beatmap.checksum)) {
+        currentId = socketData.beatmap.id
+        currentChecksum = socketData.beatmap.checksum
+
+        currentBeatmap = allBeatmaps.find(beatmap => Number(beatmap.beatmap_id) === Number(socketData.beatmap.id))
+        currentMapEl.textContent = `${socketData.beatmap.artist} - ${socketData.beatmap.title}`
+
+        // Autopicking
+        // (it used to check currentPicker here, so "None" as next picker still auto picked for blue)
+        const targetElement = document.getElementById(`${currentId}`)
+        if (currentBeatmap && targetElement && autoPickButtonEl.checked && nextPicker !== "none") {
+            const event = new MouseEvent('mousedown', {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                button: nextPicker === "red" ? 0 : 2
+            })
+            targetElement.dispatchEvent(event)
+            setCurrentPicker(nextPicker)
+            setNextPicker(nextPicker === "red" ? "Blue" : "Red")
+        }
+
+        // Mappool map found
+        if (currentBeatmap) {
+            mappoolMapFound = true
+            // Maps are identified by their label (B1, B2...) in the pool data
+            mappoolMapLabel = currentBeatmap.label
+            currentModIdEl.textContent = mappoolMapLabel
+        } else {
+            // Not a pool map: previously the old flag stayed true and main/ crashed on the missing beatmap
+            mappoolMapFound = false
+            mappoolMapLabel = undefined
+            currentModIdEl.textContent = ""
+        }
+    }
+
     // Set score against information
-    if (currentIpcState !== socketData.tourney.ipcState) {
+    const incomingIpcState = socketData.tourney?.ipcState
+    if (incomingIpcState !== undefined && currentIpcState !== incomingIpcState) {
         previousIpcState = currentIpcState
-        currentIpcState = socketData.tourney.ipcState
+        currentIpcState = incomingIpcState
 
         // Calculate scores
         if (isMapRunning(currentIpcState)) {
@@ -928,41 +966,6 @@ socket.onmessage = event => {
     // Straight to the overlays (throttled)
     saveState()
 
-    if (socketData.beatmap && (currentId !== socketData.beatmap.id || currentChecksum !== socketData.beatmap.checksum)) {
-        currentId = socketData.beatmap.id
-        currentChecksum = socketData.beatmap.checksum
-
-        currentBeatmap = allBeatmaps.find(beatmap => Number(beatmap.beatmap_id) === Number(socketData.beatmap.id))
-        currentMapEl.textContent = `${socketData.beatmap.artist} - ${socketData.beatmap.title}`
-
-        // Autopicking
-        // (it used to check currentPicker here, so "None" as next picker still auto picked for blue)
-        const targetElement = document.getElementById(`${currentId}`)
-        if (currentBeatmap && targetElement && autoPickButtonEl.checked && nextPicker !== "none") {
-            const event = new MouseEvent('mousedown', {
-                bubbles: true,
-                cancelable: true,
-                view: window,
-                button: nextPicker === "red" ? 0 : 2
-            })
-            targetElement.dispatchEvent(event)
-            setCurrentPicker(nextPicker)
-            setNextPicker(nextPicker === "red" ? "Blue" : "Red")
-        }
-
-        // Mappool map found
-        if (currentBeatmap) {
-            mappoolMapFound = true
-            // Maps are identified by their label (B1, B2...) in the pool data
-            mappoolMapLabel = currentBeatmap.label
-            currentModIdEl.textContent = mappoolMapLabel
-        } else {
-            // Not a pool map: previously the old flag stayed true and main/ crashed on the missing beatmap
-            mappoolMapFound = false
-            mappoolMapLabel = undefined
-            currentModIdEl.textContent = ""
-        }
-    }
 }
 
 // Clear scores
@@ -1106,7 +1109,7 @@ function updatePlayerData(playerData, data) {
         )
 
         // An empty slot has id 0, which could match an unused tosu client, so it never reads a score
-        player.currentScore = isPresent(player) ? (client?.play.score ?? 0) : 0
+        player.currentScore = isPresent(player) ? (client?.play?.score ?? 0) : 0
     })
 
     // Effective scores (class bonuses applied, sit-outs zeroed)
