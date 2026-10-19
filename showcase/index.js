@@ -8,10 +8,7 @@ import {
     setNowPlayingStatsFromTosu,
 } from "../_shared/core/overlay.js"
 
-// ─────────────────────────────────────────────────────────────
 // Round name
-// ─────────────────────────────────────────────────────────────
-
 // Wrap the round name over (at most) 2 lines of the SVG <text>
 function setRoundName(name) {
     const text = document.getElementById("round-name")
@@ -59,9 +56,7 @@ loadShowcaseBeatmaps()
     .then(beatmaps => setRoundName(beatmaps.roundName))
     .catch(error => console.error("Could not load showcase beatmaps:", error))
 
-// ─────────────────────────────────────────────────────────────
 // Twitch chat
-// ─────────────────────────────────────────────────────────────
 const twitchChatContainer = document.getElementById("chatbox-container")
 const chatColours = {}
 
@@ -75,7 +70,7 @@ function getChatColour(username) {
         g = Math.floor(Math.random() * 256)
         b = Math.floor(Math.random() * 256)
     } while (!(
-        r + g + b <= constants.CHAT_COLOUR_MAX_BRIGHTNESS &&
+        r + g + b <= constants.STARTING_SOON_CHAT_COLOUR_MIN_BRIGHTNESS &&
         g <= (r + b) * constants.CHAT_COLOUR_MAX_GREEN_RATIO
     ))
 
@@ -126,9 +121,7 @@ ComfyJS.onMessageDeleted = id => document.getElementById(id)?.remove()
 ComfyJS.onTimeout = extra => deleteAllMessagesFromUser(extra.timedOutUserId)
 ComfyJS.onBan = extra => deleteAllMessagesFromUser(extra.bannedUserId)
 
-// ─────────────────────────────────────────────────────────────
 // Now playing (straight from tosu)
-// ─────────────────────────────────────────────────────────────
 const nowPlayingEls = getNowPlayingElements()
 let currentId, currentChecksum
 let updateStats = false

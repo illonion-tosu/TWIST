@@ -6,8 +6,9 @@
     <title>Countdown</title>
 
     <link rel="stylesheet" href="../_shared/css/style.css">
-    <link rel="stylesheet" href="../_shared/css/page-background.css">
     <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
 </head>
 <body>
     <!-- Shared SVG definitions, referenced by id from the SVGs below -->
@@ -37,6 +38,7 @@
     </svg>
 
     <div class="main">
+        <!-- Timer -->
         <svg class="timer" xmlns="http://www.w3.org/2000/svg" width="945" height="350" viewBox="-50 0 865 350">
             <text
                 x="397.5"
@@ -49,6 +51,23 @@
                 <tspan class="timer-minutes">44</tspan><tspan class="timer-colon">:</tspan><tspan class="timer-seconds">44</tspan>
             </text>
         </svg>
+
+        <!-- Text Chat -->
+        <img class="chat-rectangle" src="static/chat/rectangle.png">
+        <div class="chatbox-container" id="chatbox-container"></div>
+        <img class="chat-text" src="static/chat/text.png">
+
+        <!-- Now Playing -->
+        <img class="now-playing-rectangle" src="static/now-playing/rectangle.png">
+        <div class="now-playing-container" id="now-playing-container">
+            <div class="now-playing-container-overlay"></div>
+            <div class="marquee">
+                <div class="marquee-track">
+                    <span class="marquee-item" id="now-playing-text">xi - Blue Zenith</span>
+                </div>
+            </div>
+        </div>
+        <img class="now-playing-text" src="static/now-playing/text.png">
     </div>
 
     <!-- Sidebar (positioned off-screen, only visible in the OBS dock) -->

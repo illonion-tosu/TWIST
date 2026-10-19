@@ -183,10 +183,10 @@ function createMapCard({
     artist = "",
     title = "",
     version = "",
-    diff_size = 0,
-    diff_approach = 0,
-    diff_overall = 0,
-    difficultyrating = 0,
+    diff_size,
+    diff_approach,
+    diff_overall,
+    difficultyrating,
     beatmapset_id = "",
     borderColor = "red",
 } = {}) {
@@ -200,10 +200,10 @@ function createMapCard({
 
     const stats = el("div", "mappool-map-stats-container")
     stats.append(
-        el("div", "mappool-map-stats-cs", `CS: ${Number(diff_size).toFixed(1)}`),
-        el("div", "mappool-map-stats-ar", `AR: ${Number(diff_approach).toFixed(1)}`),
-        el("div", "mappool-map-stats-od", `OD: ${Number(diff_overall).toFixed(1)}`),
-        el("div", "mappool-map-stats-star mappool-map-stats-sr", `SR: ${Number(difficultyrating).toFixed(2)}`)
+        el("div", "mappool-map-stats-cs", `CS: ${fmt(diff_size, 1)}`),
+        el("div", "mappool-map-stats-ar", `AR: ${fmt(diff_approach, 1)}`),
+        el("div", "mappool-map-stats-od", `OD: ${fmt(diff_overall, 1)}`),
+        el("div", "mappool-map-stats-star mappool-map-stats-sr", `SR: ${fmt(difficultyrating, 2)}`)
     )
 
     container.append(

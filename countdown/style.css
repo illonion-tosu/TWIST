@@ -103,3 +103,113 @@
 .timer-error-message {
     display: none;
 }
+
+/* Chat Text */
+.chat-text {
+    position: absolute;
+    bottom: 298px;
+    right: 337px;
+}
+
+.chat-rectangle {
+    position: absolute;
+    bottom: 11px;
+    right: 19px;
+}
+
+/* Chatbox CSS */
+.chatbox-container {
+position: absolute;
+    bottom: 29px;
+    right: 37px;
+    width: 439px;
+    height: 255px;
+    margin: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow-y: scroll;
+    font-family: "Helvetica Neue", sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+.chatbox-container::-webkit-scrollbar { display: none; }
+
+.chatbox-message {
+    display: flex;
+    width: inherit;
+    color: white;
+    line-height: 27px;
+}
+
+.chatbox-name {
+    margin-right: 10px;
+    white-space: nowrap;
+}
+
+.chatbox-content { width: 100%; }
+
+/* Now Playing */
+.now-playing-rectangle {
+    position: absolute;
+    bottom: 45px;
+    right: 450px;
+}
+
+.now-playing-text {
+    position: absolute;
+    bottom: 125px;
+    right: 935px;
+}
+
+.now-playing-container {
+    position: absolute;
+    bottom: 64px;
+    right: 469px;
+    width: 524px;
+    height: 76px;
+    color: white;
+    font-family: "Helvetica Neue", sans-serif;
+    font-size: 3.2rem;
+    display: flex;
+    align-items: center;
+    background: center / cover;
+    background-image: url("https://assets.ppy.sh/beatmaps/292301/covers/cover.jpg");
+}
+
+.now-playing-container-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgb(0 0 0 / 40%);
+}
+
+.marquee {
+    width: 100%;
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+}
+
+.marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee-scroll var(--duration, 10s) linear infinite;
+}
+
+.marquee-item {
+    flex: none;
+    white-space: nowrap;
+    padding-right: 4rem;
+    line-height: 60px;
+}
+
+@keyframes marquee-scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(calc(-1 * var(--shift, 100%))); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none; }
+}
