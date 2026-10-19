@@ -43,6 +43,7 @@ export const constants = Object.freeze({
     STORAGE_KEY: "data",
     POLL_INTERVAL_MS: 100,
     SAVE_INTERVAL_MS: 100,
+    SAVE_THROTTLE_MS: 25,
 
     // Data files
     BEATMAPS_PATH: "../_data/beatmaps.json",
@@ -65,6 +66,8 @@ export const constants = Object.freeze({
     TEAM_HP_BAR_MAX_WIDTH: 238,
     PLAYER_HP_BAR_MAX_WIDTH: 636,
     COUNT_UP_DURATION: 0.2,
+    TEAM_NAME_MIN_FONT_RATIO: 0.55,
+    HP_BAR_TEAM_NAME_MAX_WIDTH: 570,
     COUNT_UP_OPTIONS: { useEasing: true, useGrouping: true, separator: ",", decimal: ".", suffix: "" },
 
     // Showcase
@@ -86,6 +89,7 @@ export const constants = Object.freeze({
     WINNER_NAME_LINE_YS: { 1: [260], 2: [235, 285] },
 
     // Mappool
+    MOD_ORDER: ["NM", "HD", "SD", "HR", "DT", "DTHR", "FM", "TB"],
     SVG_NS: "http://www.w3.org/2000/svg",
     BEATMAP_COVER_URL: "https://assets.ppy.sh/beatmaps/{id}/covers/cover.jpg",
     MAP_BORDER_VIEWBOX: "0 0 680 91",

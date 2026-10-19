@@ -111,7 +111,7 @@ loadBeatmaps().then(beatmaps => {
     allBeatmaps.map(beatmap => {
         const button = document.createElement("button")
         button.classList.add("mappool-select-button")
-        button.textContent = `${beatmap.mod}${beatmap.order}`
+        button.textContent = `${beatmap.label}`
         button.setAttribute("id", beatmap.beatmap_id)
         button.addEventListener("mousedown", mapClickEvent)
         button.addEventListener("contextmenu", event => event.preventDefault())
@@ -177,6 +177,8 @@ function mapClickEvent(event) {
         this.classList.add("mappool-select-button-blue-pick")
         setCurrentPicker(team)
     }
+
+    saveState(true)
 }
 
 const mapsPlayedInputEl = document.getElementById("maps-played-input")
@@ -267,6 +269,7 @@ function restoreSavedState() {
 mapsPlayedInputEl.addEventListener("input", () => {
     mapsPlayed = Math.max(0, Math.floor(Number(mapsPlayedInputEl.value)) || 0)
     damageMultiplierEl.textContent = `${getDamageMultiplier()}x`
+    refreshDamage()
 })
 
 function el(tag, props = {}, ...children) {
@@ -529,6 +532,8 @@ function applyClasses(changedBlock) {
 
     showClassError("red", rejected ? shownErrors.red : [])
     showClassError("blue", rejected ? shownErrors.blue : [])
+
+    refreshDamage()
 }
 
 // Demigod / Soulweaver only last one map.
@@ -560,6 +565,7 @@ function healTeam(humanNumber) {
     }
 
     showClassError(side, [])
+    refreshDamage()
 }
 
 function countAlive(side) {
@@ -745,6 +751,7 @@ function setHpButton() {
             player.currentDeadRounds = 0
         }
     }
+    refreshDamage()
 }
 
 // Map Target Button
@@ -761,6 +768,7 @@ function setTargetButton() {
         if (!isPresent(playerData[`player${value}`])) return
         playerData[`player${i + 1}`].currentTarget = value
     })
+    refreshDamage()
 }
 
 // Make dropdowns reflect what's actually in playerData
@@ -783,7 +791,7 @@ let checkedWinner = false
 // Mappool Map Found
 let currentId, currentChecksum
 let mappoolMapFound = false
-let mappoolMapModId
+let mappoolMapLabel
 let currentBeatmap
 
 // Team Names
@@ -854,12 +862,18 @@ socket.onmessage = event => {
         if (currentIpcState === IPC.IDLE && (previousIpcState === IPC.WAITING_FOR_CLIENTS || previousIpcState === IPC.PLAYING)) {
             clearScores()
         }
+
+        // A state change (map start / end, damage applied) always goes out immediately
+        saveState(true)
     }
 
     // Keep scores updating live while the map is being played
     if (isMapRunning(currentIpcState)) {
         updatePlayerData(playerData, socketData)
     }
+
+    // Straight to the overlays (throttled)
+    saveState()
 
     if (socketData.beatmap && (currentId !== socketData.beatmap.id || currentChecksum !== socketData.beatmap.checksum)) {
         currentId = socketData.beatmap.id
@@ -886,12 +900,13 @@ socket.onmessage = event => {
         // Mappool map found
         if (currentBeatmap) {
             mappoolMapFound = true
-            mappoolMapModId = `${currentBeatmap.mod.toUpperCase()}${currentBeatmap.order}`
-            currentModIdEl.textContent = mappoolMapModId
+            // Maps are identified by their label (B1, B2...) in the pool data
+            mappoolMapLabel = currentBeatmap.label ?? `${String(currentBeatmap.mod ?? "").toUpperCase()}${currentBeatmap.order ?? ""}`
+            currentModIdEl.textContent = mappoolMapLabel
         } else {
             // Not a pool map: previously the old flag stayed true and main/ crashed on the missing beatmap
             mappoolMapFound = false
-            mappoolMapModId = undefined
+            mappoolMapLabel = undefined
             currentModIdEl.textContent = ""
         }
     }
@@ -969,11 +984,19 @@ function applyDamage(playerData) {
     refreshDamageMultiplierUi()
 }
 
-setInterval(() => {
+// Write everything the overlays read to localStorage.
+// Runs on a timer, right after every tosu message, and right after every change made in the dashboard,
+// so the overlays don't have to wait for the next timer tick. `force` skips the throttle.
+let lastSaveAt = 0
+function saveState(force = false) {
     teamRedNameEl.textContent = redTeamName ?? ""
     teamBlueNameEl.textContent = blueTeamName ?? ""
 
     if (!stateReady) return
+
+    const now = performance.now()
+    if (!force && now - lastSaveAt < constants.SAVE_THROTTLE_MS) return
+    lastSaveAt = now
 
     // Save information
     const savedInfo = {
@@ -987,7 +1010,7 @@ setInterval(() => {
         },
         mappoolInfo: {
             mappoolMapFound: mappoolMapFound,
-            mappoolMapModId: mappoolMapModId,
+            mappoolMapLabel: mappoolMapLabel,
             currentPicker: currentPicker,
             currentBeatmap: currentBeatmap
         },
@@ -1004,8 +1027,20 @@ setInterval(() => {
         nextPicker: nextPicker,
     }
 
-    localStorage.setItem(constants.STORAGE_KEY, JSON.stringify(savedInfo))
-}, constants.SAVE_INTERVAL_MS)
+    try {
+        localStorage.setItem(constants.STORAGE_KEY, JSON.stringify(savedInfo))
+    } catch (error) {
+        console.error("Could not save dashboard data:", error)
+    }
+}
+setInterval(saveState, constants.SAVE_INTERVAL_MS)
+
+// Work out the damage again right now (instead of waiting for tosu's next message) and push it to the overlays.
+// Used whenever something that feeds into damage changes in the dashboard.
+function refreshDamage() {
+    if (socketData && isMapRunning(currentIpcState)) updatePlayerData(playerData, socketData)
+    saveState(true)
+}
 
 
 function updatePlayerData(playerData, data) {
@@ -1110,6 +1145,7 @@ function setDemigodDamage() {
     selectCurrentPickerButtonBlueEl.addEventListener("click", () => setCurrentPicker("Blue"))
     selectCurrentPickerButtonNoneEl.addEventListener("click", () => setCurrentPicker("None"))
     teamHpButtonEl.addEventListener("click", () => setHpButton())
+    toggleHpEl.addEventListener("change", () => refreshDamage())
     mapTargetButtonEl.addEventListener("click", () => setTargetButton())
     // Class abilities apply as soon as a control changes (no Submit button)
     classPanelsEl.addEventListener("change", event => applyClasses(event.target.closest(".class-player")))
