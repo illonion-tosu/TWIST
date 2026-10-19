@@ -1,6 +1,6 @@
 import { updateChat } from "../_shared/core/chat.js"
 import { constants } from "../_shared/js/constants.js"
-import { deepEqual, getModColourVar, readSavedData, startPolling } from "../_shared/core/utils.js"
+import { deepEqual, getModColourVar, getModDetails, readSavedData, startPolling } from "../_shared/core/utils.js"
 import { getHpBarWidth, getTeamHp, getTeamMaxHp } from "../_shared/core/match.js"
 import { createCounter, setTeamName, setToggleHpVisible } from "../_shared/core/overlay.js"
 
@@ -192,16 +192,25 @@ function createMapCard({
     diff_approach,
     diff_overall,
     difficultyrating,
+    bpm,
+    total_length,
     beatmapset_id = "",
     borderColor = "red",
 } = {}) {
+    if (diff_size !== undefined && diff_size !== "") {
+        ({ cs: diff_size, ar: diff_approach, od: diff_overall } =
+            getModDetails(diff_size, diff_approach, diff_overall, bpm, total_length, mod))
+    }
+
     const wrapper = el("div", "mappool-map-wrapper")
     wrapper.setAttribute("id", beatmap_id)
     const container = el("div", "mappool-map-container")
 
     const bg = el("div", "mappool-map-background")
     bg.append(el("div", "mappool-map-background-overlay"))
-    if (beatmapset_id) bg.style.backgroundImage = `url("${constants.BEATMAP_COVER_URL.replace("{id}", beatmapset_id)}")`
+    bg.style.backgroundImage = beatmapset_id
+        ? `url("${constants.BEATMAP_COVER_URL.replace("{id}", beatmapset_id)}")`
+        : "none"
 
     const stats = el("div", "mappool-map-stats-container")
     stats.append(
