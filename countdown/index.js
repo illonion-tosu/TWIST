@@ -69,8 +69,7 @@ class CountdownTimer {
      * Sets the countdown time from inputs and immediately starts the timer.
      */
     setAndStart() {
-        this.setTime()
-        this.start()
+        if (this.setTime()) this.start()
     }
 
     /**
@@ -78,25 +77,31 @@ class CountdownTimer {
      *
      * Supports decimal minute input
      * Updates the timer display immediately
+     *
+     * @returns {boolean} false (and nothing changes) when the input is negative
      */
     setTime() {
         const minutesValue = Number(elements.countdown.minutes.value)
         const minutesNumber = Math.floor(minutesValue)
         const secondsValue = Number(elements.countdown.seconds.value)
 
-        this.remainingSeconds =
+        const totalSeconds =
             Math.round(secondsValue) +
             minutesNumber * 60 +
             Math.round((minutesValue - minutesNumber) * 60)
 
-        if (this.remainingSeconds < 0) {
+        // Bad input must not touch the running timer (it used to store the negative value, which then
+        // ticked down and drew "-1" on stream)
+        if (!Number.isFinite(totalSeconds) || totalSeconds < 0) {
             showError(elements.countdown.errorMessage)
-            return
+            return false
         }
 
+        this.remainingSeconds = totalSeconds
         hideErrors()
         updateDisplay(this.remainingSeconds)
         this.stop()
+        return true
     }
 
     /**
@@ -205,13 +210,21 @@ window.setAndStartTimer = () => {
     countdownTimer.setAndStart()
     utcTimer.stop()
 }
-window.setMinuteSecondTimer = () => countdownTimer.setTime()
-window.startTimer = () => countdownTimer.start()
+window.setMinuteSecondTimer = () => {
+    if (countdownTimer.setTime()) utcTimer.stop()
+}
+window.startTimer = () => {
+    utcTimer.stop()
+    countdownTimer.start()
+}
 window.stopTimer = () => {
     countdownTimer.stop()
     utcTimer.stop()
 }
-window.resetTimer = () => countdownTimer.reset()
+window.resetTimer = () => {
+    utcTimer.stop()
+    countdownTimer.reset()
+}
 window.startUTCTimer = () => {
     countdownTimer.reset()
     utcTimer.start()
@@ -285,8 +298,8 @@ ComfyJS.onChat = (user, message, flags, self, extra) => {
 }
 
 ComfyJS.onMessageDeleted = id => document.getElementById(id)?.remove()
-ComfyJS.onTimeout = extra => deleteAllMessagesFromUser(extra.timedOutUserId)
-ComfyJS.onBan = extra => deleteAllMessagesFromUser(extra.bannedUserId)
+ComfyJS.onTimeout = (user, duration, extra) => deleteAllMessagesFromUser(extra.timedOutUserId)
+ComfyJS.onBan = (user, extra) => deleteAllMessagesFromUser(extra.bannedUserId)
 
 // Marquee
 function setupMarquee(container) {
