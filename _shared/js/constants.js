@@ -14,17 +14,19 @@ export const constants = Object.freeze({
     DEFAULT_CURRENT_PICKER: "blue",
 
     // HP and damage
-    DEFAULT_MAX_HP: 300000,
+    DEFAULT_MAX_HP: 800000,
+    MAX_STANDARD_DAMAGE: 400000,
     ROUND_MAX_HP: [
-        { names: ["quarterfinals", "quarter finals", "qf"], maxHp: 300000 },
-        { names: ["semifinals", "semi finals", "sf"], maxHp: 400000 },
-        { names: ["finals", "grand finals", "f", "gf"], maxHp: 650000 },
+        { names: ["quarterfinals", "quarter finals", "qf"], maxHp: 800000 },
+        { names: ["semifinals", "semi finals", "sf"], maxHp: 1200000 },
+        { names: ["finals", "grand finals", "f", "gf"], maxHp: 1600000 },
     ],
-    DEAD_ROUNDS: 2,
-    REVIVE_HP_RATIO: 0.1,
+    DEAD_ROUNDS: 3,
+    REVIVE_HP_RATIO: 0.5,
+    SECONDARY_ATTACKER_RATIO: 0.5,
 
     DAMAGE_MULTIPLIER_STEP: 1,
-    MAPS_PER_MULTIPLIER_STEP: 1,
+    MAPS_PER_MULTIPLIER_STEP: 2,
 
     // Class abilities
     CLASSES_WITH_CONTROLS: ["human", "demigod", "soulweaver", "witch"],
@@ -32,7 +34,7 @@ export const constants = Object.freeze({
     SOULWEAVER_CHALLENGER_MULTIPLIER: 1.1,
     SOULWEAVER_CHALLENGED_MULTIPLIER: 0.9,
     SOULWEAVER_LOSER_HP_LOSS_RATIO: 0.75,
-    HUMAN_HEAL_AMOUNT: 30000,
+    HUMAN_HEAL_AMOUNT: 150000,
     CLASS_IMAGE_FOLDER: "static/classes",
 
     // tosu

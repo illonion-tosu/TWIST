@@ -543,11 +543,18 @@ function evaluateClasses() {
         }
     }
 
-    // Demigod and Soulweaver both zero out players, so they can't share a map
     if (next.demigod && next.soulweaver) {
-        const message = "Demigod and Soulweaver can't both be active in the same map."
-        errors[demigodSide].push(message)
-        if (soulweaverSide !== demigodSide) errors[soulweaverSide].push(message)
+        next.soulweaver = null
+        for (const n of constants.PLAYER_NUMBERS) {
+            const box = document.getElementById(`soulweaver-${n}-active`)
+            if (box) box.checked = false
+        }
+    }
+
+    for (const side of constants.SIDES) {
+        const used = [next.demigod, next.soulweaver, next.witch]
+            .filter(ability => ability && sideOf(ability.player ?? ability.challenger) === side)
+        if (used.length > 1) errors[side].push("Only 1 ability per team per map.")
     }
 
     return { errors, next }
@@ -595,8 +602,7 @@ function resetMapAbilities() {
     showClassError("blue", [])
 }
 
-// Human: the button heals every living teammate (the Human included) by HUMAN_HEAL_AMOUNT.
-// No cooldown: press it as often as needed.
+// Human: the heal button heals every living teammate (the Human included) by HUMAN_HEAL_AMOUNT.
 function healTeam(humanNumber) {
     const side = sideOf(humanNumber)
 
@@ -1013,9 +1019,7 @@ function applyDamage(playerData) {
                 Math.round(hpBefore * (1 - constants.SOULWEAVER_LOSER_HP_LOSS_RATIO))
             )
         } else if (wasAlive && player.currentMaxHp === 0) {
-            // Knocked out: sits out 2 rounds, then revives once at 10% of round max HP.
-            // A player who has already revived stays down for good.
-            player.currentDeadRounds = player.hasRevived ? 0 : constants.DEAD_ROUNDS
+            player.currentDeadRounds = (player.class === "human" && !player.hasRevived) ? constants.DEAD_ROUNDS : 0
         } else if (player.currentDeadRounds > 0) {
             player.currentDeadRounds--
 
@@ -1147,7 +1151,12 @@ function updatePlayerData(playerData, data) {
 
     // Damage scales up as the match goes on
     const damageMultiplier = getDamageMultiplier()
-    Object.values(playerData).forEach(player => { player.currentScoreAgainst *= damageMultiplier })
+    Object.values(playerData).forEach(player => {
+        player.currentScoreAgainst *= damageMultiplier
+        if (!abilities.demigod) {
+            player.currentScoreAgainst = Math.min(player.currentScoreAgainst, constants.MAX_STANDARD_DAMAGE)
+        }
+    })
 }
 
 // Standard damage, based purely on who is targeting whom:
@@ -1162,9 +1171,11 @@ function setStandardDamage() {
         )
         if (!attackers.length) return
 
-        const averageScore = attackers.reduce((sum, attacker) => sum + attacker.effectiveScore, 0) / attackers.length
+        const scores = attackers.map(attacker => attacker.effectiveScore).sort((a, b) => b - a)
+        const attackScore = scores[0]
+            + scores.slice(1).reduce((sum, score) => sum + score * constants.SECONDARY_ATTACKER_RATIO, 0)
 
-        player.currentScoreAgainst += Math.max(0, averageScore - player.effectiveScore)
+        player.currentScoreAgainst += Math.max(0, attackScore - player.effectiveScore)
     })
 }
 
@@ -1210,7 +1221,7 @@ function setDemigodDamage() {
     classPanelsEl.addEventListener("input", event => {
         if (event.target.type === "number") applyClasses(null)
     })
-    // Human: "Rolled a pool number" heals the team
+    // Heal button heals the team
     classPanelsEl.addEventListener("click", event => {
         const button = event.target.closest(".human-heal-button")
         if (button) healTeam(Number(button.dataset.player))
