@@ -66,7 +66,7 @@ export function findShowcaseBeatmap(artist, title, difficultyName) {
 
     return maps.find(beatmap =>
         normalise(beatmap.title) === wanted.title &&
-        normalise(beatmap.difficultyName) === wanted.difficulty &&
+        normalise(beatmap.version) === wanted.difficulty &&
         (!normalise(beatmap.artist) || normalise(beatmap.artist) === wanted.artist)
     )
 }
