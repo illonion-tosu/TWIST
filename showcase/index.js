@@ -52,8 +52,55 @@ function setRoundName(name) {
     })
 }
 
+// Round name
+// Wrap the round name over (at most) 2 lines of the SVG <text>
+function setThemeName(name) {
+    const text = document.getElementById("theme-name")
+
+    const words = String(name ?? "").split(" ").filter(Boolean)
+    const lines = []
+    let currentLine = ""
+
+    // Temporarily put text on the SVG so getComputedTextLength() works.
+    text.textContent = "THEME: "
+
+    for (const word of words) {
+        const testLine = currentLine ? `${currentLine} ${word}` : word
+        text.textContent = testLine
+
+        if (text.getComputedTextLength() <= constants.SHOWCASE_ROUND_NAME_MAX_WIDTH) {
+            currentLine = testLine
+        } else {
+            if (currentLine) lines.push(currentLine)
+            currentLine = word
+        }
+    }
+    if (currentLine) lines.push(currentLine)
+
+    // Rebuild the text using tspans. Only 1 and 2 line layouts exist, so anything longer is cut off.
+    text.textContent = "THEME: "
+
+    const lineYs = constants.SHOWCASE_ROUND_NAME_LINE_YS
+    const maxLines = Object.keys(lineYs).length
+    const visibleLines = lines.slice(0, maxLines)
+    if (lines.length > maxLines) {
+        visibleLines[maxLines - 1] = visibleLines[maxLines - 1].replace(/\s*$/, "") + "..."
+    }
+
+    visibleLines.forEach((line, index) => {
+        const tspan = document.createElementNS(constants.SVG_NS, "tspan")
+        tspan.setAttribute("x", constants.SHOWCASE_ROUND_NAME_X)
+        tspan.setAttribute("y", lineYs[visibleLines.length][index])
+        tspan.textContent = line
+        text.appendChild(tspan)
+    })
+}
+
 loadShowcaseBeatmaps()
-    .then(beatmaps => setRoundName(beatmaps.roundName))
+    .then(beatmaps => {
+        setRoundName(beatmaps.roundName)
+        setThemeName(beatmaps.themeName)
+    })
     .catch(error => console.error("Could not load showcase beatmaps:", error))
 
 // Twitch chat
@@ -139,7 +186,7 @@ socket.onmessage = event => {
         setNowPlayingMetadata(nowPlayingEls, beatmapData, data.directPath)
 
         // Mod info
-        const showcaseBeatmap = findShowcaseBeatmap(beatmapData.title, beatmapData.version, beatmapData.mapper, beatmapData.id)
+        const showcaseBeatmap = findShowcaseBeatmap(beatmapData.artist, beatmapData.title, beatmapData.version)
         if (showcaseBeatmap) {
             // Labelled like the mappool: the chip shows the label, the colour comes from the mod
             const label = showcaseBeatmap.label ?? showcaseBeatmap.modId ?? ""

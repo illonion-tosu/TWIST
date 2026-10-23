@@ -1044,10 +1044,22 @@ function applyDamage(playerData) {
     refreshDamageMultiplierUi()
 }
 
+// Slim down the tosu data
+function slimTosuData(data) {
+    if (!data) return data
+    const { scoreVisible, chat, ipcState, team } = data.tourney ?? {}
+    return {
+        beatmap: data.beatmap,
+        directPath: data.directPath,
+        tourney: { scoreVisible, chat, ipcState, team },
+    }
+}
+
 // Write everything the overlays read to localStorage.
 // Runs on a timer, right after every tosu message, and right after every change made in the dashboard,
 // so the overlays don't have to wait for the next timer tick. `force` skips the throttle.
 let lastSaveAt = 0
+let lastSavedJson = null
 function saveState(force = false) {
     teamRedNameEl.textContent = redTeamName ?? ""
     teamBlueNameEl.textContent = blueTeamName ?? ""
@@ -1060,7 +1072,7 @@ function saveState(force = false) {
 
     // Save information
     const savedInfo = {
-        tosuData: socketData,
+        tosuData: slimTosuData(socketData),
         maxHp: maxHp,
         playerData: playerData,
         roundName: roundName,
@@ -1090,7 +1102,11 @@ function saveState(force = false) {
     }
 
     try {
-        localStorage.setItem(constants.STORAGE_KEY, JSON.stringify(savedInfo))
+        const serialised = JSON.stringify(savedInfo)
+        if (serialised !== lastSavedJson) {
+            lastSavedJson = serialised
+            localStorage.setItem(constants.STORAGE_KEY, serialised)
+        }
     } catch (error) {
         console.error("Could not save dashboard data:", error)
     }
