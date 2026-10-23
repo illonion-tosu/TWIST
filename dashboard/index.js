@@ -2,7 +2,8 @@ import { constants } from "../_shared/js/constants.js"
 import { loadBeatmaps } from "../_shared/core/beatmaps.js"
 import { findTeam, loadTeams } from "../_shared/core/teams.js"
 import { createTosuWsSocket } from "../_shared/core/websocket.js"
-import { isPresent, isSlotFilled } from "../_shared/core/match.js"
+import { getRoundMaxHp, isPresent, isSlotFilled } from "../_shared/core/match.js"
+import { fetchMatch, isApiConfigured, normaliseApiMatch } from "../_shared/core/api.js"
 
 // Saved match state: read it before anything gets a chance to overwrite it
 let savedState = null
@@ -12,6 +13,23 @@ try {
     savedState = null
 }
 let stateReady = false // saving is paused until the restore has run
+
+// Match API (see the "Match API" section at the bottom of this file)
+const apiToggleEl = document.getElementById("auto-api-button")
+const matchIdInputEl = document.getElementById("match-id-input")
+const matchIdButtonEl = document.getElementById("match-id-button")
+const apiStatusEl = document.getElementById("api-status")
+const apiWarningsEl = document.getElementById("api-warnings")
+let apiActive = false // toggle on AND a match ID set AND an endpoint configured
+let matchId = null // the number typed into the dashboard
+let appliedMatchId = null // the match the current state came from (null = a local match)
+let apiMultiplier = null // damage multiplier from the API (null = work it out from maps played)
+let apiMatchStatus = null
+let apiWinner = null
+let lastAppliedCommit = null // "gameNumber:beatmapId" of the last commit applied
+let previewBeatmapId = null // the map tosu is currently playing / last played (string id)
+let previewLocked = false // true once the API has committed the previewed map: the damage preview stays empty until the next map
+let awaitingCommitScene = false // a map ended and we're waiting for the API to commit it before changing scene
 
 // Round Name
 const roundNameEl = document.getElementById("round-name")
@@ -124,6 +142,7 @@ loadBeatmaps().then(beatmaps => {
         console.error("Could not restore saved state:", error)
     }
     stateReady = true
+    syncApiMode()
 }).catch(error => {
     console.error("Could not load beatmaps:", error)
     stateReady = true
@@ -134,6 +153,39 @@ let redBan = []
 let redPick = []
 let blueBan = []
 let bluePick = []
+// Put one map in a state. action: "pick" | "ban" | "clear". team: "red" | "blue".
+// Shared by the mouse handler below and the API. `save` is false when the caller saves once at the end.
+function setMapState(id, team, action, { save = true, setPicker = true } = {}) {
+    id = String(id)
+    const button = document.getElementById(id)
+
+    // Filter it out of everything first
+    redBan = redBan.filter(other => other !== id)
+    redPick = redPick.filter(other => other !== id)
+    blueBan = blueBan.filter(other => other !== id)
+    bluePick = bluePick.filter(other => other !== id)
+
+    // Remove all related classes to it
+    if (button) {
+        button.classList.remove("mappool-select-button-red-ban")
+        button.classList.remove("mappool-select-button-blue-ban")
+        button.classList.remove("mappool-select-button-red-pick")
+        button.classList.remove("mappool-select-button-blue-pick")
+    }
+
+    // Add elements + classes
+    if (action !== "clear" && (team === "red" || team === "blue")) {
+        const list = { redban: redBan, redpick: redPick, blueban: blueBan, bluepick: bluePick }[`${team}${action}`]
+        if (list) {
+            list.push(id)
+            button?.classList.add(`mappool-select-button-${team}-${action}`)
+            if (action === "pick" && setPicker) setCurrentPicker(team)
+        }
+    }
+
+    if (save) saveState(true)
+}
+
 function mapClickEvent(event) {
     // Team
     let team
@@ -146,39 +198,7 @@ function mapClickEvent(event) {
     if (event.ctrlKey) action = "ban"
     if (event.shiftKey) action = "clear"
 
-    // Filter it out of everything first
-    redBan = redBan.filter(id => id !== this.getAttribute("id"))
-    redPick = redPick.filter(id => id !== this.getAttribute("id"))
-    blueBan = blueBan.filter(id => id !== this.getAttribute("id"))
-    bluePick = bluePick.filter(id => id !== this.getAttribute("id"))
-
-    // Remove all related classes to it
-    this.classList.remove("mappool-select-button-red-ban")
-    this.classList.remove("mappool-select-button-blue-ban")
-    this.classList.remove("mappool-select-button-red-pick")
-    this.classList.remove("mappool-select-button-blue-pick")
-
-    // Add elements + classes
-    if (team === "red" && action === "ban") {
-        redBan.push(this.getAttribute("id"))
-        this.classList.add("mappool-select-button-red-ban")
-    }
-    if (team === "red" && action === "pick") {
-        redPick.push(this.getAttribute("id"))
-        this.classList.add("mappool-select-button-red-pick")
-        setCurrentPicker(team)
-    }
-    if (team === "blue" && action === "ban") {
-        blueBan.push(this.getAttribute("id"))
-        this.classList.add("mappool-select-button-blue-ban")
-    }
-    if (team === "blue" && action === "pick") {
-        bluePick.push(this.getAttribute("id"))
-        this.classList.add("mappool-select-button-blue-pick")
-        setCurrentPicker(team)
-    }
-
-    saveState(true)
+    setMapState(this.getAttribute("id"), team, action)
 }
 
 const mapsPlayedInputEl = document.getElementById("maps-played-input")
@@ -186,9 +206,14 @@ const damageMultiplierEl = document.getElementById("damage-multiplier")
 let mapsPlayed = 0
 
 // +1.0x per map played (constants.DAMAGE_MULTIPLIER_STEP)
-function getDamageMultiplier() {
+function localDamageMultiplier() {
     return 1 + constants.DAMAGE_MULTIPLIER_STEP
         * Math.floor(mapsPlayed / constants.MAPS_PER_MULTIPLIER_STEP)
+}
+
+// The API's number wins while it's on; otherwise it comes from maps played
+function getDamageMultiplier() {
+    return apiActive && apiMultiplier != null ? apiMultiplier : localDamageMultiplier()
 }
 
 function refreshDamageMultiplierUi() {
@@ -204,36 +229,39 @@ const classOf = playerNumber => playerData[`player${playerNumber}`]?.class ?? ""
 const abilities = {
     demigod: null, // { player, mode, target }, cleared after every map
     soulweaver: null, // { challenger, challenged }, cleared after every map
-    witch: null, // { player }, cleared after every map. Display only: it has no effect on damage
+    witch: { red: null, blue: null }, // { player } per team (both teams can have one), cleared after every map. Display only: no effect on damage
 }
 
 // Which class image each team's overlay shows (the latest activation on that side wins).
 // Cleared after every map. Human sets it when the heal button is used.
 const classDisplay = { red: null, blue: null }
 
-// Who "owns" each per-map ability (the player that activated it)
-const abilityOwner = {
-    demigod: ability => ability.player,
-    soulweaver: ability => ability.challenger,
-    witch: ability => ability.player,
-}
+// Per-map abilities that are switched on, as { name, player } (Witch is per team, so it can appear twice)
+const activeAbilities = state => [
+    state.demigod && { name: "demigod", player: state.demigod.player },
+    state.soulweaver && { name: "soulweaver", player: state.soulweaver.challenger },
+    state.witch?.red && { name: "witch", player: state.witch.red.player },
+    state.witch?.blue && { name: "witch", player: state.witch.blue.player },
+].filter(Boolean)
 
 // Compare the abilities before / after a change: anything newly activated takes over its team's image,
 // anything switched off gives the image up (falling back to another ability still active on that team).
 function syncClassDisplay(before) {
-    for (const name of Object.keys(abilityOwner)) {
-        const was = before[name]
-        const now = abilities[name]
+    const was = activeAbilities(before)
+    const now = activeAbilities(abilities)
+    const same = (a, b) => a.name === b.name && a.player === b.player
 
-        if (now && (!was || abilityOwner[name](now) !== abilityOwner[name](was))) {
-            classDisplay[sideOf(abilityOwner[name](now))] = name
-        } else if (!now && was) {
-            const side = sideOf(abilityOwner[name](was))
-            if (classDisplay[side] !== name) continue
-            classDisplay[side] = Object.keys(abilityOwner).find(other =>
-                abilities[other] && sideOf(abilityOwner[other](abilities[other])) === side
-            ) ?? null
-        }
+    for (const ability of now) {
+        if (!was.some(other => same(other, ability))) classDisplay[sideOf(ability.player)] = ability.name
+    }
+
+    for (const ability of was) {
+        if (now.some(other => same(other, ability))) continue
+        const side = sideOf(ability.player)
+        // Replaced by the same ability on another player of this team: the new one already took the image
+        if (now.some(other => other.name === ability.name && sideOf(other.player) === side)) continue
+        if (classDisplay[side] !== ability.name) continue
+        classDisplay[side] = now.filter(other => sideOf(other.player) === side).at(-1)?.name ?? null
     }
 }
 
@@ -250,9 +278,34 @@ const playerLabel = playerNumber =>
 function restoreSavedState() {
     const saved = savedState
     savedState = null
+    if (!saved) return
 
-    // Only restore the same round, so a new round never starts with last round's HP
-    if (!saved || saved.roundName !== roundName) return
+    // The match ID and the API toggle survive a reload whatever the round is
+    const api = saved.api ?? {}
+    if (api.matchId != null) {
+        matchId = api.matchId
+        matchIdInputEl.value = api.matchId
+    }
+    apiToggleEl.checked = Boolean(api.enabled)
+
+    // A match that came from the API is identified by its match ID. A local match keeps the old rule:
+    // only restore the same round, so a new round never starts with last round's HP.
+    const fromApi = api.appliedMatchId != null
+    if (!fromApi && saved.roundName !== roundName) return
+
+    if (fromApi) {
+        appliedMatchId = api.appliedMatchId
+        lastAppliedCommit = api.lastCommit ?? null
+        previewBeatmapId = api.previewBeatmapId ?? null
+        previewLocked = Boolean(api.previewLocked)
+        apiMatchStatus = api.status ?? null
+        apiWinner = api.winner ?? null
+        roundName = saved.roundName
+        roundNameEl.textContent = roundName ?? ""
+        if (Number(saved.maxHp) > 0) maxHp = Number(saved.maxHp)
+        redTeamName = saved.teamName?.redTeamName
+        blueTeamName = saved.teamName?.blueTeamName
+    }
 
     // Players: HP, dead rounds, revive status, targets (scores start fresh)
     Object.keys(playerData).forEach((key, i) => {
@@ -265,10 +318,19 @@ function restoreSavedState() {
         playerData[key].currentScoreAgainst = 0
         teamHpIOnputNumberElements[i].value = playerData[key].currentMaxHp
     })
+
+    // Names, classes and empty slots back onto the panels
+    for (const side of constants.SIDES) {
+        applyRoster(side, playersOf(side).map(n => {
+            const player = playerData[`player${n}`]
+            return { id: player.id, playerName: player.playerName, class: player.class, present: isPresent(player) }
+        }), { keepHp: true })
+    }
     syncTargetSelects()
 
     // Maps played + multiplier display
     mapsPlayed = Math.max(0, Math.floor(Number(saved.mapsPlayed)) || 0)
+    if (fromApi && Number(saved.damageMultiplier) > 0) apiMultiplier = Number(saved.damageMultiplier)
     refreshDamageMultiplierUi()
 
     toggleHpEl.checked = Boolean(saved.toggleHp)
@@ -294,6 +356,16 @@ function restoreSavedState() {
     // Pickers
     if (saved.mappoolInfo?.currentPicker) setCurrentPicker(saved.mappoolInfo.currentPicker)
     if (saved.nextPicker) setNextPicker(saved.nextPicker)
+
+    // Abilities (a reload used to forget them)
+    if (saved.abilities) {
+        abilities.demigod = saved.abilities.demigod ?? null
+        abilities.soulweaver = saved.abilities.soulweaver ?? null
+        abilities.witch = { red: saved.abilities.witch?.red ?? null, blue: saved.abilities.witch?.blue ?? null }
+        classDisplay.red = saved.classImages?.red ?? null
+        classDisplay.blue = saved.classImages?.blue ?? null
+        syncAbilityControls()
+    }
 }
 
 // Lets you correct the count by hand (e.g. a map was replayed)
@@ -435,7 +507,7 @@ refreshClassSelects()
 function showClassError(side, messages) {
     const errorEl = document.getElementById(`class-error-${side}`)
     if (!errorEl) return
-    errorEl.textContent = messages.join(" ")
+    errorEl.textContent = [...new Set(messages)].join(" ")
     errorEl.hidden = messages.length === 0
 }
 
@@ -474,7 +546,7 @@ function evaluateClasses() {
     const next = {
         demigod: null,
         soulweaver: null,
-        witch: null,
+        witch: { red: null, blue: null }, // each team can have its own Witch
     }
     let demigodSide = null
     let soulweaverSide = null
@@ -533,12 +605,15 @@ function evaluateClasses() {
                 soulweaverSide ??= side
             }
 
-            // Witch: only shows her image on the overlay, nothing else to validate
+            // Witch: only shows her image on the overlay. Each team can have its own.
             if (className === "witch" && checked(`witch-${n}-active`)) {
                 if (!isAlive(n)) {
                     errors[side].push(`${playerLabel(n)} is dead and can't activate.`)
                 }
-                next.witch = { player: n }
+                if (next.witch[side]) {
+                    errors[side].push("Only 1 ability per team per map.")
+                }
+                next.witch[side] = { player: n }
             }
         }
     }
@@ -552,7 +627,7 @@ function evaluateClasses() {
     }
 
     for (const side of constants.SIDES) {
-        const used = [next.demigod, next.soulweaver, next.witch]
+        const used = [next.demigod, next.soulweaver, next.witch[side]]
             .filter(ability => ability && sideOf(ability.player ?? ability.challenger) === side)
         if (used.length > 1) errors[side].push("Only 1 ability per team per map.")
     }
@@ -594,7 +669,7 @@ function applyClasses(changedBlock) {
 function resetMapAbilities() {
     abilities.demigod = null
     abilities.soulweaver = null
-    abilities.witch = null
+    abilities.witch = { red: null, blue: null }
     classDisplay.red = null
     classDisplay.blue = null
     document.querySelectorAll(".per-map-ability").forEach(checkboxEl => { checkboxEl.checked = false })
@@ -604,6 +679,7 @@ function resetMapAbilities() {
 
 // Human: the heal button heals every living teammate (the Human included) by HUMAN_HEAL_AMOUNT.
 function healTeam(humanNumber) {
+    if (apiActive) return // the API owns HP while it's on
     const side = sideOf(humanNumber)
 
     if (classOf(humanNumber) !== "human") return
@@ -672,116 +748,101 @@ loadTeams().then(() => {
     teamsLoaded = true
 }).catch(error => console.error("Could not load teams:", error))
 
-// Change Teams
+// Change Teams: find the team in teams.json, then show its roster
 function changeTeams(teamName, side) {
-    // Find team
     const currentTeam = findTeam(teamName)
     if (!currentTeam) return
 
-    // Set up arrays
-    let currentPlayers = []
-    let teamHpPlayerElements = []
-    let teamMapTargetSelectionPlayerElements = []
-    let teamMapTargetSelectionPlayerSelectElements = []
-    if (side === "red") {
-        currentPlayers.push(playerData.player1, playerData.player2, playerData.player3)
-        teamHpPlayerElements.push(
-            document.getElementById("team-hp-player-1"),
-            document.getElementById("team-hp-player-2"),
-            document.getElementById("team-hp-player-3")
-        )
-        teamMapTargetSelectionPlayerElements.push(
-            document.getElementById("map-target-selection-player-1"),
-            document.getElementById("map-target-selection-player-2"),
-            document.getElementById("map-target-selection-player-3")
-        )
-        teamMapTargetSelectionPlayerSelectElements.push(
-            document.getElementById("map-target-selection-player-4-select"),
-            document.getElementById("map-target-selection-player-5-select"),
-            document.getElementById("map-target-selection-player-6-select")
-        )
-    } else {
-        currentPlayers.push(playerData.player4, playerData.player5, playerData.player6)
-        teamHpPlayerElements.push(
-            document.getElementById("team-hp-player-4"),
-            document.getElementById("team-hp-player-5"),
-            document.getElementById("team-hp-player-6")
-        )
-        teamMapTargetSelectionPlayerElements.push(
-            document.getElementById("map-target-selection-player-4"),
-            document.getElementById("map-target-selection-player-5"),
-            document.getElementById("map-target-selection-player-6")
-        )
-        teamMapTargetSelectionPlayerSelectElements.push(
-            document.getElementById("map-target-selection-player-1-select"),
-            document.getElementById("map-target-selection-player-2-select"),
-            document.getElementById("map-target-selection-player-3-select")
-        )
-    }
+    applyRoster(side, [1, 2, 3].map(i => {
+        const player = currentTeam[`player${i}`] ?? { id: 0, playerName: "", class: "" }
+        return {
+            id: player.id,
+            playerName: player.playerName,
+            class: player.class,
+            present: isSlotFilled(player),
+        }
+    }))
+}
 
-    // Set players
-    for (let i = 0; i < currentPlayers.length; i++) {
-        const currentPlayer = currentTeam[`player${i + 1}`] ?? { id: 0, playerName: "", class: "" }
-        const currentPlayerId = currentPlayer.id
-        const currentPlayerName = currentPlayer.playerName
-        currentPlayers[i].id = currentPlayerId
-        currentPlayers[i].playerName = currentPlayerName
+// Put a side's three players (id, name, class, present) into playerData and onto every panel.
+// Used by teams.json (changeTeams), the saved-state restore and the API.
+// keepHp: true leaves HP alone for a slot that just became present (the API / restore already set it).
+// Nobody is re-aimed: a target is whatever it was set to, even an empty slot.
+function applyRoster(side, roster, { keepHp = false } = {}) {
+    const offset = side === "red" ? 0 : 3
+    const opposingOffset = side === "red" ? 3 : 0
 
-        // Class is stored on each player: currentTeam.playerX.class
-        currentPlayers[i].class = String(currentPlayer.class ?? "").toLowerCase()
+    for (let i = 0; i < 3; i++) {
+        const number = offset + i + 1
+        const player = playerData[`player${number}`]
+        const entry = roster[i] ?? { id: 0, playerName: "", class: "", present: false }
+        const name = entry.playerName ?? ""
+        const filled = entry.present !== false
 
-        teamHpPlayerElements[i].textContent = currentPlayerName
-        teamMapTargetSelectionPlayerElements[i].textContent = currentPlayerName
+        player.id = entry.id ?? 0
+        player.playerName = name
+        // Class is stored on each player
+        player.class = String(entry.class ?? "").toLowerCase()
+
+        document.getElementById(`team-hp-player-${number}`).textContent = name
+        document.getElementById(`map-target-selection-player-${number}`).textContent = name
 
         // 2v2 / 2v3: an empty slot is out of the match entirely. HP / damage are never scaled, the team just has fewer players.
-        const filled = isSlotFilled(currentPlayer)
-        const wasPresent = currentPlayers[i].present
-        currentPlayers[i].present = filled
+        const wasPresent = player.present
+        player.present = filled
         if (!filled) {
-            Object.assign(currentPlayers[i], {
+            Object.assign(player, {
                 currentMaxHp: 0, currentDeadRounds: 0, hasRevived: true,
                 currentScore: 0, effectiveScore: 0, currentScoreAgainst: 0,
             })
-        } else if (wasPresent === false) {
+        } else if (wasPresent === false && !keepHp) {
             // Slot filled again (a 3-player team after a 2-player one): fresh player
-            Object.assign(currentPlayers[i], { currentMaxHp: maxHp, currentDeadRounds: 0, hasRevived: false })
+            Object.assign(player, { currentMaxHp: maxHp, currentDeadRounds: 0, hasRevived: false })
         }
-        teamHpIOnputNumberElements[(side === "red" ? 0 : 3) + i].value = currentPlayers[i].currentMaxHp
-        teamHpPlayerElements[i].parentElement.style.display = filled ? "" : "none"
-        teamMapTargetSelectionPlayerElements[i].parentElement.style.display = filled ? "" : "none"
+        teamHpIOnputNumberElements[number - 1].value = player.currentMaxHp
+        document.getElementById(`team-hp-player-${number}`).parentElement.style.display = filled ? "" : "none"
+        document.getElementById(`map-target-selection-player-${number}`).parentElement.style.display = filled ? "" : "none"
 
-        // Fill each select's options with the matching team player
-        // Value = player number (1-6), since that's what currentTarget uses
-        const playerNumberOffset = side === "red" ? 0 : 3
-        const options = teamMapTargetSelectionPlayerSelectElements[i].children
-        for (let j = 0; j < options.length; j++) {
-            const optionPlayer = currentTeam[`player${j + 1}`]
-            if (!optionPlayer) continue
-            options[j].textContent = optionPlayer.playerName
-            options[j].value = playerNumberOffset + j + 1
-            // Nobody can target an empty slot
-            const optionFilled = isSlotFilled(optionPlayer)
-            options[j].disabled = !optionFilled
-            options[j].hidden = !optionFilled
+        // The opposing team's target selects list this player (value = player number 1-6, since that's what currentTarget uses)
+        for (let k = 1; k <= 3; k++) {
+            const option = document.getElementById(`map-target-selection-player-${opposingOffset + k}-select`)?.children[i]
+            if (!option) continue
+            option.textContent = name
+            option.value = number
+            // Nobody can be picked in the dropdown while they're an empty slot
+            option.disabled = !filled
+            option.hidden = !filled
         }
     }
 
-    retargetAbsentPlayers()
     refreshClassSelects()
     updateClassPanel(side)
     syncTargetSelects()
 }
 
-// Anyone aiming at an empty slot is pointed at the first opponent who is actually playing
-function retargetAbsentPlayers() {
-    for (const n of constants.PLAYER_NUMBERS) {
-        const player = playerData[`player${n}`]
-        const target = playerData[`player${player.currentTarget}`]
-        if (isPresent(target)) continue
+// Write the current abilities into the class controls without firing their change events
+function syncAbilityControls() {
+    document.querySelectorAll(".per-map-ability").forEach(box => { box.checked = false })
+    const tick = id => { const box = document.getElementById(id); if (box) box.checked = true }
+    const choose = (id, value) => {
+        const select = document.getElementById(id)
+        if (select && value !== null && value !== undefined) select.value = String(value)
+    }
 
-        const replacement = playersOf(otherSide(sideOf(n)))
-            .find(m => isPresent(playerData[`player${m}`]))
-        if (replacement) player.currentTarget = replacement
+    if (abilities.demigod) {
+        const { player, mode, target } = abilities.demigod
+        tick(`demigod-${player}-active`)
+        choose(`demigod-${player}-mode`, mode)
+        choose(`demigod-${player}-target`, target)
+    }
+    if (abilities.soulweaver) {
+        const { challenger, challenged } = abilities.soulweaver
+        tick(`soulweaver-${challenger}-active`)
+        choose(`soulweaver-${challenger}-challenged`, challenged)
+    }
+    for (const side of constants.SIDES) {
+        if (abilities.witch[side]) tick(`witch-${abilities.witch[side].player}-active`)
+        showClassError(side, [])
     }
 }
 
@@ -797,6 +858,7 @@ const teamHpIOnputNumberElements = [
 ]
 
 function setHpButton() {
+    if (apiActive) return // the API owns HP while it's on
     for (let i = 0; i < teamHpIOnputNumberElements.length; i++) {
         const player = playerData[`player${i + 1}`]
         // Empty slots can't be given HP
@@ -820,6 +882,7 @@ const targetSelectElements = constants.PLAYER_NUMBERS.map(i =>
 )
 
 function setTargetButton() {
+    if (apiActive) return // the API owns targets while it's on
     targetSelectElements.forEach((selectEl, i) => {
         const value = Number(selectEl.value)
         // Ignore placeholder options that haven't been filled with a player yet
@@ -870,7 +933,7 @@ socket.onmessage = event => {
 
     // Team Names
     const teamNames = socketData.tourney?.team
-    if (teamsLoaded && teamNames) {
+    if (teamsLoaded && teamNames && !apiActive) {
         if (redTeamName !== teamNames.left) {
             redTeamName = teamNames.left
             changeTeams(redTeamName, "red")
@@ -886,6 +949,7 @@ socket.onmessage = event => {
     if (socketData.beatmap && (currentId !== socketData.beatmap.id || currentChecksum !== socketData.beatmap.checksum)) {
         currentId = socketData.beatmap.id
         currentChecksum = socketData.beatmap.checksum
+        previewBeatmapId = String(socketData.beatmap.id)
 
         currentBeatmap = allBeatmaps.find(beatmap => Number(beatmap.beatmap_id) === Number(socketData.beatmap.id))
         currentMapEl.textContent = `${socketData.beatmap.artist} - ${socketData.beatmap.title}`
@@ -893,7 +957,7 @@ socket.onmessage = event => {
         // Autopicking
         // (it used to check currentPicker here, so "None" as next picker still auto picked for blue)
         const targetElement = document.getElementById(`${currentId}`)
-        if (currentBeatmap && targetElement && autoPickButtonEl.checked && nextPicker !== "none") {
+        if (currentBeatmap && targetElement && autoPickButtonEl.checked && nextPicker !== "none" && !apiActive) {
             const event = new MouseEvent('mousedown', {
                 bubbles: true,
                 cancelable: true,
@@ -927,6 +991,9 @@ socket.onmessage = event => {
 
         // Calculate scores
         if (isMapRunning(currentIpcState)) {
+            // A new map starting (not the next phase of the same one) brings the damage preview back after an API commit
+            const starting = state => state === IPC.WAITING_FOR_CLIENTS || state === IPC.PLAYING
+            if (starting(currentIpcState) && !starting(previousIpcState)) previewLocked = false
             checkedWinner = false
             updatePlayerData(playerData, socketData)
 
@@ -939,7 +1006,11 @@ socket.onmessage = event => {
         if (currentIpcState === IPC.IDLE && previousIpcState === IPC.RANKING && !checkedWinner) {
             checkedWinner = true
 
-            if (toggleHpEl.checked) {
+            if (apiActive) {
+                // The API owns HP: nothing is applied here. The preview stays up until the API commits this map.
+                if (previewLocked) finishMapScene()
+                else awaitingCommitScene = true
+            } else if (toggleHpEl.checked) {
                 applyDamage(playerData)
 
                 if (autoObsButtonEl.checked) {
@@ -1099,6 +1170,19 @@ function saveState(force = false) {
         nextPicker: nextPicker,
         // Class image shown per team on the main overlay (null = none)
         classImages: { red: classDisplay.red, blue: classDisplay.blue },
+        // Per-map abilities (so a reload doesn't forget them)
+        abilities: abilities,
+        // Match API state: what a reload needs to carry on, and what the overlays can read
+        api: {
+            enabled: apiToggleEl.checked,
+            matchId: matchId,
+            appliedMatchId: appliedMatchId,
+            lastCommit: lastAppliedCommit,
+            previewBeatmapId: previewBeatmapId,
+            previewLocked: previewLocked,
+            status: apiMatchStatus,
+            winner: apiWinner,
+        },
     }
 
     try {
@@ -1122,6 +1206,12 @@ function refreshDamage() {
 
 
 function updatePlayerData(playerData, data) {
+    // The API already committed this map: its HP has the damage in it, so the preview stays empty until the next map
+    if (previewLocked) {
+        clearScores()
+        return
+    }
+
     // Raw scores
     Object.values(playerData).forEach(player => {
         const client = data.tourney?.clients?.find(
@@ -1233,9 +1323,11 @@ function setDemigodDamage() {
     toggleHpEl.addEventListener("change", () => refreshDamage())
     mapTargetButtonEl.addEventListener("click", () => setTargetButton())
     // Class abilities apply as soon as a control changes (no Submit button)
-    classPanelsEl.addEventListener("change", event => applyClasses(event.target.closest(".class-player")))
+    classPanelsEl.addEventListener("change", event => {
+        if (!apiActive) applyClasses(event.target.closest(".class-player"))
+    })
     classPanelsEl.addEventListener("input", event => {
-        if (event.target.type === "number") applyClasses(null)
+        if (!apiActive && event.target.type === "number") applyClasses(null)
     })
     // Heal button heals the team
     classPanelsEl.addEventListener("click", event => {
@@ -1340,3 +1432,352 @@ if (obs) {
 } else {
     console.warn("obs-websocket-js didn't load, OBS scene control is disabled")
 }
+
+
+// ---------------------------------------------------------------------------------------------------------------
+// Match API
+// While the toggle is on (and a match ID is set) the API is the source of truth for the round, max HP, team names,
+// rosters, HP / dead rounds / revives, targets, picks and bans, pickers, maps played, damage multiplier and class abilities.
+// tosu still owns live scores, the current map and chat, and the dashboard still previews damage from the live scores.
+// Everything the API says goes into the same variables and controls manual mode uses, so turning the toggle off just
+// stops polling: the match carries on from the last values and the controls become editable again.
+
+let apiTimer = null
+let apiPolling = false
+let apiVersion = null
+let apiLastOkAt = 0
+let apiLastError = ""
+let apiNotice = ""
+let apiWarnings = []
+
+// Everything the API owns can't be edited by hand while it's on
+function setControlsLocked(locked) {
+    document.body.classList.toggle("api-locked", locked)
+    const controls = [
+        teamHpButtonEl, mapTargetButtonEl, mapsPlayedInputEl, autoPickButtonEl,
+        selectNextPickerButtonRedEl, selectNextPickerButtonBlueEl, selectNextPickerButtonNoneEl,
+        selectCurrentPickerButtonRedEl, selectCurrentPickerButtonBlueEl, selectCurrentPickerButtonNoneEl,
+        ...teamHpIOnputNumberElements,
+        ...targetSelectElements,
+        ...classPanelsEl.querySelectorAll("input, select, button"),
+        ...mappoolSelectContainerEl.querySelectorAll("button"),
+    ]
+    for (const control of controls) control.disabled = locked
+}
+
+// A different match: start it from scratch (full HP, nothing picked, no abilities)
+function resetMatchState() {
+    Object.keys(playerData).forEach((key, i) => {
+        const player = playerData[key]
+        Object.assign(player, {
+            currentMaxHp: isPresent(player) ? maxHp : 0,
+            currentDeadRounds: 0,
+            hasRevived: !isPresent(player),
+            currentScore: 0, effectiveScore: 0, currentScoreAgainst: 0,
+        })
+        teamHpIOnputNumberElements[i].value = player.currentMaxHp
+    })
+    mappoolSelectContainerEl.querySelectorAll(".mappool-select-button").forEach(button => {
+        setMapState(button.id, null, "clear", { save: false })
+    })
+    resetMapAbilities()
+    mapsPlayed = 0
+    apiMultiplier = null
+    apiMatchStatus = null
+    apiWinner = null
+    lastAppliedCommit = null
+    previewLocked = false
+    awaitingCommitScene = false
+    refreshDamageMultiplierUi()
+}
+
+// Abilities and the class image each team shows, exactly as the API says (no validation: the API decides)
+function applyAbilitiesFromApi(next, images) {
+    abilities.demigod = next.demigod
+    abilities.soulweaver = next.soulweaver
+    abilities.witch = next.witch
+    if (images) {
+        classDisplay.red = images.red ?? null
+        classDisplay.blue = images.blue ?? null
+    }
+    syncAbilityControls()
+}
+
+// After a map the API has committed: change scene (only if the dashboard was waiting for it)
+function finishMapScene() {
+    awaitingCommitScene = false
+    if (!autoObsButtonEl.checked) return
+    const over = apiMatchStatus === "completed" || apiWinner != null
+        || constants.SIDES.some(side => isTeamEliminated(playersOf(side)))
+    changeScene(over ? constants.OBS_SCENES.WINNER : constants.OBS_SCENES.MAPPOOL)
+}
+
+// Write one validated snapshot into the dashboard. Fields the API left out (undefined) are left alone.
+// Returns warnings. Saves once at the end so the overlays never see a half-applied snapshot.
+function applyApiMatch(match) {
+    const warnings = []
+
+    // A different match: wipe the previous one first
+    if (appliedMatchId != null && appliedMatchId !== match.matchId) resetMatchState()
+    appliedMatchId = match.matchId
+    if (match.status !== undefined) apiMatchStatus = match.status
+    if (match.winner !== undefined) apiWinner = match.winner
+
+    // Round + max HP (max HP comes from the round when the API doesn't send it)
+    if (match.roundName !== undefined) {
+        roundName = match.roundName
+        roundNameEl.textContent = roundName
+        if (match.maxHp === undefined) maxHp = getRoundMaxHp(roundName)
+    }
+    if (match.maxHp !== undefined) maxHp = match.maxHp
+
+    // Team names
+    if (match.teamName?.redTeamName !== undefined) redTeamName = match.teamName.redTeamName
+    if (match.teamName?.blueTeamName !== undefined) blueTeamName = match.teamName.blueTeamName
+
+    // A committed map: its damage is already in the HP below, so the live preview is cleared (once) and held
+    // until the next map starts. A commit for some other map (a late one) only updates HP.
+    const commit = match.lastCommitted
+    if (commit) {
+        const key = `${commit.gameNumber}:${commit.beatmapId}`
+        if (key !== lastAppliedCommit) {
+            lastAppliedCommit = key
+            if (previewBeatmapId != null && commit.beatmapId === previewBeatmapId) {
+                clearScores()
+                previewLocked = true
+                if (awaitingCommitScene) finishMapScene()
+            }
+        }
+    }
+
+    // Players: HP, dead rounds, revives and targets, then the roster on every panel
+    for (const [key, incoming] of Object.entries(match.playerData ?? {})) {
+        const player = playerData[key]
+        if (!player) continue
+        for (const field of ["currentMaxHp", "currentDeadRounds", "hasRevived", "currentTarget"]) {
+            if (incoming[field] !== undefined) player[field] = incoming[field]
+        }
+    }
+    if (match.playerData) {
+        for (const side of constants.SIDES) {
+            applyRoster(side, playersOf(side).map(n => {
+                const current = playerData[`player${n}`]
+                const incoming = match.playerData[`player${n}`] ?? {}
+                return {
+                    id: incoming.id ?? current.id,
+                    playerName: incoming.playerName ?? current.playerName,
+                    class: incoming.class ?? current.class,
+                    present: incoming.present ?? isPresent(current),
+                }
+            }), { keepHp: true })
+        }
+    }
+
+    // Maps played + damage multiplier
+    if (match.mapsPlayed !== undefined) mapsPlayed = match.mapsPlayed
+    if (match.damageMultiplier !== undefined) apiMultiplier = match.damageMultiplier
+    else if (match.mapsPlayed !== undefined) apiMultiplier = null
+    refreshDamageMultiplierUi()
+    if (apiMultiplier != null && apiMultiplier !== localDamageMultiplier()) {
+        warnings.push(`damageMultiplier is ${apiMultiplier}x but ${mapsPlayed} maps played works out to ${localDamageMultiplier()}x locally. The API's value is used while it's on.`)
+    }
+
+    // Picks and bans: everything the API lists is picked / banned, everything else is cleared (the same code a click uses)
+    if (match.pickBanInfo) {
+        const buttons = [...mappoolSelectContainerEl.querySelectorAll(".mappool-select-button")]
+        const known = new Set(buttons.map(button => button.id))
+        const options = { save: false, setPicker: false }
+
+        buttons.forEach(button => setMapState(button.id, null, "clear", options))
+        for (const [key, ids] of Object.entries(match.pickBanInfo)) {
+            const team = key.startsWith("red") ? "red" : "blue"
+            const action = key.endsWith("Ban") ? "ban" : "pick"
+            for (const id of ids) {
+                if (!known.has(id)) {
+                    warnings.push(`Map ${id} isn't in the loaded mappool, so it was ignored.`)
+                    continue
+                }
+                setMapState(id, team, action, options)
+            }
+        }
+    }
+
+    // Pickers (set directly: the API says who picks, nothing is worked out)
+    if (match.currentPicker !== undefined) setCurrentPicker(match.currentPicker)
+    if (match.nextPicker !== undefined) setNextPicker(match.nextPicker)
+
+    // Abilities
+    if (match.abilities) applyAbilitiesFromApi(match.abilities, match.classImages)
+    else if (match.classImages) {
+        classDisplay.red = match.classImages.red
+        classDisplay.blue = match.classImages.blue
+    }
+
+    // Recompute the preview from the live scores and save everything in one go
+    refreshDamage()
+    return warnings
+}
+
+function describeApiError(error) {
+    if (error?.response) return `The API answered HTTP ${error.response.status}.`
+    if (error?.code === "ECONNABORTED") return "The API timed out."
+    if (error?.request) return "Can't reach the API (offline, or blocked by CORS)."
+    return error?.message ?? String(error)
+}
+
+async function pollApi() {
+    clearTimeout(apiTimer)
+    if (!apiActive || apiPolling) return
+
+    apiPolling = true
+    const requestedId = matchId
+    let obsolete = false
+    try {
+        const raw = await fetchMatch(requestedId)
+        if (!apiActive || requestedId !== matchId) {
+            obsolete = true
+            return
+        }
+
+        const result = normaliseApiMatch(raw)
+        if (!result.ok) throw new Error(result.errors.join(" "))
+        const { match } = result
+        if (match.matchId !== requestedId) {
+            throw new Error(`Asked for match ${requestedId} but the API sent match ${match.matchId}.`)
+        }
+
+        // Responses can arrive out of order: never go backwards, and skip a repeat of what we already have
+        const sameMatch = appliedMatchId === match.matchId
+        if (sameMatch && match.version !== null && apiVersion !== null && match.version <= apiVersion) {
+            if (match.version < apiVersion) {
+                apiWarnings = [`Ignored an older response (version ${match.version}, already have ${apiVersion}).`]
+            }
+        } else {
+            apiWarnings = [...result.warnings, ...applyApiMatch(match)]
+            apiVersion = match.version
+        }
+        apiLastOkAt = performance.now()
+        apiLastError = ""
+    } catch (error) {
+        // Keep the last good data: nothing is blanked, the status line just turns red
+        apiLastError = describeApiError(error)
+        console.warn("Match API request failed:", error)
+    } finally {
+        apiPolling = false
+        if (apiActive) apiTimer = setTimeout(pollApi, obsolete ? 0 : constants.API_POLL_MS)
+        refreshApiStatus()
+    }
+}
+
+// Start / stop the API according to the toggle and the match ID
+function syncApiMode() {
+    const wasActive = apiActive
+    apiActive = apiToggleEl.checked && isApiConfigured() && matchId != null
+    setControlsLocked(apiActive)
+    clearTimeout(apiTimer)
+
+    if (apiActive) {
+        pollApi()
+    } else if (wasActive) {
+        // The match carries on locally from the last values. If the API already counted the map that is still
+        // running, don't let the local rules count it again when it ends.
+        if (previewLocked && isMapRunning(currentIpcState)) checkedWinner = true
+        apiMultiplier = null
+        awaitingCommitScene = false
+        refreshDamageMultiplierUi()
+    }
+
+    refreshApiStatus()
+    saveState(true)
+}
+
+// Match ID + Load. Loading a different match than the one on screen asks for a second press first.
+let pendingSwitchId = null
+let pendingSwitchTimer = null
+
+function clearSwitchConfirm() {
+    pendingSwitchId = null
+    clearTimeout(pendingSwitchTimer)
+    matchIdButtonEl.textContent = "Load"
+    apiNotice = ""
+}
+
+function loadMatchId() {
+    const text = matchIdInputEl.value.trim()
+    if (!/^\d+$/.test(text)) {
+        apiNotice = "The match ID has to be a whole number."
+        refreshApiStatus()
+        return
+    }
+    const id = Number(text)
+
+    if (appliedMatchId != null && appliedMatchId !== id && pendingSwitchId !== id) {
+        pendingSwitchId = id
+        matchIdButtonEl.textContent = "Press again to switch"
+        apiNotice = `Switching to match ${id} clears match ${appliedMatchId}'s HP, picks, bans and abilities. Press again to confirm.`
+        refreshApiStatus()
+        clearTimeout(pendingSwitchTimer)
+        pendingSwitchTimer = setTimeout(() => {
+            clearSwitchConfirm()
+            refreshApiStatus()
+        }, 6000)
+        return
+    }
+
+    clearSwitchConfirm()
+    matchId = id
+    apiVersion = null
+    apiLastOkAt = 0
+    apiLastError = ""
+    apiWarnings = []
+    syncApiMode()
+}
+
+function refreshApiStatus() {
+    let state = "off"
+    let text = "API off. The dashboard is running on its own rules."
+
+    if (apiToggleEl.checked) {
+        if (!isApiConfigured()) {
+            state = "error"
+            text = "Set API_MATCH_URL in _shared/js/constants.js first."
+        } else if (matchId == null) {
+            state = "waiting"
+            text = "Enter a match ID and press Load."
+        } else if (apiLastError) {
+            state = "error"
+            const age = apiLastOkAt ? ` Showing the last good data from ${Math.round((performance.now() - apiLastOkAt) / 1000)}s ago.` : ""
+            text = `${apiLastError}${age} Untick Use API to take over by hand.`
+        } else if (!apiLastOkAt) {
+            state = "waiting"
+            text = `Loading match ${matchId}...`
+        } else {
+            const age = performance.now() - apiLastOkAt
+            if (age > constants.API_STALE_MS) {
+                state = "error"
+                text = `Stale: no response for ${Math.round(age / 1000)}s. Untick Use API to take over by hand.`
+            } else {
+                state = "ok"
+                const version = apiVersion === null ? "" : `, version ${apiVersion}`
+                text = `Live: match ${appliedMatchId}${version}, updated ${Math.round(age / 1000)}s ago.`
+            }
+        }
+    } else if (matchId != null) {
+        text = `API off. Match ID ${matchId} is set.`
+    }
+
+    apiStatusEl.dataset.state = state
+    apiStatusEl.textContent = text
+
+    const lines = [apiNotice, ...apiWarnings].filter(Boolean).slice(0, 6)
+    apiWarningsEl.textContent = lines.join("\n")
+    apiWarningsEl.hidden = lines.length === 0
+}
+
+apiToggleEl.addEventListener("change", syncApiMode)
+matchIdButtonEl.addEventListener("click", loadMatchId)
+matchIdInputEl.addEventListener("keydown", event => {
+    if (event.key === "Enter") loadMatchId()
+})
+setInterval(refreshApiStatus, 1000)
+refreshApiStatus()
