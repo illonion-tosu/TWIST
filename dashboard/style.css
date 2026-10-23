@@ -46,6 +46,61 @@ p { text-align: center; }
     justify-content: space-between;
 }
 
+/* Match API */
+.api-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 20px 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid gray;
+}
+
+.api-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.25rem;
+}
+
+.api-controls input[type="number"] { width: 220px; }
+
+.api-button {
+    min-width: 150px;
+    padding: 10px 20px;
+    transition: 200ms ease-in-out;
+}
+.api-button:hover { background-color: var(--hover-colour); }
+
+.api-status {
+    margin: 12px 0 0;
+    font-size: 1.1rem;
+}
+.api-status[data-state="off"],
+.api-status[data-state="waiting"] { color: gray; }
+.api-status[data-state="ok"] { color: var(--nm-colour); }
+.api-status[data-state="error"] { color: var(--hr-colour); }
+
+.api-warnings {
+    margin: 8px 0 0;
+    max-width: 900px;
+    color: var(--fm-colour);
+    font-size: 1rem;
+    white-space: pre-line;
+}
+
+/* While the API is in control, the controls it owns can't be edited by hand */
+button:disabled,
+input:disabled,
+select:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.api-locked .mappool-select-container {
+    pointer-events: none;
+    opacity: 0.55;
+}
+
 /* Automation toggles */
 .auto-section {
     display: flex;
