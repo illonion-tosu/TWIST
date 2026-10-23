@@ -37,6 +37,12 @@
     right: 0;
 }
 
+.theme-container {
+    position: absolute;
+    top: 130px;
+    right: 0;
+}
+
 .character-right {
     position: absolute;
     top: 185px;

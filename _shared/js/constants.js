@@ -79,7 +79,7 @@ export const constants = Object.freeze({
     // Showcase
     SHOWCASE_ROUND_NAME_MAX_WIDTH: 350,
     SHOWCASE_ROUND_NAME_X: 210,
-    SHOWCASE_ROUND_NAME_LINE_YS: { 1: [62.5], 2: [45, 80] },
+    SHOWCASE_ROUND_NAME_LINE_YS: { 1: [80], 2: [45, 80]},
 
     // Twitch Chat
     TWITCH_CHANNEL: "purlstournaments",
