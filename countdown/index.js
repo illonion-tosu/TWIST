@@ -1,6 +1,5 @@
 import { constants } from "../_shared/js/constants.js"
-import { readSavedData, startPolling } from "../_shared/core/utils.js"
-
+import { createTosuWsSocket } from "../_shared/core/websocket.js"
 
 // DOM Elements
 const elements = {
@@ -342,14 +341,12 @@ const nowPlayingContainerEl = document.getElementById("now-playing-container")
 let currentId, currentChecksum
 
 // Get Data
-function getData() {
-    const data = readSavedData()
-
-    // The dashboard hasn't saved anything (or hasn't heard from tosu) yet
-    if (!data || !data.tosuData) return
+const socket = createTosuWsSocket()
+socket.onmessage = event => {
+    const data = JSON.parse(event.data)
 
     // Now playing
-    const beatmapData = data.tosuData.beatmap
+    const beatmapData = data.beatmap
     if (beatmapData && (currentId !== beatmapData.id || currentChecksum !== beatmapData.checksum)) {
         currentId = beatmapData.id
         currentChecksum = beatmapData.checksum
@@ -358,5 +355,3 @@ function getData() {
         nowPlayingContainerEl.style.backgroundImage = `url("https://assets.ppy.sh/beatmaps/${beatmapData.set}/covers/cover.jpg")`
     }
 }
-
-startPolling(getData)
