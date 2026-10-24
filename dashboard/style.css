@@ -76,6 +76,7 @@ p { text-align: center; }
     margin: 12px 0 0;
     font-size: 1.1rem;
 }
+
 .api-status[data-state="off"],
 .api-status[data-state="waiting"] { color: gray; }
 .api-status[data-state="ok"] { color: var(--nm-colour); }
@@ -96,6 +97,7 @@ select:disabled {
     opacity: 0.45;
     cursor: not-allowed;
 }
+
 .api-locked .mappool-select-container {
     pointer-events: none;
     opacity: 0.55;
