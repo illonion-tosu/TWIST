@@ -30,10 +30,12 @@ let lastAppliedCommit = null // "gameNumber:beatmapId" of the last commit applie
 let previewBeatmapId = null // the map tosu is currently playing / last played (string id)
 let previewLocked = false // true once the API has committed the previewed map: the damage preview stays empty until the next map
 let awaitingCommitScene = false // a map ended and we're waiting for the API to commit it before changing scene
+let mapDiscarded = false // Reset Match was pressed during a map: that map's damage is thrown away when it ends
 
 // Round Name
 const roundNameEl = document.getElementById("round-name")
 let roundName
+let defaultRoundName // the round as loaded at startup, which Reset Match goes back to
 
 // Beatmaps
 let allBeatmaps = []
@@ -103,6 +105,7 @@ const mappoolSelectContainerEl = document.getElementById("mappool-select-contain
 loadBeatmaps().then(beatmaps => {
     // Set Round Name
     roundName = beatmaps.roundName
+    defaultRoundName = roundName
     roundNameEl.textContent = roundName
     allBeatmaps = beatmaps.beatmaps
 
@@ -993,7 +996,10 @@ socket.onmessage = event => {
         if (isMapRunning(currentIpcState)) {
             // A new map starting (not the next phase of the same one) brings the damage preview back after an API commit
             const starting = state => state === IPC.WAITING_FOR_CLIENTS || state === IPC.PLAYING
-            if (starting(currentIpcState) && !starting(previousIpcState)) previewLocked = false
+            if (starting(currentIpcState) && !starting(previousIpcState)) {
+                previewLocked = false
+                mapDiscarded = false
+            }
             checkedWinner = false
             updatePlayerData(playerData, socketData)
 
@@ -1006,7 +1012,12 @@ socket.onmessage = event => {
         if (currentIpcState === IPC.IDLE && previousIpcState === IPC.RANKING && !checkedWinner) {
             checkedWinner = true
 
-            if (apiActive) {
+            if (mapDiscarded) {
+                // Reset Match was pressed while this map was running: its damage belongs to the match that no longer exists
+                mapDiscarded = false
+                clearScores()
+                resetMapAbilities()
+            } else if (apiActive) {
                 // The API owns HP: nothing is applied here. The preview stays up until the API commits this map.
                 if (previewLocked) finishMapScene()
                 else awaitingCommitScene = true
@@ -1781,3 +1792,60 @@ matchIdInputEl.addEventListener("keydown", event => {
 })
 setInterval(refreshApiStatus, 1000)
 refreshApiStatus()
+
+const resetMatchButtonEl = document.getElementById("reset-match-button")
+let resetConfirmTimer = null
+
+function clearResetConfirm() {
+    clearTimeout(resetConfirmTimer)
+    resetConfirmTimer = null
+    resetMatchButtonEl.textContent = "Reset Match"
+}
+
+function resetEverything() {
+    // The API goes first, so nothing it says can come back in
+    apiToggleEl.checked = false
+    matchId = null
+    matchIdInputEl.value = ""
+    appliedMatchId = null
+    apiVersion = null
+    apiLastOkAt = 0
+    apiLastError = ""
+    apiWarnings = []
+    clearSwitchConfirm()
+
+    // Round and max HP as loaded at startup
+    roundName = defaultRoundName
+    roundNameEl.textContent = roundName ?? ""
+    maxHp = getRoundMaxHp(roundName)
+
+    // Fresh players with the default targets, then full HP, no picks, no abilities, 0 maps played
+    Object.keys(playerData).forEach((key, i) => Object.assign(playerData[key], newPlayer(constants.DEFAULT_TARGETS[i])))
+    resetMatchState()
+
+    // Blank rosters on every panel (the next tosu message fills the teams back in)
+    redTeamName = undefined
+    blueTeamName = undefined
+    for (const side of constants.SIDES) {
+        applyRoster(side, playersOf(side).map(() => ({ id: constants.DEFAULT_PLAYER_ID, playerName: "", class: "", present: true })), { keepHp: true })
+    }
+
+    setNextPicker(constants.DEFAULT_NEXT_PICKER)
+    setCurrentPicker(constants.DEFAULT_CURRENT_PICKER)
+
+    // A map that is running right now belongs to the old match: don't apply its damage when it ends
+    mapDiscarded = isMapRunning(currentIpcState)
+    checkedWinner = false
+
+    syncApiMode() // unlocks the controls, stops polling and saves
+}
+
+resetMatchButtonEl.addEventListener("click", () => {
+    if (!resetConfirmTimer) {
+        resetMatchButtonEl.textContent = "Press again to reset everything"
+        resetConfirmTimer = setTimeout(clearResetConfirm, 6000)
+        return
+    }
+    clearResetConfirm()
+    resetEverything()
+})

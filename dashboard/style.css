@@ -269,6 +269,15 @@ select:focus,
 input[type="number"].maps-played-input { width: calc(100% - 174px); }
 .class-player { margin-bottom: 25px; }
 
+/* Reset Match */
+.reset-button {
+    min-width: 230px;
+    padding: 12px 20px;
+    border-color: var(--hr-colour);
+    transition: 200ms ease-in-out;
+}
+.reset-button:hover { background-color: var(--hr-colour); color: white; }
+
 /* Match API */
 .api-section {
     display: flex;
