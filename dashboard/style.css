@@ -276,7 +276,11 @@ input[type="number"].maps-played-input { width: calc(100% - 174px); }
     border-color: var(--hr-colour);
     transition: 200ms ease-in-out;
 }
-.reset-button:hover { background-color: var(--hr-colour); color: white; }
+
+.reset-button:hover {
+    background-color: var(--hr-colour);
+    color: white;
+}
 
 /* Match API */
 .api-section {
