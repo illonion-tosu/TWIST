@@ -56,6 +56,15 @@ export const constants = Object.freeze({
     SHOWCASE_BEATMAPS_PATH: "../_data/showcase-beatmaps.json",
     TEAMS_PATH: "../_data/teams.json",
 
+    // Match API (read-only GET). {id} is replaced with the match ID typed into the dashboard.
+    // e.g. "https://your-host/api/matches/{id}". To try it without a server, point it at the bundled sample:
+    // "../_data/sample-match-response.json" (and enter match ID 48213).
+    API_MATCH_URL: "",
+    API_HEADERS: {}, // keep empty unless the endpoint needs a key (custom headers trigger a CORS preflight)
+    API_POLL_MS: 2000,
+    API_TIMEOUT_MS: 5000,
+    API_STALE_MS: 10000, // no good response for this long = shown as stale
+
     // OBS
     OBS_ADDRESS: "ws://127.0.0.1:4455",
     OBS_RECONNECT_MS: 3000,

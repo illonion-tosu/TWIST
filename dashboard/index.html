@@ -31,9 +31,21 @@
             </label>
             <label class="auto-labels">
                 <input type="checkbox" id="auto-api-button">
-                <span>Use API (autopilot hopefully)</span>
+                <span>Use API</span>
             </label>
         </div>
+    </div>
+
+    <!-- Match API: the match ID the GET request uses, and what the API is doing -->
+    <div class="api-section">
+        <h1>Match API</h1>
+        <div class="api-controls">
+            <label for="match-id-input">Match ID:</label>
+            <input type="number" id="match-id-input" min="0" step="1" placeholder="e.g. 48213">
+            <button type="button" class="api-button" id="match-id-button">Load</button>
+        </div>
+        <p class="api-status" id="api-status" data-state="off">API off</p>
+        <p class="api-warnings" id="api-warnings" hidden></p>
     </div>
 
     <!-- Scene Control -->

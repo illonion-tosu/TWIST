@@ -56,7 +56,10 @@ function getData() {
     const redMaxHp = getSideMaxHp(playerData, "red")
     const blueMaxHp = getSideMaxHp(playerData, "blue")
 
-    if (redMaxHp === blueMaxHp) {
+    if (data.api?.winner === "red" || data.api?.winner === "blue") {
+        // The API says who won
+        currentWinnerSide = data.api.winner
+    } else if (redMaxHp === blueMaxHp) {
         currentWinnerSide = previousWinnerSide ?? "red"
     } else {
         currentWinnerSide = redMaxHp > blueMaxHp ? "red" : "blue"
