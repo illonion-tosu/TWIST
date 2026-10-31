@@ -3,7 +3,7 @@ import { loadBeatmaps } from "../_shared/core/beatmaps.js"
 import { findTeam, loadTeams } from "../_shared/core/teams.js"
 import { createTosuWsSocket } from "../_shared/core/websocket.js"
 import { getRoundMaxHp, isPresent, isSlotFilled } from "../_shared/core/match.js"
-import { fetchMatch, isApiConfigured, normaliseApiMatch } from "../_shared/core/api.js"
+import { fetchMatch, isApiConfigured, matchUrl, normaliseApiHost, normaliseApiMatch, toMatchId } from "../_shared/core/api.js"
 
 // Saved match state: read it before anything gets a chance to overwrite it
 let savedState = null
@@ -16,12 +16,14 @@ let stateReady = false // saving is paused until the restore has run
 
 // Match API (see the "Match API" section at the bottom of this file)
 const apiToggleEl = document.getElementById("auto-api-button")
+const apiHostInputEl = document.getElementById("api-host-input")
 const matchIdInputEl = document.getElementById("match-id-input")
 const matchIdButtonEl = document.getElementById("match-id-button")
 const apiStatusEl = document.getElementById("api-status")
 const apiWarningsEl = document.getElementById("api-warnings")
 let apiActive = false // toggle on AND a match ID set AND an endpoint configured
-let matchId = null // the number typed into the dashboard
+let matchId = null // the match ID typed into the dashboard (text)
+let apiHost = normaliseApiHost("") // "host:port" of the match server (the Server box; empty = API_DEFAULT_HOST)
 let appliedMatchId = null // the match the current state came from (null = a local match)
 let apiMultiplier = null // damage multiplier from the API (null = work it out from maps played)
 let apiMatchStatus = null
@@ -301,19 +303,27 @@ function restoreSavedState() {
 
     // The match ID and the API toggle survive a reload whatever the round is
     const api = saved.api ?? {}
-    if (api.matchId !== null) {
-        matchId = api.matchId
-        matchIdInputEl.value = api.matchId
+    // toMatchId: older saves stored the ID as a number, and a save with no "api" at all has none
+    const savedMatchId = toMatchId(api.matchId)
+    if (savedMatchId !== null) {
+        matchId = savedMatchId
+        matchIdInputEl.value = savedMatchId
     }
     apiToggleEl.checked = Boolean(api.enabled)
+    const savedHost = typeof api.host === "string" ? normaliseApiHost(api.host) : null
+    if (savedHost) {
+        apiHost = savedHost
+        apiHostInputEl.value = savedHost
+    }
 
     // A match that came from the API is identified by its match ID. A local match keeps the old rule:
     // only restore the same round, so a new round never starts with last round's HP.
-    const fromApi = api.appliedMatchId !== null
+    const savedAppliedMatchId = toMatchId(api.appliedMatchId)
+    const fromApi = savedAppliedMatchId !== null
     if (!fromApi && saved.roundName !== roundName) return
 
     if (fromApi) {
-        appliedMatchId = api.appliedMatchId
+        appliedMatchId = savedAppliedMatchId
         lastAppliedCommit = api.lastCommit ?? null
         previewBeatmapId = api.previewBeatmapId ?? null
         previewLocked = Boolean(api.previewLocked)
@@ -548,7 +558,9 @@ function updateClassPanel(side) {
     }
 
     const classText = [...new Set(names)].join(" / ")
-    document.getElementById(`${side}-class`).textContent = classText
+    // Optional: only filled in if the page has a #red-class / #blue-class element
+    const sideClassEl = document.getElementById(`${side}-class`)
+    if (sideClassEl) sideClassEl.textContent = classText
     document.getElementById(`class-title-${side}`).textContent =
         `${side === "red" ? "Red" : "Blue"}: ${classText}`
 
@@ -1186,6 +1198,7 @@ function saveState(force = false) {
         // Match API state: what a reload needs to carry on, and what the overlays can read
         api: {
             enabled: apiToggleEl.checked,
+            host: apiHost,
             matchId: matchId,
             appliedMatchId: appliedMatchId,
             lastCommit: lastAppliedCommit,
@@ -1632,7 +1645,7 @@ function applyApiMatch(match) {
 function describeApiError(error) {
     if (error?.response) return `The API answered HTTP ${error.response.status}.`
     if (error?.code === "ECONNABORTED") return "The API timed out."
-    if (error?.request) return "Can't reach the API (offline, or blocked by CORS)."
+    if (error?.request) return `Can't reach the API at ${apiHost} (wrong address, server offline, or blocked by CORS).`
     return error?.message ?? String(error)
 }
 
@@ -1642,10 +1655,11 @@ async function pollApi() {
 
     apiPolling = true
     const requestedId = matchId
+    const requestedHost = apiHost
     let obsolete = false
     try {
-        const raw = await fetchMatch(requestedId)
-        if (!apiActive || requestedId !== matchId) {
+        const raw = await fetchMatch(requestedHost, requestedId)
+        if (!apiActive || requestedId !== matchId || requestedHost !== apiHost) {
             obsolete = true
             return
         }
@@ -1714,13 +1728,19 @@ function clearSwitchConfirm() {
 }
 
 function loadMatchId() {
-    const text = matchIdInputEl.value.trim()
-    if (!/^\d+$/.test(text)) {
-        apiNotice = "The match ID has to be a whole number."
+    const host = normaliseApiHost(apiHostInputEl.value)
+    if (!host) {
+        apiNotice = "The server should be an IP address or hostname, optionally with a :port (e.g. 192.168.1.20 or 192.168.1.20:8787)."
         refreshApiStatus()
         return
     }
-    const id = Number(text)
+
+    const id = toMatchId(matchIdInputEl.value)
+    if (id === null) {
+        apiNotice = "Enter a match ID."
+        refreshApiStatus()
+        return
+    }
 
     if (appliedMatchId !== null && appliedMatchId !== id && pendingSwitchId !== id) {
         pendingSwitchId = id
@@ -1736,6 +1756,8 @@ function loadMatchId() {
     }
 
     clearSwitchConfirm()
+    apiHost = host
+    apiHostInputEl.value = host
     matchId = id
     apiVersion = null
     apiLastOkAt = 0
@@ -1754,14 +1776,14 @@ function refreshApiStatus() {
             text = "Set API_MATCH_URL in _shared/js/constants.js first."
         } else if (matchId === null) {
             state = "waiting"
-            text = "Enter a match ID and press Load."
+            text = "Enter the server and a match ID, then press Load."
         } else if (apiLastError) {
             state = "error"
             const age = apiLastOkAt ? ` Showing the last good data from ${Math.round((performance.now() - apiLastOkAt) / 1000)}s ago.` : ""
             text = `${apiLastError}${age} Untick Use API to take over by hand.`
         } else if (!apiLastOkAt) {
             state = "waiting"
-            text = `Loading match ${matchId}...`
+            text = `Loading ${matchUrl(apiHost, matchId)}...`
         } else {
             const age = performance.now() - apiLastOkAt
             if (age > constants.API_STALE_MS) {
@@ -1770,11 +1792,11 @@ function refreshApiStatus() {
             } else {
                 state = "ok"
                 const version = apiVersion === null ? "" : `, version ${apiVersion}`
-                text = `Live: match ${appliedMatchId}${version}, updated ${Math.round(age / 1000)}s ago.`
+                text = `Live: match ${appliedMatchId} from ${apiHost}${version}, updated ${Math.round(age / 1000)}s ago.`
             }
         }
     } else if (matchId !== null) {
-        text = `API off. Match ID ${matchId} is set.`
+        text = `API off. Match ID ${matchId} on ${apiHost} is set.`
     }
 
     apiStatusEl.dataset.state = state
@@ -1788,6 +1810,9 @@ function refreshApiStatus() {
 apiToggleEl.addEventListener("change", syncApiMode)
 matchIdButtonEl.addEventListener("click", loadMatchId)
 matchIdInputEl.addEventListener("keydown", event => {
+    if (event.key === "Enter") loadMatchId()
+})
+apiHostInputEl.addEventListener("keydown", event => {
     if (event.key === "Enter") loadMatchId()
 })
 setInterval(refreshApiStatus, 1000)

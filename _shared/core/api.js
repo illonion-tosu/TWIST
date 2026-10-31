@@ -13,10 +13,29 @@ const PICK_BAN_KEYS = ["redBan", "blueBan", "redPick", "bluePick"] // same order
 
 export const isApiConfigured = () => Boolean(constants.API_MATCH_URL)
 
-export const matchUrl = id => constants.API_MATCH_URL.replace("{id}", encodeURIComponent(id))
+/**
+ * Tidy up the server typed into the dashboard: "192.168.1.20", "my-pc", "10.0.0.5:9000", "[::1]",
+ * or a pasted "http://192.168.1.20:8787/" all work. Adds API_DEFAULT_PORT when no port is given.
+ * Returns "host:port", or null if it isn't a usable host.
+ */
+export function normaliseApiHost(value) {
+    let text = String(value ?? "").trim()
+    if (!text) text = constants.API_DEFAULT_HOST
+    text = text.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "").replace(/\/.*$/, "") // drop http:// and any path
 
-export async function fetchMatch(id) {
-    const response = await axios.get(matchUrl(id), {
+    const match = text.match(/^(\[[0-9a-f:.]+\]|[a-z0-9]([a-z0-9.-]*[a-z0-9])?)(?::(\d{1,5}))?$/i)
+    if (!match) return null
+    const port = match[3] === undefined ? constants.API_DEFAULT_PORT : Number(match[3])
+    if (!(port >= 1 && port <= 65535)) return null
+    return `${match[1].toLowerCase()}:${port}`
+}
+
+export const matchUrl = (host, id) => constants.API_MATCH_URL
+    .replace("{host}", host)
+    .replace("{id}", encodeURIComponent(id))
+
+export async function fetchMatch(host, id) {
+    const response = await axios.get(matchUrl(host, id), {
         timeout: constants.API_TIMEOUT_MS,
         headers: constants.API_HEADERS,
     })
@@ -30,6 +49,15 @@ function toInt(value) {
     if (typeof value === "number") return Number.isInteger(value) ? value : undefined
     if (typeof value === "string" && /^-?\d+$/.test(value.trim())) return Number(value)
     return undefined
+}
+
+// Match IDs are text (e.g. "48213" or "QF-03"). Numbers are accepted too and turned into text,
+// so 48213 and "48213" are the same match. Anything empty or unusable is null.
+export function toMatchId(value) {
+    if (typeof value === "number") return Number.isInteger(value) && value >= 0 ? String(value) : null
+    if (typeof value !== "string") return null
+    const id = value.trim()
+    return id ? id : null
 }
 
 const toPlayerNumber = value => {
@@ -218,13 +246,201 @@ function readClassImages(raw, warn) {
 
 function readCommit(raw, warn) {
     if (raw === undefined || raw === null) return undefined
-    const gameNumber = toInt(raw.gameNumber)
-    const beatmapId = String(raw.beatmapId ?? "").trim()
+    const gameNumber = toInt(raw.gameNumber ?? raw.mapNumber ?? raw.mapIndex)
+    const beatmapId = String(raw.beatmapId ?? raw.beatmap_id ?? raw.mapId ?? "").trim()
     if (!isObject(raw) || gameNumber === undefined || gameNumber < 0 || !beatmapId) {
         warn("lastCommitted ignored: it needs a gameNumber and a beatmapId.")
         return undefined
     }
     return { gameNumber, beatmapId }
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Match server format (schemaVersion 2, GET /api/matches/{id}/state).
+// The server's JSON is shaped differently from what the dashboard saves, so it is translated here into the
+// dashboard's shape first, and then goes through the same validation below. Anything already in the dashboard's
+// shape is left as it is, so the bundled sample-match-response.json still works.
+// ---------------------------------------------------------------------------------------------------------------
+
+const SIDE_NAMES = { red: "red", blue: "blue" }
+
+// "red" / "blue", or a team id ("perihelion") / short name ("PHC") from redTeam / blueTeam. Anything else is undefined.
+function sideFromTeam(value, raw) {
+    if (value === null || value === undefined) return undefined
+    const text = String(value).trim().toLowerCase()
+    if (SIDE_NAMES[text]) return SIDE_NAMES[text]
+    for (const side of constants.SIDES) {
+        const team = raw[`${side}Team`]
+        if (!isObject(team)) continue
+        if ([team.id, team.shortName, team.name].some(v => v !== undefined && v !== null && String(v).toLowerCase() === text)) return side
+    }
+    return undefined
+}
+
+// Player number 1-6 from a number, or from a player id string like "bsb-1" / an osu! id
+function makePlayerResolver(players) {
+    const byKey = new Map()
+    players.forEach((player, index) => {
+        const n = toPlayerNumber(player?.player) ?? index + 1
+        for (const key of [player?.id, player?.osuId]) {
+            if (key !== undefined && key !== null) byKey.set(String(key), n)
+        }
+    })
+    return value => {
+        if (value === null || value === undefined) return undefined
+        if (byKey.has(String(value))) return byKey.get(String(value))
+        return toPlayerNumber(value)
+    }
+}
+
+function adaptPlayers(list, resolvePlayer) {
+    const players = {}
+    list.forEach((source, index) => {
+        if (!isObject(source)) return
+        const n = toPlayerNumber(source.player) ?? index + 1
+        const player = {}
+
+        // The dashboard / overlays use the osu! id (chibis, avatars, tosu client lookup), not the server's "phc-1" id
+        const osuId = toInt(source.osuId) ?? toInt(source.id)
+        if (osuId !== undefined) player.id = osuId
+        const name = source.playerName ?? source.name
+        if (typeof name === "string") player.playerName = name
+        if (typeof source.class === "string") player.class = source.class
+        if (typeof source.hasRevived === "boolean") player.hasRevived = source.hasRevived
+        if (typeof source.present === "boolean") player.present = source.present
+
+        const hp = typeof source.hp === "number" ? source.hp : source.currentMaxHp
+        if (hp !== undefined && hp !== null) player.currentMaxHp = hp
+
+        const deadRounds = source.deadMapsRemaining ?? source.currentDeadRounds
+        if (deadRounds !== undefined && deadRounds !== null) player.currentDeadRounds = deadRounds
+
+        // null = no target set: leave the dashboard's target alone
+        const target = resolvePlayer(source.currentTarget) ?? resolvePlayer(source.targetPlayerId)
+        if (target !== undefined) player.currentTarget = target
+
+        players[`player${n}`] = player
+    })
+    return players
+}
+
+// { picked: [...], banned: [...] } -> { redBan, blueBan, redPick, bluePick }
+// Each entry needs a team and a map: { team | side | teamId | by | pickedBy | bannedBy, beatmapId | beatmap_id | mapId | id }
+function adaptPickBan(raw, warn) {
+    const info = isObject(raw.pickBanInfo) ? raw.pickBanInfo : {}
+    const picked = Array.isArray(info.picked) ? info.picked : Array.isArray(raw.pickedMaps) ? raw.pickedMaps : undefined
+    const banned = Array.isArray(info.banned) ? info.banned : Array.isArray(raw.bannedMaps) ? raw.bannedMaps : undefined
+    if (picked === undefined && banned === undefined) return undefined
+
+    const lists = { redBan: [], blueBan: [], redPick: [], bluePick: [] }
+    const add = (entries, action) => {
+        for (const entry of entries ?? []) {
+            const teamValue = isObject(entry)
+                ? entry.team ?? entry.side ?? entry.teamId ?? entry.by ?? entry[`${action === "Pick" ? "picked" : "banned"}By`]
+                : undefined
+            const mapValue = isObject(entry) ? entry.beatmapId ?? entry.beatmap_id ?? entry.mapId ?? entry.id : entry
+            const side = sideFromTeam(teamValue, raw)
+            const id = String(mapValue ?? "").trim()
+            if (!id) {
+                warn(`A ${action.toLowerCase()} entry has no beatmap id and was ignored.`)
+            } else if (!side) {
+                warn(`${action} of map ${id} ignored: it doesn't say which team (red / blue or a team id).`)
+            } else {
+                lists[`${side}${action}`].push(id)
+            }
+        }
+    }
+    add(picked, "Pick")
+    add(banned, "Ban")
+    return lists
+}
+
+// Ability entries can be a single object, null, or a list (history): the last one that hasn't ended is used.
+// Player fields may be player numbers or player ids ("bsb-1").
+function adaptAbility(value, resolvePlayer) {
+    const entries = Array.isArray(value) ? value : [value]
+    const active = entries.filter(isActive).at(-1)
+    if (!active) return null
+    const out = { ...active }
+    for (const field of ["player", "target", "challenger", "challenged"]) {
+        const idField = `${field}Id`
+        const resolved = resolvePlayer(active[field]) ?? resolvePlayer(active[idField])
+        if (resolved !== undefined) out[field] = resolved
+    }
+    return out
+}
+
+function adaptAbilities(raw, resolvePlayer) {
+    if (!isObject(raw)) return raw
+    const out = { ...raw }
+    for (const name of ["demigod", "soulweaver"]) {
+        if (raw[name] !== undefined) out[name] = adaptAbility(raw[name], resolvePlayer)
+    }
+    for (const name of ["witch", "human"]) {
+        if (!isObject(raw[name])) continue
+        out[name] = {}
+        for (const side of constants.SIDES) out[name][side] = adaptAbility(raw[name][side], resolvePlayer)
+    }
+    return out
+}
+
+const pickerOrUndefined = value => (value === null || value === undefined ? undefined : value)
+
+/**
+ * Translate the match server's response into the dashboard's shape. Returns a new object; raw is not changed.
+ */
+export function adaptApiResponse(raw, warn = () => {}) {
+    if (!isObject(raw)) return raw
+    const out = { ...raw }
+
+    // "version" is the schema version on this server (it never changes); "revision" goes up with every change
+    if (toInt(raw.revision) !== undefined) out.version = toInt(raw.revision)
+
+    // Team names: { red, blue }, or redTeam.name / blueTeam.name
+    const teamName = isObject(raw.teamName) ? raw.teamName : {}
+    const red = teamName.redTeamName ?? teamName.red ?? raw.redTeam?.name
+    const blue = teamName.blueTeamName ?? teamName.blue ?? raw.blueTeam?.name
+    if (red !== undefined || blue !== undefined) {
+        out.teamName = {}
+        if (red !== undefined) out.teamName.redTeamName = red
+        if (blue !== undefined) out.teamName.blueTeamName = blue
+    }
+
+    // Players: a list with "player": 1-6 on each entry
+    let resolvePlayer = toPlayerNumber
+    if (Array.isArray(raw.playerData)) {
+        resolvePlayer = makePlayerResolver(raw.playerData)
+        out.playerData = adaptPlayers(raw.playerData, resolvePlayer)
+    }
+
+    // Picks / bans
+    if (!(isObject(raw.pickBanInfo) && PICK_BAN_KEYS.every(key => Array.isArray(raw.pickBanInfo[key])))) {
+        const lists = adaptPickBan(raw, warn)
+        if (lists) out.pickBanInfo = lists
+    }
+
+    // Pickers: null = not decided yet, so the dashboard keeps what it shows. Top-level currentPicker is used too.
+    const currentPicker = pickerOrUndefined(raw.mappoolInfo?.currentPicker) ?? pickerOrUndefined(raw.currentPicker)
+    out.mappoolInfo = currentPicker === undefined ? undefined : { currentPicker: sideFromTeam(currentPicker, raw) ?? currentPicker }
+    const nextPicker = pickerOrUndefined(raw.nextPicker)
+    out.nextPicker = nextPicker === undefined ? undefined : sideFromTeam(nextPicker, raw) ?? nextPicker
+
+    if (raw.abilities !== undefined) out.abilities = adaptAbilities(raw.abilities, resolvePlayer)
+
+    // "lastCommited" (sic) on this server
+    if (out.lastCommitted === undefined && raw.lastCommited !== undefined) out.lastCommitted = raw.lastCommited
+
+    // Winner: "red" / "blue" / null, or a team id in winnerTeamId
+    if ((raw.winner === null || raw.winner === undefined) && raw.winnerTeamId !== null && raw.winnerTeamId !== undefined) {
+        const side = sideFromTeam(raw.winnerTeamId, raw)
+        if (side) out.winner = side
+        else warn(`winnerTeamId "${raw.winnerTeamId}" doesn't match either team.`)
+    } else if (raw.winner !== null && raw.winner !== undefined && raw.winner !== "red" && raw.winner !== "blue") {
+        const side = sideFromTeam(raw.winner, raw)
+        if (side) out.winner = side
+    }
+
+    return out
 }
 
 /**
@@ -239,9 +455,10 @@ export function normaliseApiMatch(raw) {
     const warn = message => warnings.push(message)
 
     if (!isObject(raw)) return { ok: false, errors: ["The response isn't a JSON object."], warnings }
+    raw = adaptApiResponse(raw, warn)
 
-    const matchId = toInt(raw.matchId)
-    if (matchId === undefined || matchId < 0) {
+    const matchId = toMatchId(raw.matchId)
+    if (matchId === null) {
         return { ok: false, errors: ["The response has no valid matchId."], warnings }
     }
 

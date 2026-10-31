@@ -53,10 +53,11 @@ export const constants = Object.freeze({
     SHOWCASE_BEATMAPS_PATH: "../_data/showcase-beatmaps.json",
     TEAMS_PATH: "../_data/teams.json",
 
-    // Match API (read-only GET). {id} is replaced with the match ID typed into the dashboard.
-    // e.g. "https://your-host/api/matches/{id}". To try it without a server, point it at the bundled sample:
-    // "../_data/sample-match-response.json" (and enter match ID 48213).
-    API_MATCH_URL: "",
+    // Match API (read-only GET). {host} is replaced with the server typed into the dashboard (an IP address or
+    // hostname, optionally with a :port) and {id} with the match ID.
+    API_MATCH_URL: "http://{host}/api/matches/{id}/state",
+    API_DEFAULT_HOST: "localhost", // used when the dashboard's Server box is empty
+    API_DEFAULT_PORT: 8787, // added when the server typed in has no :port
     API_HEADERS: {}, // keep empty unless the endpoint needs a key (custom headers trigger a CORS preflight)
     API_POLL_MS: 2000,
     API_TIMEOUT_MS: 5000,
