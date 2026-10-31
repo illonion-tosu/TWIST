@@ -95,7 +95,7 @@ const newPlayer = (target) => ({
     present: true,
 })
 
-let playerData = Object.fromEntries(
+const playerData = Object.fromEntries(
     constants.PLAYER_NUMBERS.map((n, i) => [`player${n}`, newPlayer(constants.DEFAULT_TARGETS[i])])
 )
 

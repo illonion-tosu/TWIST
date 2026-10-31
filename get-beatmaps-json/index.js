@@ -25,7 +25,7 @@ async function getBeatmaps() {
         // Get API response
         const response = await fetch(`https://osu.ppy.sh/api/get_beatmaps?k=${osuApi}&b=${allBeatmaps[i].beatmap_id}&mods=${modNumber}`)
         await delay(1000)
-        let responseJson = await response.json()
+        const responseJson = await response.json()
         if (!responseJson[0]) {
             console.warn(`No beatmap found for ${allBeatmaps[i].label} (${allBeatmaps[i].beatmap_id}), skipping`)
             continue
