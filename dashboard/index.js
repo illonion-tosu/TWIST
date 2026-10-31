@@ -102,6 +102,17 @@ const playerData = Object.fromEntries(
 // Mappool Select Container
 const mappoolSelectContainerEl = document.getElementById("mappool-select-container")
 
+// Team HP Button
+const teamHpButtonEl = document.getElementById("team-hp-button")
+const teamHpIOnputNumberElements = [
+    document.getElementById("team-hp-input-number-player-1"),
+    document.getElementById("team-hp-input-number-player-2"),
+    document.getElementById("team-hp-input-number-player-3"),
+    document.getElementById("team-hp-input-number-player-4"),
+    document.getElementById("team-hp-input-number-player-5"),
+    document.getElementById("team-hp-input-number-player-6")
+]
+
 loadBeatmaps().then(beatmaps => {
     // Set Round Name
     roundName = beatmaps.roundName
@@ -138,7 +149,7 @@ loadBeatmaps().then(beatmaps => {
         button.addEventListener("contextmenu", event => event.preventDefault())
         mappoolSelectContainerEl.append(button)
     })
-
+    
     try {
         restoreSavedState()
     } catch (error) {
@@ -216,7 +227,7 @@ function localDamageMultiplier() {
 
 // The API's number wins while it's on; otherwise it comes from maps played
 function getDamageMultiplier() {
-    return apiActive && apiMultiplier != null ? apiMultiplier : localDamageMultiplier()
+    return apiActive && apiMultiplier !== null ? apiMultiplier : localDamageMultiplier()
 }
 
 function refreshDamageMultiplierUi() {
@@ -247,6 +258,16 @@ const activeAbilities = state => [
     state.witch?.blue && { name: "witch", player: state.witch.blue.player },
 ].filter(Boolean)
 
+const classPanelsEl = document.getElementById("class-panels")
+
+const sideOf = playerNumber => constants.TEAM_PLAYER_NUMBERS.red.includes(playerNumber) ? "red" : "blue"
+const playersOf = side => constants.TEAM_PLAYER_NUMBERS[side]
+const otherSide = side => side === "red" ? "blue" : "red"
+
+const isAlive = playerNumber => playerData[`player${playerNumber}`]?.currentMaxHp > 0
+const playerLabel = playerNumber =>
+    playerData[`player${playerNumber}`]?.playerName || `Player ${playerNumber}`
+
 // Compare the abilities before / after a change: anything newly activated takes over its team's image,
 // anything switched off gives the image up (falling back to another ability still active on that team).
 function syncClassDisplay(before) {
@@ -268,15 +289,10 @@ function syncClassDisplay(before) {
     }
 }
 
-const classPanelsEl = document.getElementById("class-panels")
-
-const sideOf = playerNumber => constants.TEAM_PLAYER_NUMBERS.red.includes(playerNumber) ? "red" : "blue"
-const playersOf = side => constants.TEAM_PLAYER_NUMBERS[side]
-const otherSide = side => side === "red" ? "blue" : "red"
-
-const isAlive = playerNumber => playerData[`player${playerNumber}`]?.currentMaxHp > 0
-const playerLabel = playerNumber =>
-    playerData[`player${playerNumber}`]?.playerName || `Player ${playerNumber}`
+// Team Names
+const teamRedNameEl = document.getElementById("team-red-name")
+const teamBlueNameEl = document.getElementById("team-blue-name")
+let redTeamName, blueTeamName
 
 function restoreSavedState() {
     const saved = savedState
@@ -285,7 +301,7 @@ function restoreSavedState() {
 
     // The match ID and the API toggle survive a reload whatever the round is
     const api = saved.api ?? {}
-    if (api.matchId != null) {
+    if (api.matchId !== null) {
         matchId = api.matchId
         matchIdInputEl.value = api.matchId
     }
@@ -293,7 +309,7 @@ function restoreSavedState() {
 
     // A match that came from the API is identified by its match ID. A local match keeps the old rule:
     // only restore the same round, so a new round never starts with last round's HP.
-    const fromApi = api.appliedMatchId != null
+    const fromApi = api.appliedMatchId !== null
     if (!fromApi && saved.roundName !== roundName) return
 
     if (fromApi) {
@@ -849,17 +865,6 @@ function syncAbilityControls() {
     }
 }
 
-// Team HP Button
-const teamHpButtonEl = document.getElementById("team-hp-button")
-const teamHpIOnputNumberElements = [
-    document.getElementById("team-hp-input-number-player-1"),
-    document.getElementById("team-hp-input-number-player-2"),
-    document.getElementById("team-hp-input-number-player-3"),
-    document.getElementById("team-hp-input-number-player-4"),
-    document.getElementById("team-hp-input-number-player-5"),
-    document.getElementById("team-hp-input-number-player-6")
-]
-
 function setHpButton() {
     if (apiActive) return // the API owns HP while it's on
     for (let i = 0; i < teamHpIOnputNumberElements.length; i++) {
@@ -918,11 +923,6 @@ let currentId, currentChecksum
 let mappoolMapFound = false
 let mappoolMapLabel
 let currentBeatmap
-
-// Team Names
-const teamRedNameEl = document.getElementById("team-red-name")
-const teamBlueNameEl = document.getElementById("team-blue-name")
-let redTeamName, blueTeamName
 
 // Current map info
 const currentMapEl = document.getElementById("current-map")
@@ -1518,7 +1518,7 @@ function applyAbilitiesFromApi(next, images) {
 function finishMapScene() {
     awaitingCommitScene = false
     if (!autoObsButtonEl.checked) return
-    const over = apiMatchStatus === "completed" || apiWinner != null
+    const over = apiMatchStatus === "completed" || apiWinner !== null
         || constants.SIDES.some(side => isTeamEliminated(playersOf(side)))
     changeScene(over ? constants.OBS_SCENES.WINNER : constants.OBS_SCENES.MAPPOOL)
 }
@@ -1529,7 +1529,7 @@ function applyApiMatch(match) {
     const warnings = []
 
     // A different match: wipe the previous one first
-    if (appliedMatchId != null && appliedMatchId !== match.matchId) resetMatchState()
+    if (appliedMatchId !== null && appliedMatchId !== match.matchId) resetMatchState()
     appliedMatchId = match.matchId
     if (match.status !== undefined) apiMatchStatus = match.status
     if (match.winner !== undefined) apiWinner = match.winner
@@ -1553,7 +1553,7 @@ function applyApiMatch(match) {
         const key = `${commit.gameNumber}:${commit.beatmapId}`
         if (key !== lastAppliedCommit) {
             lastAppliedCommit = key
-            if (previewBeatmapId != null && commit.beatmapId === previewBeatmapId) {
+            if (previewBeatmapId !== null && commit.beatmapId === previewBeatmapId) {
                 clearScores()
                 previewLocked = true
                 if (awaitingCommitScene) finishMapScene()
@@ -1589,7 +1589,7 @@ function applyApiMatch(match) {
     if (match.damageMultiplier !== undefined) apiMultiplier = match.damageMultiplier
     else if (match.mapsPlayed !== undefined) apiMultiplier = null
     refreshDamageMultiplierUi()
-    if (apiMultiplier != null && apiMultiplier !== localDamageMultiplier()) {
+    if (apiMultiplier !== null && apiMultiplier !== localDamageMultiplier()) {
         warnings.push(`damageMultiplier is ${apiMultiplier}x but ${mapsPlayed} maps played works out to ${localDamageMultiplier()}x locally. The API's value is used while it's on.`)
     }
 
@@ -1683,7 +1683,7 @@ async function pollApi() {
 // Start / stop the API according to the toggle and the match ID
 function syncApiMode() {
     const wasActive = apiActive
-    apiActive = apiToggleEl.checked && isApiConfigured() && matchId != null
+    apiActive = apiToggleEl.checked && isApiConfigured() && matchId !== null
     setControlsLocked(apiActive)
     clearTimeout(apiTimer)
 
@@ -1722,7 +1722,7 @@ function loadMatchId() {
     }
     const id = Number(text)
 
-    if (appliedMatchId != null && appliedMatchId !== id && pendingSwitchId !== id) {
+    if (appliedMatchId !== null && appliedMatchId !== id && pendingSwitchId !== id) {
         pendingSwitchId = id
         matchIdButtonEl.textContent = "Press again to switch"
         apiNotice = `Switching to match ${id} clears match ${appliedMatchId}'s HP, picks, bans and abilities. Press again to confirm.`
@@ -1773,7 +1773,7 @@ function refreshApiStatus() {
                 text = `Live: match ${appliedMatchId}${version}, updated ${Math.round(age / 1000)}s ago.`
             }
         }
-    } else if (matchId != null) {
+    } else if (matchId !== null) {
         text = `API off. Match ID ${matchId} is set.`
     }
 
