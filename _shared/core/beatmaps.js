@@ -1,42 +1,46 @@
 import { constants } from "../js/constants.js"
 
-let allBeatmaps = { roundName: "", poolName: "", beatmaps: [] }
+let allBeatmaps = { roundName: "", beatmaps: [] }
 
-// Load beatmaps: the tiles come from mappools.json (label + mods), and the osu! stats
-// (CS / AR / OD / SR / cover) are filled in from beatmaps.json when the map is in there
+// Load beatmaps from beatmaps.json: { roundName, beatmaps: [...] }.
+// Each map carries its pool slot (label / mod / isTiebreaker) next to the osu! API v1 fields
+// (diff_size, diff_approach, diff_overall, difficultyrating, bpm, total_length, beatmapset_id...).
 export async function loadBeatmaps() {
-    const [mappoolsResponse, statsResult] = await Promise.all([
-        axios.get(constants.MAPPOOLS_PATH),
-        axios.get(constants.BEATMAPS_PATH).catch(error => {
-            console.warn("Could not load beatmaps.json, cards will have no osu! stats:", error)
-            return null
-        }),
-    ])
+    const response = await axios.get(constants.BEATMAPS_PATH)
+    const data = response.data ?? {}
+    if (!Array.isArray(data.beatmaps)) throw new Error("beatmaps.json has no \"beatmaps\" list")
 
-    const pools = mappoolsResponse.data
-    const pool = pools.find(p => p.id === constants.ACTIVE_MAPPOOL_ID) ?? pools[0]
-    if (!pool) throw new Error("mappools.json has no pools")
-
-    const statsById = new Map((statsResult?.data?.beatmaps ?? []).map(b => [Number(b.beatmap_id), b]))
-
-    const beatmaps = pool.maps.map(map => {
-        const stats = statsById.get(Number(map.beatmapId)) ?? {}
-        const mods = String(map.mods ?? "NM").toUpperCase()
-        return {
-            ...stats,
-            beatmap_id: String(map.beatmapId),
-            label: map.label,
-            mod: mods,
-            isTiebreaker: Boolean(map.isTiebreaker),
-            artist: map.artist ?? stats.artist ?? "",
-            title: map.title ?? stats.title ?? "",
-            version: map.difficulty ?? stats.version ?? "",
+    const seen = new Set()
+    const beatmaps = []
+    data.beatmaps.forEach((map, index) => {
+        const id = String(map?.beatmap_id ?? "").trim()
+        if (!id) {
+            console.warn(`beatmaps.json entry ${index + 1} has no beatmap_id and was skipped.`)
+            return
         }
+        if (seen.has(id)) {
+            console.warn(`beatmaps.json lists beatmap ${id} twice: only the first one is used.`)
+            return
+        }
+        seen.add(id)
+
+        const mod = String(map.mod ?? "NM").trim().toUpperCase() || "NM"
+        if (!map.label) console.warn(`beatmaps.json beatmap ${id} has no label.`)
+        beatmaps.push({
+            ...map,
+            beatmap_id: id,
+            beatmapset_id: map.beatmapset_id === undefined || map.beatmapset_id === null ? "" : String(map.beatmapset_id),
+            label: String(map.label ?? `${mod}${index + 1}`),
+            mod,
+            isTiebreaker: Boolean(map.isTiebreaker),
+            artist: map.artist ?? "",
+            title: map.title ?? "",
+            version: map.version ?? "",
+        })
     })
 
     allBeatmaps = {
-        roundName: statsResult?.data?.roundName ?? pool.name,
-        poolName: pool.name,
+        roundName: typeof data.roundName === "string" ? data.roundName : "",
         beatmaps,
     }
     return allBeatmaps
@@ -69,4 +73,4 @@ export function findShowcaseBeatmap(artist, title, difficultyName) {
         normalise(beatmap.version) === wanted.difficulty &&
         (!normalise(beatmap.artist) || normalise(beatmap.artist) === wanted.artist)
     )
-}
+}

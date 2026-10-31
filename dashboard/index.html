@@ -41,8 +41,10 @@
     <div class="api-section">
         <h1>Match API</h1>
         <div class="api-controls">
+            <label for="api-host-input">Server:</label>
+            <input type="text" id="api-host-input" placeholder="localhost:8787" spellcheck="false" autocomplete="off">
             <label for="match-id-input">Match ID:</label>
-            <input type="number" id="match-id-input" min="0" step="1" placeholder="e.g. 48213">
+            <input type="text" id="match-id-input" placeholder="e.g. 48213" spellcheck="false" autocomplete="off">
             <button type="button" class="api-button" id="match-id-button">Load</button>
         </div>
         <p class="api-status" id="api-status" data-state="off">API off</p>
