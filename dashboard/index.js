@@ -961,13 +961,13 @@ socket.onmessage = event => {
         // (it used to check currentPicker here, so "None" as next picker still auto picked for blue)
         const targetElement = document.getElementById(`${currentId}`)
         if (currentBeatmap && targetElement && autoPickButtonEl.checked && nextPicker !== "none" && !apiActive) {
-            const event = new MouseEvent('mousedown', {
+            const mouseEvent = new MouseEvent('mousedown', {
                 bubbles: true,
                 cancelable: true,
                 view: window,
                 button: nextPicker === "red" ? 0 : 2
             })
-            targetElement.dispatchEvent(event)
+            targetElement.dispatchEvent(mouseEvent)
             setCurrentPicker(nextPicker)
             setNextPicker(nextPicker === "red" ? "Blue" : "Red")
         }
@@ -1073,11 +1073,11 @@ function isTeamEliminated(playerNumbers) {
 }
 
 // Apply damage
-function applyDamage(playerData) {
+function applyDamage(applyDamagePlayerData) {
     // Decide the duel from final scores before anything is reset
     const duelLoser = getDuelLoser()
 
-    Object.entries(playerData).forEach(([playerKey, player], i) => {
+    Object.entries(applyDamagePlayerData).forEach(([playerKey, player], i) => {
         // Empty slot: never takes damage, never revives
         if (!isPresent(player)) {
             player.currentMaxHp = 0
@@ -1216,7 +1216,7 @@ function refreshDamage() {
 }
 
 
-function updatePlayerData(playerData, data) {
+function updatePlayerData(nonUpdatedPlayerData, data) {
     // The API already committed this map: its HP has the damage in it, so the preview stays empty until the next map
     if (previewLocked) {
         clearScores()
@@ -1224,7 +1224,7 @@ function updatePlayerData(playerData, data) {
     }
 
     // Raw scores
-    Object.values(playerData).forEach(player => {
+    Object.values(nonUpdatedPlayerData).forEach(player => {
         const client = data.tourney?.clients?.find(
             client => client.user.id === player.id
         )
@@ -1234,7 +1234,7 @@ function updatePlayerData(playerData, data) {
     })
 
     // Effective scores (class bonuses applied, sit-outs zeroed)
-    Object.entries(playerData).forEach(([playerKey, player]) => {
+    Object.entries(nonUpdatedPlayerData).forEach(([playerKey, player]) => {
         const playerNumber = Number(playerKey.replace("player", ""))
         const demigod = abilities.demigod
         const duel = abilities.soulweaver
@@ -1255,7 +1255,7 @@ function updatePlayerData(playerData, data) {
     })
 
     // Reset damage, then build it up
-    Object.values(playerData).forEach(player => { player.currentScoreAgainst = 0 })
+    Object.values(nonUpdatedPlayerData).forEach(player => { player.currentScoreAgainst = 0 })
     if (!toggleHpEl.checked) return
 
     if (abilities.demigod) {
@@ -1268,7 +1268,7 @@ function updatePlayerData(playerData, data) {
 
     // Damage scales up as the match goes on
     const damageMultiplier = getDamageMultiplier()
-    Object.values(playerData).forEach(player => {
+    Object.values(nonUpdatedPlayerData).forEach(player => {
         player.currentScoreAgainst *= damageMultiplier
         if (!abilities.demigod) {
             player.currentScoreAgainst = Math.min(player.currentScoreAgainst, constants.MAX_STANDARD_DAMAGE)
@@ -1752,7 +1752,7 @@ function refreshApiStatus() {
         if (!isApiConfigured()) {
             state = "error"
             text = "Set API_MATCH_URL in _shared/js/constants.js first."
-        } else if (matchId == null) {
+        } else if (matchId === null) {
             state = "waiting"
             text = "Enter a match ID and press Load."
         } else if (apiLastError) {
