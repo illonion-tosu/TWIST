@@ -1226,7 +1226,7 @@ function updatePlayerData(nonUpdatedPlayerData, data) {
     // Raw scores
     Object.values(nonUpdatedPlayerData).forEach(player => {
         const client = data.tourney?.clients?.find(
-            client => client.user.id === player.id
+            c => c.user.id === player.id
         )
 
         // An empty slot has id 0, which could match an unused tosu client, so it never reads a score
