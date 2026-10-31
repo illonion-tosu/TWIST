@@ -2,7 +2,6 @@
     --greenscreen-height: 842px;
     --now-playing-width: 977px;
     --now-playing-height: 177px;
-    --green-screen: #0f0;
     --now-playing-mod: #3b7cc4;
     --white: #fff;
     --black: #000;
@@ -19,16 +18,6 @@
     width: 3px;
     height: var(--greenscreen-height);
     background-color: var(--white);
-}
-
-/* Greenscreen */
-.greenscreen {
-    position: absolute;
-    top: 0;
-    left: 3px;
-    width: 1497px;
-    height: var(--greenscreen-height);
-    background-color: var(--green-screen);
 }
 
 .round-name-container {
