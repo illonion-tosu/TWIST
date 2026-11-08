@@ -1,6 +1,6 @@
 import { constants } from "../_shared/js/constants.js"
 import { loadBeatmaps } from "../_shared/core/beatmaps.js"
-import { findTeam, loadTeams } from "../_shared/core/teams.js"
+import { findTeam, getRoster, loadTeams } from "../_shared/core/teams.js"
 import { createTosuWsSocket } from "../_shared/core/websocket.js"
 import { getRoundMaxHp, isPresent, isSlotFilled } from "../_shared/core/match.js"
 import { fetchMatch, isApiConfigured, matchUrl, normaliseApiHost, normaliseApiMatch, toMatchId } from "../_shared/core/api.js"
@@ -239,7 +239,7 @@ function refreshDamageMultiplierUi() {
 refreshDamageMultiplierUi()
 
 // Class abilities
-// Class of a player (lowercase). Stored in playerData, filled from currentTeam.playerX.class
+// Class of a player (lowercase). Stored in playerData, filled from the team's player element in teams.json
 const classOf = playerNumber => playerData[`player${playerNumber}`]?.class ?? ""
 
 const abilities = {
@@ -784,15 +784,10 @@ function changeTeams(teamName, side) {
     const currentTeam = findTeam(teamName)
     if (!currentTeam) return
 
-    applyRoster(side, [1, 2, 3].map(i => {
-        const player = currentTeam[`player${i}`] ?? { id: 0, playerName: "", class: "" }
-        return {
-            id: player.id,
-            playerName: player.playerName,
-            class: player.class,
-            present: isSlotFilled(player),
-        }
-    }))
+    applyRoster(side, getRoster(currentTeam).map(player => ({
+        ...player,
+        present: isSlotFilled(player),
+    })))
 }
 
 // Put a side's three players (id, name, class, present) into playerData and onto every panel.
