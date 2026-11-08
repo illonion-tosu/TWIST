@@ -332,13 +332,21 @@ function adaptPickBan(raw, warn) {
     const banned = Array.isArray(info.banned) ? info.banned : Array.isArray(raw.bannedMaps) ? raw.bannedMaps : undefined
     if (picked === undefined && banned === undefined) return undefined
 
+    // Entries can name a map by its pool slot id ("a1"). pickedMaps / bannedMaps list the same maps with their beatmapId.
+    const beatmapIdBySlot = new Map()
+    for (const map of [...(raw.pickedMaps ?? []), ...(raw.bannedMaps ?? [])]) {
+        if (isObject(map) && map.id !== undefined && (map.beatmapId ?? map.beatmap_id) !== undefined) {
+            beatmapIdBySlot.set(String(map.id), map.beatmapId ?? map.beatmap_id)
+        }
+    }
+
     const lists = { redBan: [], blueBan: [], redPick: [], bluePick: [] }
     const add = (entries, action) => {
         for (const entry of entries ?? []) {
             const teamValue = isObject(entry)
                 ? entry.team ?? entry.side ?? entry.teamId ?? entry.by ?? entry[`${action === "Pick" ? "picked" : "banned"}By`]
                 : undefined
-            const mapValue = isObject(entry) ? entry.beatmapId ?? entry.beatmap_id ?? entry.mapId ?? entry.id : entry
+            const mapValue = isObject(entry) ? entry.beatmapId ?? entry.beatmap_id ?? entry.mapId ?? beatmapIdBySlot.get(String(entry.id)) ?? entry.id : entry
             const side = sideFromTeam(teamValue, raw)
             const id = String(mapValue ?? "").trim()
             if (!id) {

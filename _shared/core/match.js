@@ -15,7 +15,7 @@ export function getRoundMaxHp(roundName) {
     return round ? round.maxHp : constants.DEFAULT_MAX_HP
 }
 
-// Teams can be 2 or 3 players. A 2-player team leaves its third slot empty (id 0, no name) in teams.json.
+// Teams can be 2 or 3 players. A 2-player team has only 2 players in teams.json, so its third slot is empty (id 0, no name).
 export const isSlotFilled = teamPlayer => Boolean(teamPlayer?.id) && Boolean(String(teamPlayer?.playerName ?? "").trim())
 
 // playerData entries carry `present`. Saves from before it existed (undefined) count as present.

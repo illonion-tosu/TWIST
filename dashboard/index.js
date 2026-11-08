@@ -1605,15 +1605,19 @@ function applyApiMatch(match) {
     if (match.pickBanInfo) {
         const buttons = [...mappoolSelectContainerEl.querySelectorAll(".mappool-select-button")]
         const known = new Set(buttons.map(button => button.id))
+        // The server can name a map by its pool slot id ("a1") instead of its beatmap id: A1 -> that button's beatmap id
+        const idByLabel = new Map(allBeatmaps.map(beatmap => [String(beatmap.label).toLowerCase(), String(beatmap.beatmap_id)]))
+        const toButtonId = id => known.has(id) ? id : idByLabel.get(String(id).toLowerCase()) ?? id
         const options = { save: false, setPicker: false }
 
         buttons.forEach(button => setMapState(button.id, null, "clear", options))
         for (const [key, ids] of Object.entries(match.pickBanInfo)) {
             const team = key.startsWith("red") ? "red" : "blue"
             const action = key.endsWith("Ban") ? "ban" : "pick"
-            for (const id of ids) {
+            for (const rawId of ids) {
+                const id = toButtonId(rawId)
                 if (!known.has(id)) {
-                    warnings.push(`Map ${id} isn't in the loaded mappool, so it was ignored.`)
+                    warnings.push(`Map ${rawId} isn't in the loaded mappool, so it was ignored.`)
                     continue
                 }
                 setMapState(id, team, action, options)
