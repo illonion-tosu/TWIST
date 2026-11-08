@@ -35,7 +35,8 @@ jobs:
 
             - name: Install linters globally
               run: |
-                  npm install --global eslint htmlhint stylelint stylelint-config-standard
+                  npm install --global eslint htmlhint stylelint
+                  npm install --prefix ../lint-configs stylelint-config-standard
 
             - name: Auto-fix CSS
               id: css_fix

@@ -1,48 +1,64 @@
 import { delay } from "../_shared/core/utils.js"
 
-// Load osu! api
+// Builds beatmaps.json for one pool in _data/mappools.json:
+//   [{ id, name, maps: [{ id, label, title, artist, difficulty, beatmapId, mods, isTiebreaker }] }]
+// Output: { roundName, beatmaps: [...] } where roundName is the pool's id (SF, QF, F...)
+// and each beatmap is the osu! API v1 response plus label / mod / isTiebreaker.
+
 let osuApi
+let pools = []
+
 async function getApi() {
     const apiResponse = await fetch("../_data/osu-api.json")
     const apiResponseJson = await apiResponse.json()
     osuApi = apiResponseJson.api
 }
 
-async function getBeatmaps() {
-    const allBeatmapsJson = []
-    const beatmapsBaseResponse = await fetch("../_data/beatmaps-base.json")
-    const beatmapsBaseResponseJson = await beatmapsBaseResponse.json()
-    const allBeatmaps = beatmapsBaseResponseJson.beatmaps
-    const roundName = beatmapsBaseResponseJson.roundName
+async function getPools() {
+    const response = await fetch("../_data/mappools.json")
+    pools = await response.json()
+    if (!Array.isArray(pools) || !pools.length) throw new Error("mappools.json has no pools")
 
-    for (let i = 0; i < allBeatmaps.length; i++) {
-        // Set mod number
-        let modNumber = 0
-        if (allBeatmaps[i].mod.includes("HR")) modNumber += 16
-        if (allBeatmaps[i].mod.includes("EZ")) modNumber += 2
-        if (allBeatmaps[i].mod.includes("DT")) modNumber += 64
-        
+    const poolEl = document.getElementById("pool")
+    pools.forEach(pool => {
+        const optionEl = document.createElement("option")
+        optionEl.value = pool.id
+        optionEl.textContent = `${pool.name} (${pool.maps?.length ?? 0} maps)`
+        poolEl.append(optionEl)
+    })
+}
+
+function getModNumber(mods) {
+    let modNumber = 0
+    if (mods.includes("HR")) modNumber += 16
+    if (mods.includes("EZ")) modNumber += 2
+    if (mods.includes("DT")) modNumber += 64
+    return modNumber
+}
+
+async function getBeatmaps(pool) {
+    const allBeatmapsJson = []
+
+    for (const map of pool.maps ?? []) {
+        const mods = String(map.mods ?? "NM").trim().toUpperCase() || "NM"
+
         // Get API response
-        const osuMapResponse = await fetch(`https://osu.ppy.sh/api/get_beatmaps?k=${osuApi}&b=${allBeatmaps[i].beatmap_id}&mods=${modNumber}`)
+        const osuMapResponse = await fetch(`https://osu.ppy.sh/api/get_beatmaps?k=${osuApi}&b=${map.beatmapId}&mods=${getModNumber(mods)}`)
         await delay(1000)
         const osuMapResponseJson = await osuMapResponse.json()
-        if (!osuMapResponseJson[0]) {
-            console.warn(`No beatmap found for ${allBeatmaps[i].label} (${allBeatmaps[i].beatmap_id}), skipping`)
+        if (!Array.isArray(osuMapResponseJson) || !osuMapResponseJson[0]) {
+            console.warn(`No beatmap found for ${map.label} (${map.beatmapId}), skipping`)
             continue
         }
-        osuMapResponseJson[0].order = allBeatmaps[i].order
-        osuMapResponseJson[0].mod = allBeatmaps[i].mod
-        if (allBeatmaps[i].EZMultiplier) osuMapResponseJson[0].EZMultiplier = allBeatmaps[i].EZMultiplier
-        
-        allBeatmapsJson.push(osuMapResponseJson[0])
+        allBeatmapsJson.push({
+            ...osuMapResponseJson[0],
+            label: map.label,
+            mod: mods,
+            isTiebreaker: Boolean(map.isTiebreaker),
+        })
     }
 
-    const fullJson = {
-        "roundName": roundName,
-        "beatmaps": allBeatmapsJson
-    }
-
-    const jsonString = JSON.stringify(fullJson, null, 4)
+    const jsonString = JSON.stringify({ roundName: pool.id, beatmaps: allBeatmapsJson }, null, 4)
     const blob = new Blob([jsonString], { type: "application/json" })
     const link = document.createElement("a")
     link.href = URL.createObjectURL(blob)
@@ -51,11 +67,19 @@ async function getBeatmaps() {
 }
 
 async function initialise() {
-    await getApi()
-    await getBeatmaps()
+    const pool = pools.find(p => p.id === document.getElementById("pool").value)
+    if (!pool) return
+    const buttonEl = document.getElementById("button")
+    buttonEl.disabled = true
+    try {
+        await getApi()
+        await getBeatmaps(pool)
+    } finally {
+        buttonEl.disabled = false
+    }
 }
 
-const buttonEl = document.getElementById("button")
 document.addEventListener("DOMContentLoaded", () => {
-    buttonEl.addEventListener("click", initialise)
+    getPools().catch(error => console.error("Could not load mappools.json:", error))
+    document.getElementById("button").addEventListener("click", initialise)
 })
