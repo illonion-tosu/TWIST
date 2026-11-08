@@ -25,6 +25,10 @@ export const isPresent = player => player?.present !== false
 export const getPresentPlayers = (playerData, side) =>
     playersOf(side).filter(n => isPresent(playerData[`player${n}`]))
 
+// Damage is always rounded up to a whole number. Values are first rounded to 6 decimals so floating point noise
+// (440000.00000000006 from 400000 * 1.1) doesn't push an exact amount up by one.
+export const roundUpDamage = value => Math.ceil(Math.round(value * 1e6) / 1e6)
+
 // Effective HP for a player: max HP minus incoming damage, floored at 0. Empty slots have none.
 export const getEffectiveHp = player =>
     isPresent(player) ? Math.max(0, Math.round(player.currentMaxHp - player.currentScoreAgainst)) : 0
