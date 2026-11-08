@@ -20,7 +20,12 @@ async function getPools() {
     if (!Array.isArray(pools) || !pools.length) throw new Error("mappools.json has no pools")
 
     const poolEl = document.getElementById("pool")
-    pools.forEach(pool => poolEl.add(new Option(`${pool.name} (${pool.maps?.length ?? 0} maps)`, pool.id)))
+    pools.forEach(pool => {
+        const optionEl = document.createElement("option")
+        optionEl.value = pool.id
+        optionEl.textContent = `${pool.name} (${pool.maps?.length ?? 0} maps)`
+        poolEl.append(optionEl)
+    })
 }
 
 function getModNumber(mods) {
