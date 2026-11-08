@@ -2,7 +2,7 @@ import { constants } from "../_shared/js/constants.js"
 import { loadBeatmaps } from "../_shared/core/beatmaps.js"
 import { findTeam, getRoster, loadTeams } from "../_shared/core/teams.js"
 import { createTosuWsSocket } from "../_shared/core/websocket.js"
-import { getRoundMaxHp, isPresent, isSlotFilled } from "../_shared/core/match.js"
+import { getRoundMaxHp, isPresent, isSlotFilled, roundUpDamage } from "../_shared/core/match.js"
 import { fetchMatch, isApiConfigured, matchUrl, normaliseApiHost, normaliseApiMatch, toMatchId } from "../_shared/core/api.js"
 
 // Saved match state: read it before anything gets a chance to overwrite it
@@ -758,6 +758,13 @@ function getScoreMultiplier(playerNumber) {
     return multiplier
 }
 
+// HP the duel loser loses: SOULWEAVER_LOSER_HP_LOSS_RATIO of the HP they entered with, times the maps-played damage
+// multiplier, capped like standard damage, rounded up. Used for the live preview and for the committed result.
+function getDuelLoss(hp) {
+    const loss = hp * constants.SOULWEAVER_LOSER_HP_LOSS_RATIO * getDamageMultiplier()
+    return roundUpDamage(Math.min(loss, constants.MAX_STANDARD_DAMAGE))
+}
+
 // Lower effective score loses. Tie = nobody loses.
 function getDuelLoser() {
     const duel = abilities.soulweaver
@@ -1102,11 +1109,8 @@ function applyDamage(applyDamagePlayerData) {
         player.currentMaxHp = Math.max(0, Math.round(hpBefore - player.currentScoreAgainst))
 
         if (wasAlive && playerKey === duelLoser) {
-            // Lost the duel: loses 75% of the HP they entered the duel with. No sitting out.
-            player.currentMaxHp = Math.max(
-                0,
-                Math.round(hpBefore * (1 - constants.SOULWEAVER_LOSER_HP_LOSS_RATIO))
-            )
+            // Lost the duel: loses 75% of the HP they entered the duel with, times the damage multiplier, up to the damage cap. No sitting out.
+            player.currentMaxHp = Math.max(0, hpBefore - getDuelLoss(hpBefore))
         } else if (wasAlive && player.currentMaxHp === 0) {
             player.currentDeadRounds = (player.class === "human" && !player.hasRevived) ? constants.DEAD_ROUNDS : 0
         } else if (player.currentDeadRounds > 0) {
@@ -1281,7 +1285,15 @@ function updatePlayerData(nonUpdatedPlayerData, data) {
         if (!abilities.demigod) {
             player.currentScoreAgainst = Math.min(player.currentScoreAgainst, constants.MAX_STANDARD_DAMAGE)
         }
+        // Damage is always a whole number, rounded up (after the multiplier and cap)
+        player.currentScoreAgainst = roundUpDamage(player.currentScoreAgainst)
     })
+
+    // Soulweaver duel: the player who is currently losing shows the HP they would lose (a % of their HP, times the
+    // damage multiplier, capped). The same amount applyDamage takes off, so the live bar matches the result.
+    const duelLoser = getDuelLoser()
+    const loser = duelLoser && nonUpdatedPlayerData[duelLoser]
+    if (loser && loser.currentMaxHp > 0) loser.currentScoreAgainst = getDuelLoss(loser.currentMaxHp)
 }
 
 // Standard damage, based purely on who is targeting whom:
@@ -1605,15 +1617,19 @@ function applyApiMatch(match) {
     if (match.pickBanInfo) {
         const buttons = [...mappoolSelectContainerEl.querySelectorAll(".mappool-select-button")]
         const known = new Set(buttons.map(button => button.id))
+        // The server can name a map by its pool slot id ("a1") instead of its beatmap id: A1 -> that button's beatmap id
+        const idByLabel = new Map(allBeatmaps.map(beatmap => [String(beatmap.label).toLowerCase(), String(beatmap.beatmap_id)]))
+        const toButtonId = id => known.has(id) ? id : idByLabel.get(String(id).toLowerCase()) ?? id
         const options = { save: false, setPicker: false }
 
         buttons.forEach(button => setMapState(button.id, null, "clear", options))
         for (const [key, ids] of Object.entries(match.pickBanInfo)) {
             const team = key.startsWith("red") ? "red" : "blue"
             const action = key.endsWith("Ban") ? "ban" : "pick"
-            for (const id of ids) {
+            for (const rawId of ids) {
+                const id = toButtonId(rawId)
                 if (!known.has(id)) {
-                    warnings.push(`Map ${id} isn't in the loaded mappool, so it was ignored.`)
+                    warnings.push(`Map ${rawId} isn't in the loaded mappool, so it was ignored.`)
                     continue
                 }
                 setMapState(id, team, action, options)

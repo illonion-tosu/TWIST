@@ -5,9 +5,31 @@ let allBeatmaps = { roundName: "", beatmaps: [] }
 // Load beatmaps from beatmaps.json: { roundName, beatmaps: [...] }.
 // Each map carries its pool slot (label / mod / isTiebreaker) next to the osu! API v1 fields
 // (diff_size, diff_approach, diff_overall, difficultyrating, bpm, total_length, beatmapset_id...).
+//
+// A mappools.json style file is accepted too: [{ id, name, maps: [{ id, label, title, artist, difficulty, beatmapId, mods, isTiebreaker }] }]
+// (or one pool object). The first pool is used and its id is the round name. It has no osu! API stats, so the mappool overlay shows dashes.
+function fromMappools(data) {
+    const pools = Array.isArray(data) ? data : [data]
+    const pool = pools[0] ?? {}
+    if (pools.length > 1) console.warn(`beatmaps.json has ${pools.length} pools: only "${pool.name ?? pool.id}" is used.`)
+    return {
+        roundName: String(pool.id ?? pool.name ?? ""),
+        beatmaps: (pool.maps ?? []).map(map => ({
+            beatmap_id: map?.beatmapId ?? map?.beatmap_id,
+            label: map?.label,
+            mod: map?.mods ?? map?.mod,
+            isTiebreaker: map?.isTiebreaker,
+            artist: map?.artist,
+            title: map?.title,
+            version: map?.difficulty ?? map?.version,
+        })),
+    }
+}
+
 export async function loadBeatmaps() {
     const response = await axios.get(constants.BEATMAPS_PATH)
-    const data = response.data ?? {}
+    let data = response.data ?? {}
+    if (Array.isArray(data) || Array.isArray(data.maps)) data = fromMappools(data)
     if (!Array.isArray(data.beatmaps)) throw new Error("beatmaps.json has no \"beatmaps\" list")
 
     const seen = new Set()
@@ -73,4 +95,4 @@ export function findShowcaseBeatmap(artist, title, difficultyName) {
         normalise(beatmap.version) === wanted.difficulty &&
         (!normalise(beatmap.artist) || normalise(beatmap.artist) === wanted.artist)
     )
-}
+}
