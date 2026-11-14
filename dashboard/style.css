@@ -1,13 +1,13 @@
 :root {
     /* Surfaces */
     --bg: #0e0f14;
-    --bg-glow-red: rgb(255 59 79 / 0.08);
-    --bg-glow-blue: rgb(0 120 255 / 0.10);
+    --bg-glow-red: rgb(255 59 79 / 8%);
+    --bg-glow-blue: rgb(0 120 255 / 10%);
     --surface: #16171f;
     --surface-2: #1d1f29;
     --surface-3: #252835;
-    --border: rgb(255 255 255 / 0.07);
-    --border-strong: rgb(255 255 255 / 0.14);
+    --border: rgb(255 255 255 / 7%);
+    --border-strong: rgb(255 255 255 / 14%);
 
     /* Text */
     --text: #eceef4;
@@ -16,11 +16,11 @@
 
     /* Accents */
     --red: #ff3b4f;
-    --red-soft: rgb(255 59 79 / 0.14);
+    --red-soft: rgb(255 59 79 / 14%);
     --blue: #2f8bff;
-    --blue-soft: rgb(47 139 255 / 0.15);
+    --blue-soft: rgb(47 139 255 / 15%);
     --accent: #8b7bff;
-    --accent-soft: rgb(139 123 255 / 0.16);
+    --accent-soft: rgb(139 123 255 / 16%);
     --ok: #3ddc84;
     --warn: #f5c84b;
     --danger: #ff5a5f;
@@ -28,14 +28,12 @@
     /* Override the shared team colours for the dashboard only */
     --team-red-colour: var(--red);
     --team-blue-colour: var(--blue);
-
     --radius: 14px;
     --radius-sm: 9px;
-    --shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 10px 30px -12px rgb(0 0 0 / 0.6);
+    --shadow: 0 1px 0 rgb(255 255 255 / 3%) inset, 0 10px 30px -12px rgb(0 0 0 / 60%);
     --ease: cubic-bezier(.2, .8, .2, 1);
-
-    --font-ui: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
-    --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+    --font-ui: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, roboto, sans-serif;
+    --font-mono: "JetBrains Mono", "Cascadia Code", consolas, ui-monospace, monospace;
 
     color-scheme: dark;
 }
@@ -76,7 +74,7 @@ h1, h2, p { margin: 0; }
     align-items: center;
     gap: 20px;
     padding: 14px 24px;
-    background: rgb(14 15 20 / 0.78);
+    background: rgb(14 15 20 / 78%);
     backdrop-filter: blur(14px) saturate(140%);
     border-bottom: 1px solid var(--border);
 }
@@ -117,18 +115,20 @@ h1, h2, p { margin: 0; }
     border-radius: 999px;
     border: 1px solid var(--border);
 }
+
 .team-chip > span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
 .team-chip::before {
     content: "";
     flex: none;
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: currentColor;
+    background: currentcolor;
 }
 .team-chip-red { background: var(--red-soft); color: var(--red); }
 .team-chip-blue { background: var(--blue-soft); color: var(--blue); }
@@ -180,6 +180,7 @@ input[type="checkbox"] {
     cursor: pointer;
     transition: background 180ms var(--ease), border-color 180ms var(--ease);
 }
+
 input[type="checkbox"]::after {
     content: "";
     position: absolute;
@@ -191,14 +192,17 @@ input[type="checkbox"]::after {
     background: var(--text-muted);
     transition: transform 200ms var(--ease), background 180ms var(--ease);
 }
+
 input[type="checkbox"]:checked {
     background: var(--accent);
     border-color: var(--accent);
 }
+
 input[type="checkbox"]:checked::after {
     transform: translateX(14px);
     background: #fff;
 }
+
 input[type="checkbox"]:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
@@ -316,7 +320,7 @@ select option { background: var(--surface-2); color: var(--text); }
 
 input[type="text"]:hover,
 input[type="number"]:hover,
-select:hover { border-color: rgb(255 255 255 / 0.24); }
+select:hover { border-color: rgb(255 255 255 / 24%); }
 
 input[type="text"]:focus,
 input[type="number"]:focus,
@@ -333,7 +337,7 @@ input::-webkit-inner-spin-button {
     appearance: none;
     margin: 0;
 }
-input[type="number"] { -moz-appearance: textfield; }
+input[type="number"] { appearance: textfield; }
 
 button {
     display: inline-flex;
@@ -353,7 +357,7 @@ button {
     transition: background 140ms var(--ease), border-color 140ms var(--ease),
                 color 140ms var(--ease), transform 100ms var(--ease), box-shadow 140ms var(--ease);
 }
-button:hover { background: #2e3242; border-color: rgb(255 255 255 / 0.22); }
+button:hover { background: #2e3242; border-color: rgb(255 255 255 / 22%); }
 button:active { transform: translateY(1px); }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -395,9 +399,10 @@ select:disabled {
 .reset-button {
     flex: none;
     background: transparent;
-    border-color: rgb(255 90 95 / 0.45);
+    border-color: rgb(255 90 95 / 45%);
     color: var(--danger);
 }
+
 .reset-button:hover {
     background: var(--danger);
     border-color: var(--danger);
@@ -419,7 +424,7 @@ select:disabled {
     min-width: 0;
     padding: 12px 14px;
     border-radius: 11px;
-    background: rgb(0 0 0 / 0.22);
+    background: rgb(0 0 0 / 22%);
     border: 1px solid var(--border);
 }
 .stat-wide { grid-column: 1 / -1; }
@@ -475,43 +480,48 @@ input[type="number"].maps-played-input {
     color: var(--text-muted);
     border: 1px solid var(--border);
 }
+
 .api-status::before {
     content: "";
     flex: none;
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: currentColor;
+    background: currentcolor;
 }
+
 .api-status[data-state="off"],
 .api-status[data-state="waiting"] { color: var(--text-muted); }
 .api-status[data-state="waiting"]::before { animation: pulse 1.2s ease-in-out infinite; }
+
 .api-status[data-state="ok"] {
     color: var(--ok);
-    background: rgb(61 220 132 / 0.1);
-    border-color: rgb(61 220 132 / 0.25);
+    background: rgb(61 220 132 / 10%);
+    border-color: rgb(61 220 132 / 25%);
 }
-.api-status[data-state="ok"]::before { box-shadow: 0 0 0 0 rgb(61 220 132 / 0.6); animation: ping 1.8s ease-out infinite; }
+.api-status[data-state="ok"]::before { box-shadow: 0 0 0 0 rgb(61 220 132 / 60%); animation: ping 1.8s ease-out infinite; }
+
 .api-status[data-state="error"] {
     color: var(--danger);
-    background: rgb(255 90 95 / 0.1);
-    border-color: rgb(255 90 95 / 0.28);
+    background: rgb(255 90 95 / 10%);
+    border-color: rgb(255 90 95 / 28%);
 }
 
 .api-warnings {
     padding: 10px 12px;
     border-radius: var(--radius-sm);
-    background: rgb(245 200 75 / 0.08);
-    border: 1px solid rgb(245 200 75 / 0.22);
+    background: rgb(245 200 75 / 8%);
+    border: 1px solid rgb(245 200 75 / 22%);
     color: var(--warn);
     font-size: 12.5px;
     white-space: pre-line;
 }
 
 @keyframes pulse { 50% { opacity: 0.35; } }
+
 @keyframes ping {
-    0% { box-shadow: 0 0 0 0 rgb(61 220 132 / 0.55); }
-    100% { box-shadow: 0 0 0 7px rgb(61 220 132 / 0); }
+    0% { box-shadow: 0 0 0 0 rgb(61 220 132 / 55%); }
+    100% { box-shadow: 0 0 0 7px rgb(61 220 132 / 0%); }
 }
 
 /* Scene Control */
@@ -531,11 +541,12 @@ input[type="number"].maps-played-input {
 .scene-buttons .team-hp-button:hover { color: var(--text); }
 
 .scene-buttons .team-hp-button.active-hp-button {
-    background: rgb(255 59 79 / 0.14);
+    background: rgb(255 59 79 / 14%);
     border-color: var(--red);
     color: var(--text);
-    box-shadow: 0 0 0 3px rgb(255 59 79 / 0.15);
+    box-shadow: 0 0 0 3px rgb(255 59 79 / 15%);
 }
+
 .scene-buttons .team-hp-button.active-hp-button::before {
     content: "LIVE";
     margin-right: 8px;
@@ -567,7 +578,7 @@ input[type="number"].maps-played-input {
     padding: 12px;
     border-radius: 12px;
     border: 1px solid var(--border);
-    background: rgb(0 0 0 / 0.18);
+    background: rgb(0 0 0 / 18%);
 }
 .team-column-red { box-shadow: inset 3px 0 0 var(--red); }
 .team-column-blue { box-shadow: inset 3px 0 0 var(--blue); }
@@ -584,6 +595,7 @@ input[type="number"].maps-played-input {
 }
 .team-column-red .team-column-head { color: var(--red); }
 .team-column-blue .team-column-head { color: var(--blue); }
+
 .team-column-head .arrow {
     font-weight: 600;
     letter-spacing: 0.04em;
@@ -625,7 +637,7 @@ input[type="number"].maps-played-input {
     padding: 12px;
     border-radius: 12px;
     border: 1px solid var(--border);
-    background: rgb(0 0 0 / 0.18);
+    background: rgb(0 0 0 / 18%);
 }
 .class-panel:has(.team-red-colour) { box-shadow: inset 3px 0 0 var(--red); }
 .class-panel:has(.team-blue-colour) { box-shadow: inset 3px 0 0 var(--blue); }
@@ -673,9 +685,10 @@ input[type="number"].maps-played-input {
     color: var(--text);
     background: var(--surface-3);
 }
+
 .class-controls .auto-labels:has(input:checked) {
     background: var(--accent-soft);
-    box-shadow: inset 0 0 0 1px rgb(139 123 255 / 0.45);
+    box-shadow: inset 0 0 0 1px rgb(139 123 255 / 45%);
 }
 
 .class-controls .team-hp-container {
@@ -684,6 +697,7 @@ input[type="number"].maps-played-input {
     align-items: center;
     gap: 10px;
 }
+
 .class-controls .team-hp-container > .team-hp {
     font-size: 11px;
     font-weight: 600;
@@ -694,10 +708,11 @@ input[type="number"].maps-played-input {
 
 .class-controls .human-heal-button {
     align-self: flex-start;
-    background: rgb(61 220 132 / 0.12);
-    border-color: rgb(61 220 132 / 0.35);
+    background: rgb(61 220 132 / 12%);
+    border-color: rgb(61 220 132 / 35%);
     color: var(--ok);
 }
+
 .class-controls .human-heal-button:hover {
     background: var(--ok);
     border-color: var(--ok);
@@ -707,8 +722,8 @@ input[type="number"].maps-played-input {
 .class-error {
     padding: 8px 10px;
     border-radius: 8px;
-    background: rgb(255 90 95 / 0.1);
-    border: 1px solid rgb(255 90 95 / 0.25);
+    background: rgb(255 90 95 / 10%);
+    border: 1px solid rgb(255 90 95 / 25%);
     font-size: 12.5px !important;
     margin-top: 0 !important;
 }
@@ -736,7 +751,7 @@ input[type="number"].maps-played-input {
     gap: 4px;
     padding: 4px;
     border-radius: 12px;
-    background: rgb(0 0 0 / 0.28);
+    background: rgb(0 0 0 / 28%);
     border: 1px solid var(--border);
 }
 
@@ -746,6 +761,7 @@ input[type="number"].maps-played-input {
     background: transparent;
     color: var(--text-muted);
 }
+
 .segmented .select-next-picker-button:hover:not(:disabled) {
     background: var(--surface-3);
     color: var(--text);
@@ -787,6 +803,7 @@ kbd {
 
 .mappool-select-button {
     --mod: var(--text-faint);
+
     position: relative;
     height: 48px;
     padding: 0 8px;
@@ -798,6 +815,7 @@ kbd {
     font-weight: 750;
     color: var(--text);
 }
+
 .mappool-select-button::before {
     content: "";
     position: absolute;
@@ -810,6 +828,7 @@ kbd {
 .mappool-select-button[data-mod="NM"] { --mod: var(--nm-colour); }
 .mappool-select-button[data-mod="HD"] { --mod: var(--hd-colour); }
 .mappool-select-button[data-mod="HR"] { --mod: var(--hr-colour); }
+
 .mappool-select-button[data-mod="DT"],
 .mappool-select-button[data-mod="NC"] { --mod: var(--dt-colour); }
 .mappool-select-button[data-mod="FM"] { --mod: var(--fm-colour); }
@@ -827,25 +846,27 @@ kbd {
     border-color: var(--red);
     box-shadow: 0 8px 20px -10px var(--red);
 }
+
 .mappool-select-button-blue-pick {
     background: var(--blue);
     border-color: var(--blue);
     box-shadow: 0 8px 20px -10px var(--blue);
 }
+
 .mappool-select-button-red-ban,
 .mappool-select-button-blue-ban {
     background:
-        repeating-linear-gradient(-45deg, rgb(0 0 0 / 0.25) 0 6px, transparent 6px 12px),
+        repeating-linear-gradient(-45deg, rgb(0 0 0 / 25%) 0 6px, transparent 6px 12px),
         var(--ban-bg);
     border-color: var(--ban-border);
-    color: rgb(255 255 255 / 0.75);
+    color: rgb(255 255 255 / 75%);
     text-decoration: line-through;
     text-decoration-thickness: 2px;
 }
-.mappool-select-button-red-ban { --ban-bg: #5a1720; --ban-border: rgb(255 59 79 / 0.6); }
-.mappool-select-button-blue-ban { --ban-bg: #142b55; --ban-border: rgb(47 139 255 / 0.6); }
+.mappool-select-button-red-ban { --ban-bg: #5a1720; --ban-border: rgb(255 59 79 / 60%); }
+.mappool-select-button-blue-ban { --ban-bg: #142b55; --ban-border: rgb(47 139 255 / 60%); }
 
-.mappool-select-button-red-pick:hover { background: #ff5566; }
+.mappool-select-button-red-pick:hover { background: #f56; }
 .mappool-select-button-blue-pick:hover { background: #4b9bff; }
 
 /* While the API is in control, the mappool can't be clicked */
