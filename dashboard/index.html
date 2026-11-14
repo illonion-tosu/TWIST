@@ -13,10 +13,17 @@
     <script src="https://unpkg.com/obs-websocket-js@5.0.8/dist/obs-ws.global.js"></script>
 </head>
 <body>
-    <!-- Match header and automation toggles -->
-    <div class="dashboard-section">
-        <h1>Match: <span class="team-red-colour" id="team-red-name">KIM HYUJIN</span> vs <span class="team-blue-colour" id="team-blue-name">KIM HYUJIN</span></h1>
-        <button type="button" class="reset-button" id="reset-match-button">Reset Match</button>
+    <!-- Top bar: match title, automation toggles, reset -->
+    <header class="topbar">
+        <div class="topbar-match">
+            <span class="eyebrow">TWIST · Match Control</span>
+            <h1 class="match-title">
+                <span class="team-chip team-chip-red"><span class="team-red-colour" id="team-red-name">KIM HYUJIN</span></span>
+                <span class="vs">vs</span>
+                <span class="team-chip team-chip-blue"><span class="team-blue-colour" id="team-blue-name">KIM HYUJIN</span></span>
+            </h1>
+        </div>
+
         <div class="auto-section">
             <label class="auto-labels">
                 <input type="checkbox" id="auto-pick-button">
@@ -28,95 +35,127 @@
             </label>
             <label class="auto-labels">
                 <input type="checkbox" id="auto-obs-button">
-                <span>Auto OBS Scenes</span>
+                <span>Auto OBS</span>
             </label>
             <label class="auto-labels">
                 <input type="checkbox" id="auto-api-button">
                 <span>Use API</span>
             </label>
         </div>
-    </div>
 
-    <!-- Match API: the match ID the GET request uses, and what the API is doing -->
-    <div class="api-section">
-        <h1>Match API</h1>
-        <div class="api-controls">
-            <label for="api-host-input">Server:</label>
-            <input type="text" id="api-host-input" placeholder="localhost:8787" spellcheck="false" autocomplete="off">
-            <label for="match-id-input">Match ID:</label>
-            <input type="text" id="match-id-input" placeholder="e.g. 48213" spellcheck="false" autocomplete="off">
-            <button type="button" class="api-button" id="match-id-button">Load</button>
-        </div>
-        <p class="api-status" id="api-status" data-state="off">API off</p>
-        <p class="api-warnings" id="api-warnings" hidden></p>
-    </div>
+        <button type="button" class="reset-button" id="reset-match-button">Reset Match</button>
+    </header>
 
-    <!-- Scene Control -->
-    <div class="scene-control">
-        <h1 style="align-self: center">Scene Control</h1>
-        <div class="scene-buttons" id="scene-buttons"></div>
-    </div>
-
-    <!-- Match details and starting HP -->
-    <div class="line-two">
-        <div class="match-details-section">
-            <h1>Match Details</h1>
-            <div class="match-details">
-                <div>Round Name: <span id="round-name">Round of 16</span></div>
-                <div>Current Map: <span id="current-map">STAYC - SO BARjAADJKsadfhjkashjkhasdfkjhasdjk</span></div>
-                <div>Current Mod ID: <span id="current-mod-id">DT2</span></div>
-                <div>Maps Played: <input type="number" class="maps-played-input" id="maps-played-input" min="0" value="0"></div>
-                <div>Damage Multiplier: <span id="damage-multiplier">1x</span></div>
+    <main class="grid">
+        <!-- Match details -->
+        <section class="card card-details">
+            <div class="card-head"><h2>Match Details</h2></div>
+            <div class="stat-grid">
+                <div class="stat">
+                    <span class="stat-label">Round</span>
+                    <span class="stat-value" id="round-name">Round of 16</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Mod ID</span>
+                    <span class="stat-value stat-mod" id="current-mod-id">DT2</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Damage</span>
+                    <span class="stat-value stat-accent" id="damage-multiplier">1x</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Maps Played</span>
+                    <input type="number" class="maps-played-input" id="maps-played-input" min="0" value="0">
+                </div>
+                <div class="stat stat-wide">
+                    <span class="stat-label">Current Map</span>
+                    <span class="stat-value stat-map" id="current-map">STAYC - SO BAD</span>
+                </div>
             </div>
-        </div>
-        <div class="hp-container">
-            <h1>Map Starting HP</h1>
-            <div class="team-hp-wrapper">
-                <div class="team-hp-wrapper-left">
+        </section>
+
+        <!-- Match API -->
+        <section class="card card-api api-section">
+            <div class="card-head">
+                <h2>Match API</h2>
+                <p class="api-status" id="api-status" data-state="off">API off</p>
+            </div>
+            <div class="api-controls">
+                <label class="field">
+                    <span class="field-label">Server</span>
+                    <input type="text" id="api-host-input" placeholder="localhost:8787" spellcheck="false" autocomplete="off">
+                </label>
+                <label class="field">
+                    <span class="field-label">Match ID</span>
+                    <input type="text" id="match-id-input" placeholder="e.g. 48213" spellcheck="false" autocomplete="off">
+                </label>
+                <button type="button" class="api-button btn-primary" id="match-id-button">Load</button>
+            </div>
+            <p class="api-warnings" id="api-warnings" hidden></p>
+        </section>
+
+        <!-- Scene Control -->
+        <section class="card card-scenes scene-control">
+            <div class="card-head">
+                <h2>Scene Control</h2>
+                <span class="card-hint">Click to switch OBS program scene</span>
+            </div>
+            <div class="scene-buttons" id="scene-buttons">
+                <span class="empty-note">Waiting for OBS…</span>
+            </div>
+        </section>
+
+        <!-- Starting HP -->
+        <section class="card card-hp hp-container">
+            <div class="card-head">
+                <h2>Map Starting HP</h2>
+                <button type="button" class="team-hp-button btn-primary" id="team-hp-button">Submit HP</button>
+            </div>
+            <div class="team-columns">
+                <div class="team-column team-column-red">
+                    <div class="team-column-head">Red</div>
                     <div class="team-hp-container team-hp-red">
-                        <div class="team-hp team-red-colour" id="team-hp-player-1">AAAAAAAAAAAAAAA:</div>
+                        <div class="team-hp team-red-colour" id="team-hp-player-1">Player 1</div>
                         <input type="number" id="team-hp-input-number-player-1">
                     </div>
                     <div class="team-hp-container team-hp-red">
-                        <div class="team-hp team-red-colour" id="team-hp-player-2">Player 2:</div>
+                        <div class="team-hp team-red-colour" id="team-hp-player-2">Player 2</div>
                         <input type="number" id="team-hp-input-number-player-2">
                     </div>
                     <div class="team-hp-container team-hp-red">
-                        <div class="team-hp team-red-colour" id="team-hp-player-3">Player 3:</div>
+                        <div class="team-hp team-red-colour" id="team-hp-player-3">Player 3</div>
                         <input type="number" id="team-hp-input-number-player-3">
                     </div>
+                </div>
+                <div class="team-column team-column-blue">
+                    <div class="team-column-head">Blue</div>
                     <div class="team-hp-container team-hp-blue">
-                        <div class="team-hp team-blue-colour" id="team-hp-player-4">Player 1:</div>
+                        <div class="team-hp team-blue-colour" id="team-hp-player-4">Player 1</div>
                         <input type="number" id="team-hp-input-number-player-4">
                     </div>
                     <div class="team-hp-container team-hp-blue">
-                        <div class="team-hp team-blue-colour" id="team-hp-player-5">Player 2:</div>
+                        <div class="team-hp team-blue-colour" id="team-hp-player-5">Player 2</div>
                         <input type="number" id="team-hp-input-number-player-5">
                     </div>
                     <div class="team-hp-container team-hp-blue">
-                        <div class="team-hp team-blue-colour" id="team-hp-player-6">Player 3:</div>
+                        <div class="team-hp team-blue-colour" id="team-hp-player-6">Player 3</div>
                         <input type="number" id="team-hp-input-number-player-6">
                     </div>
                 </div>
-                <button class="team-hp-button" id="team-hp-button">
-                    Submit
-                </button>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <!-- Class activation and map targets -->
-    <div class="line-three">
-        <div class="class-activation-container">
-            <h1>Activate Classes</h1>
-            <div id="class-panels"></div>
-        </div>
-        <div class="targeting-container">
-            <h1>Map Target Selection</h1>
-            <div class="team-hp-wrapper">
-                <div class="team-hp-wrapper-left">
+        <!-- Map targets -->
+        <section class="card card-targets targeting-container">
+            <div class="card-head">
+                <h2>Map Target Selection</h2>
+                <button type="button" class="team-hp-button btn-primary" id="map-target-button">Submit Targets</button>
+            </div>
+            <div class="team-columns">
+                <div class="team-column team-column-red">
+                    <div class="team-column-head">Red <span class="arrow">→ targets Blue</span></div>
                     <div class="team-hp-container team-hp-red">
-                        <div class="team-hp team-red-colour" id="map-target-selection-player-1">AAAAAAAAAAAAAAA:</div>
+                        <div class="team-hp team-red-colour" id="map-target-selection-player-1">Player 1</div>
                         <select id="map-target-selection-player-1-select">
                             <option>AAAAAAAAAAAAAAA</option>
                             <option>BBBBBBBBBBBBBBB</option>
@@ -124,7 +163,7 @@
                         </select>
                     </div>
                     <div class="team-hp-container team-hp-red">
-                        <div class="team-hp team-red-colour" id="map-target-selection-player-2">Player 2:</div>
+                        <div class="team-hp team-red-colour" id="map-target-selection-player-2">Player 2</div>
                         <select id="map-target-selection-player-2-select">
                             <option>AAAAAAAAAAAAAAA</option>
                             <option>BBBBBBBBBBBBBBB</option>
@@ -132,15 +171,18 @@
                         </select>
                     </div>
                     <div class="team-hp-container team-hp-red">
-                        <div class="team-hp team-red-colour" id="map-target-selection-player-3">Player 3:</div>
+                        <div class="team-hp team-red-colour" id="map-target-selection-player-3">Player 3</div>
                         <select id="map-target-selection-player-3-select">
                             <option>AAAAAAAAAAAAAAA</option>
                             <option>BBBBBBBBBBBBBBB</option>
                             <option>CCCCCCCCCCCCCCC</option>
                         </select>
                     </div>
+                </div>
+                <div class="team-column team-column-blue">
+                    <div class="team-column-head">Blue <span class="arrow">→ targets Red</span></div>
                     <div class="team-hp-container team-hp-blue">
-                        <div class="team-hp team-blue-colour" id="map-target-selection-player-4">Player 1:</div>
+                        <div class="team-hp team-blue-colour" id="map-target-selection-player-4">Player 1</div>
                         <select id="map-target-selection-player-4-select">
                             <option>AAAAAAAAAAAAAAA</option>
                             <option>BBBBBBBBBBBBBBB</option>
@@ -148,7 +190,7 @@
                         </select>
                     </div>
                     <div class="team-hp-container team-hp-blue">
-                        <div class="team-hp team-blue-colour" id="map-target-selection-player-5">Player 2:</div>
+                        <div class="team-hp team-blue-colour" id="map-target-selection-player-5">Player 2</div>
                         <select id="map-target-selection-player-5-select">
                             <option>AAAAAAAAAAAAAAA</option>
                             <option>BBBBBBBBBBBBBBB</option>
@@ -156,7 +198,7 @@
                         </select>
                     </div>
                     <div class="team-hp-container team-hp-blue">
-                        <div class="team-hp team-blue-colour" id="map-target-selection-player-6">Player 3:</div>
+                        <div class="team-hp team-blue-colour" id="map-target-selection-player-6">Player 3</div>
                         <select id="map-target-selection-player-6-select">
                             <option>AAAAAAAAAAAAAAA</option>
                             <option>BBBBBBBBBBBBBBB</option>
@@ -164,44 +206,54 @@
                         </select>
                     </div>
                 </div>
-                <button class="team-hp-button" id="map-target-button">
-                    Submit
-                </button>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <!-- Next picker -->
-    <div class="line-four">
-        <div class="select-next-picker">
-            <h1>Select Next Picker</h1>
-            <p class="current" id="next-picker">Current: None</p>
-            <div class="select-next-picker-button-container">
-                <button class="select-next-picker-button" id="select-next-picker-button-red">Red</button>
-                <button class="select-next-picker-button" id="select-next-picker-button-blue">Blue</button>
-                <button class="select-next-picker-button" id="select-next-picker-button-none">None</button>
+        <!-- Class activation -->
+        <section class="card card-classes class-activation-container">
+            <div class="card-head">
+                <h2>Activate Classes</h2>
+                <span class="card-hint">Applies instantly · one ability per team per map</span>
             </div>
-        </div>
-        <div class="select-next-picker">
-            <h1>Select Current Picker</h1>
-            <p class="current" id="current-picker">Current: None</p>
-            <div class="select-next-picker-button-container">
-                <button class="select-next-picker-button" id="select-current-picker-button-red">Red</button>
-                <button class="select-next-picker-button" id="select-current-picker-button-blue">Blue</button>
-                <button class="select-next-picker-button" id="select-current-picker-button-none">None</button>
-            </div>
-        </div>
-    </div>
+            <div id="class-panels"></div>
+        </section>
 
-    <!-- Mappool select -->
-    <div class="mappool-select-section">
-        <h1>Mappool Select Section</h1>
-        <p>
-            LC = Left Click | RC = Right Click<br><br>
-            Ctrl + LC = Left Ban | Ctrl + RC = Right Ban<br><br>LC = Left Pick | RC = Right Pick<br><br>Shift + Click = Remove
-        </p>
-        <div class="mappool-select-container" id="mappool-select-container"></div>
-    </div>
+        <!-- Pickers -->
+        <section class="card card-pickers">
+            <div class="card-head"><h2>Pickers</h2></div>
+            <div class="picker-group select-next-picker">
+                <p class="current" id="next-picker">Next: None</p>
+                <div class="segmented select-next-picker-button-container" data-picker-group="next">
+                    <button class="select-next-picker-button seg-red" data-value="red" id="select-next-picker-button-red">Red</button>
+                    <button class="select-next-picker-button seg-blue" data-value="blue" id="select-next-picker-button-blue">Blue</button>
+                    <button class="select-next-picker-button seg-none" data-value="none" id="select-next-picker-button-none">None</button>
+                </div>
+            </div>
+            <div class="picker-group select-next-picker">
+                <p class="current" id="current-picker">Current: None</p>
+                <div class="segmented select-next-picker-button-container" data-picker-group="current">
+                    <button class="select-next-picker-button seg-red" data-value="red" id="select-current-picker-button-red">Red</button>
+                    <button class="select-next-picker-button seg-blue" data-value="blue" id="select-current-picker-button-blue">Blue</button>
+                    <button class="select-next-picker-button seg-none" data-value="none" id="select-current-picker-button-none">None</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mappool -->
+        <section class="card card-mappool mappool-select-section">
+            <div class="card-head">
+                <h2>Mappool</h2>
+                <div class="legend">
+                    <span class="legend-item"><kbd>LMB</kbd> Red pick</span>
+                    <span class="legend-item"><kbd>RMB</kbd> Blue pick</span>
+                    <span class="legend-item"><kbd>Ctrl</kbd>+<kbd>LMB</kbd> Red ban</span>
+                    <span class="legend-item"><kbd>Ctrl</kbd>+<kbd>RMB</kbd> Blue ban</span>
+                    <span class="legend-item"><kbd>Shift</kbd>+click Clear</span>
+                </div>
+            </div>
+            <div class="mappool-select-container" id="mappool-select-container"></div>
+        </section>
+    </main>
 
     <script src="index.js" type="module"></script>
 </body>
