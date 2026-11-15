@@ -223,6 +223,7 @@ input[type="checkbox"]:focus-visible {
 .card-hp { grid-column: span 6; }
 .card-targets { grid-column: span 6; }
 .card-classes { grid-column: span 8; }
+
 .card-pickers {
     grid-column: span 4;
     gap: 18px;
