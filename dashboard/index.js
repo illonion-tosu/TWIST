@@ -52,9 +52,18 @@ let nextPicker = constants.DEFAULT_NEXT_PICKER
 
 const capitalise = text => text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
 
+// Highlight the chosen button in a picker's segmented control
+function markPickerButtons(group, team) {
+    document.querySelectorAll(`[data-picker-group="${group}"] button`).forEach(button => {
+        button.classList.toggle("is-active", button.dataset.value === team)
+    })
+}
+
 function setNextPicker(team) {
     nextPickerEl.textContent = `Next: ${capitalise(team)}`
     nextPicker = team.toLowerCase()
+    nextPickerEl.dataset.team = nextPicker
+    markPickerButtons("next", nextPicker)
 }
 
 // current picker
@@ -67,6 +76,8 @@ let currentPicker = constants.DEFAULT_CURRENT_PICKER
 function setCurrentPicker(team) {
     currentPickerEl.textContent = `Current: ${capitalise(team)}`
     currentPicker = team.toLowerCase()
+    currentPickerEl.dataset.team = currentPicker
+    markPickerButtons("current", currentPicker)
 }
 
 // The HTML says "None" until clicked, but the variables above start as red / blue: show what's really in effect
@@ -147,6 +158,10 @@ loadBeatmaps().then(beatmaps => {
         button.classList.add("mappool-select-button")
         button.textContent = `${beatmap.label}`
         button.setAttribute("id", beatmap.beatmap_id)
+        // Colour tag by mod, full map name on hover
+        button.dataset.mod = beatmap.isTiebreaker ? "TB" : String(beatmap.mod ?? "").slice(0, 2)
+        const mapName = [beatmap.artist, beatmap.title].filter(Boolean).join(" - ")
+        if (mapName) button.title = `${mapName}${beatmap.version ? ` [${beatmap.version}]` : ""}`
         button.addEventListener("mousedown", mapClickEvent)
         button.addEventListener("contextmenu", event => event.preventDefault())
         mappoolSelectContainerEl.append(button)
@@ -758,11 +773,26 @@ function getScoreMultiplier(playerNumber) {
     return multiplier
 }
 
-// HP the duel loser loses: SOULWEAVER_LOSER_HP_LOSS_RATIO of the HP they entered with, times the maps-played damage
-// multiplier, capped like standard damage, rounded up. Used for the live preview and for the committed result.
+// HP the duel loser loses: SOULWEAVER_LOSER_HP_LOSS_RATIO (75%) of the HP they entered with, rounded up.
+// No damage cap and no maps-played multiplier. Used for the live preview and for the committed result.
 function getDuelLoss(hp) {
-    const loss = hp * constants.SOULWEAVER_LOSER_HP_LOSS_RATIO * getDamageMultiplier()
-    return roundUpDamage(Math.min(loss, constants.MAX_STANDARD_DAMAGE))
+    return roundUpDamage(hp * constants.SOULWEAVER_LOSER_HP_LOSS_RATIO)
+}
+
+// EZ: a player's score is doubled while they're playing with EZ
+const EZ_SCORE_MULTIPLIER = constants.EZ_SCORE_MULTIPLIER ?? 2
+const EZ_MOD_BIT = 2 // osu! mod bitmask value for Easy
+
+// Works with tosu's mods object ({ array, number, name }) or a plain mod string like "EZNF"
+function hasEzMod(mods) {
+    if (!mods) return false
+    if (Array.isArray(mods.array)) {
+        return mods.array.some(mod => String(mod?.acronym ?? mod).toUpperCase() === "EZ")
+    }
+    if (typeof mods.number === "number") return (mods.number & EZ_MOD_BIT) !== 0
+    const name = typeof mods === "string" ? mods : (mods.name ?? mods.str ?? "")
+    // Acronyms are two letters each, so check them in pairs ("NEZ..." mustn't count as EZ)
+    return (String(name).toUpperCase().match(/.{1,2}/g) ?? []).includes("EZ")
 }
 
 // Lower effective score loses. Tie = nobody loses.
@@ -1109,7 +1139,7 @@ function applyDamage(applyDamagePlayerData) {
         player.currentMaxHp = Math.max(0, Math.round(hpBefore - player.currentScoreAgainst))
 
         if (wasAlive && playerKey === duelLoser) {
-            // Lost the duel: loses 75% of the HP they entered the duel with, times the damage multiplier, up to the damage cap. No sitting out.
+            // Lost the duel: loses 75% of the HP they entered the duel with. No cap, no damage multiplier. No sitting out.
             player.currentMaxHp = Math.max(0, hpBefore - getDuelLoss(hpBefore))
         } else if (wasAlive && player.currentMaxHp === 0) {
             player.currentDeadRounds = (player.class === "human" && !player.hasRevived) ? constants.DEAD_ROUNDS : 0
@@ -1242,7 +1272,10 @@ function updatePlayerData(nonUpdatedPlayerData, data) {
         )
 
         // An empty slot has id 0, which could match an unused tosu client, so it never reads a score
-        player.currentScore = isPresent(player) ? (client?.play?.score ?? 0) : 0
+        const rawScore = isPresent(player) ? (client?.play?.score ?? 0) : 0
+        // EZ doubles the score (before any class multiplier)
+        player.ezActive = isPresent(player) && hasEzMod(client?.play?.mods)
+        player.currentScore = player.ezActive ? rawScore * EZ_SCORE_MULTIPLIER : rawScore
     })
 
     // Effective scores (class bonuses applied, sit-outs zeroed)
@@ -1289,8 +1322,8 @@ function updatePlayerData(nonUpdatedPlayerData, data) {
         player.currentScoreAgainst = roundUpDamage(player.currentScoreAgainst)
     })
 
-    // Soulweaver duel: the player who is currently losing shows the HP they would lose (a % of their HP, times the
-    // damage multiplier, capped). The same amount applyDamage takes off, so the live bar matches the result.
+    // Soulweaver duel: the player who is currently losing shows the HP they would lose (75% of their HP, no cap,
+    // no damage multiplier). The same amount applyDamage takes off, so the live bar matches the result.
     const duelLoser = getDuelLoser()
     const loser = duelLoser && nonUpdatedPlayerData[duelLoser]
     if (loser && loser.currentMaxHp > 0) loser.currentScoreAgainst = getDuelLoss(loser.currentMaxHp)
