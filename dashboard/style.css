@@ -165,7 +165,6 @@ h1, h2, p { margin: 0; }
     transition: background 160ms var(--ease), color 160ms var(--ease);
 }
 .auto-labels:hover { background: var(--surface-3); color: var(--text); }
-.auto-labels:has(input:checked) { color: var(--text); }
 
 input[type="checkbox"] {
     appearance: none;
@@ -218,14 +217,17 @@ input[type="checkbox"]:focus-visible {
     margin: 0 auto;
 }
 
-.card-details  { grid-column: span 5; }
-.card-api      { grid-column: span 7; }
-.card-scenes   { grid-column: span 12; }
-.card-hp       { grid-column: span 6; }
-.card-targets  { grid-column: span 6; }
-.card-classes  { grid-column: span 8; }
-.card-pickers  { grid-column: span 4; }
-.card-mappool  { grid-column: span 12; }
+.card-details { grid-column: span 5; }
+.card-api { grid-column: span 7; }
+.card-scenes { grid-column: span 12; }
+.card-hp { grid-column: span 6; }
+.card-targets { grid-column: span 6; }
+.card-classes { grid-column: span 8; }
+.card-pickers {
+    grid-column: span 4;
+    gap: 18px;
+}
+.card-mappool { grid-column: span 12; }
 
 @media (width <= 1280px) {
     .card-details,
@@ -303,6 +305,7 @@ input[type="number"] {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     text-align: right;
+    appearance: textfield;
 }
 
 select {
@@ -337,7 +340,6 @@ input::-webkit-inner-spin-button {
     appearance: none;
     margin: 0;
 }
-input[type="number"] { appearance: textfield; }
 
 button {
     display: inline-flex;
@@ -686,6 +688,8 @@ input[type="number"].maps-played-input {
     background: var(--surface-3);
 }
 
+.auto-labels:has(input:checked) { color: var(--text); }
+
 .class-controls .auto-labels:has(input:checked) {
     background: var(--accent-soft);
     box-shadow: inset 0 0 0 1px rgb(139 123 255 / 45%);
@@ -729,8 +733,6 @@ input[type="number"].maps-played-input {
 }
 
 /* Pickers */
-.card-pickers { gap: 18px; }
-
 .picker-group {
     display: flex;
     flex-direction: column;
