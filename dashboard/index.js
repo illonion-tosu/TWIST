@@ -781,18 +781,31 @@ function getDuelLoss(hp) {
 
 // EZ: a player's score is doubled while they're playing with EZ
 const EZ_SCORE_MULTIPLIER = constants.EZ_SCORE_MULTIPLIER ?? 2
-const EZ_MOD_BIT = 2 // osu! mod bitmask value for Easy
+// osu! mod bitmask values
+const MOD_BITS = { EZ: 2, HD: 8 }
 
 // Works with tosu's mods object ({ array, number, name }) or a plain mod string like "EZNF"
-function hasEzMod(mods) {
+function hasMod(mods, acronym) {
     if (!mods) return false
     if (Array.isArray(mods.array)) {
-        return mods.array.some(mod => String(mod?.acronym ?? mod).toUpperCase() === "EZ")
+        return mods.array.some(mod => String(mod?.acronym ?? mod).toUpperCase() === acronym)
     }
-    if (typeof mods.number === "number") return (mods.number & EZ_MOD_BIT) !== 0
+    if (typeof mods.number === "number") return (mods.number & MOD_BITS[acronym]) !== 0
     const name = typeof mods === "string" ? mods : (mods.name ?? mods.str ?? "")
     // Acronyms are two letters each, so check them in pairs ("NEZ..." mustn't count as EZ)
-    return (String(name).toUpperCase().match(/.{1,2}/g) ?? []).includes("EZ")
+    return (String(name).toUpperCase().match(/.{1,2}/g) ?? []).includes(acronym)
+}
+const hasEzMod = mods => hasMod(mods, "EZ")
+const hasHdMod = mods => hasMod(mods, "HD")
+
+// Accuracy-scored maps (RX): (acc - floor) / (1 - floor) * 1,000,000, never below 0.
+// tosu gives accuracy as a percentage (98.5); a 0-1 value is accepted too.
+function getAccScore(accuracy) {
+    let acc = Number(accuracy)
+    if (!Number.isFinite(acc)) return 0
+    if (acc > 1) acc /= 100
+    const floor = constants.ACC_SCORE_FLOOR
+    return Math.round(Math.max(0, (acc - floor) / (1 - floor)) * constants.ACC_SCORE_MAX)
 }
 
 // Lower effective score loses. Tie = nobody loses.
@@ -967,6 +980,9 @@ let currentId, currentChecksum
 let mappoolMapFound = false
 let mappoolMapLabel
 let currentBeatmap
+
+// The current pool map's mod slot (NM, DTHR, RX...), or "" when it isn't a pool map
+const getCurrentMapMod = () => String(currentBeatmap?.mod ?? "").toUpperCase()
 
 // Current map info
 const currentMapEl = document.getElementById("current-map")
@@ -1266,16 +1282,36 @@ function updatePlayerData(nonUpdatedPlayerData, data) {
     }
 
     // Raw scores
+    const mapMod = getCurrentMapMod()
+    const accScoring = constants.ACC_SCORING_MODS.includes(mapMod)
     Object.values(nonUpdatedPlayerData).forEach(player => {
         const client = data.tourney?.clients?.find(
             c => c.user.id === player.id
         )
 
         // An empty slot has id 0, which could match an unused tosu client, so it never reads a score
-        const rawScore = isPresent(player) ? (client?.play?.score ?? 0) : 0
+        if (!isPresent(player)) {
+            player.ezActive = false
+            player.currentScore = 0
+            return
+        }
+
+        // RX maps: accuracy formula, no mod multipliers (accuracy has none to undo)
+        if (accScoring) {
+            player.ezActive = false
+            player.currentScore = client ? getAccScore(client.play?.accuracy) : 0
+            return
+        }
+
+        let score = client?.play?.score ?? 0
         // EZ doubles the score (before any class multiplier)
-        player.ezActive = isPresent(player) && hasEzMod(client?.play?.mods)
-        player.currentScore = player.ezActive ? rawScore * EZ_SCORE_MULTIPLIER : rawScore
+        player.ezActive = hasEzMod(client?.play?.mods)
+        if (player.ezActive) score *= EZ_SCORE_MULTIPLIER
+        // DTHR: HD is optional, so its multiplier is removed
+        if (mapMod === "DTHR" && hasHdMod(client?.play?.mods)) {
+            score = Math.round(score / constants.DTHR_HD_SCORE_DIVISOR)
+        }
+        player.currentScore = score
     })
 
     // Effective scores (class bonuses applied, sit-outs zeroed)
