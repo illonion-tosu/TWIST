@@ -74,6 +74,14 @@ export const constants = Object.freeze({
     MOD_DT_SPEED_MULTIPLIER: 1.5,
     MOD_STAT_CAP: 10,
 
+    // Scoring
+    // These maps are scored on accuracy instead of osu! score: (acc - floor) / (1 - floor) * max, 0 at or below the floor
+    ACC_SCORING_MODS: ["RX"],
+    ACC_SCORE_FLOOR: 0.85,
+    ACC_SCORE_MAX: 1000000,
+    // DTHR maps: HD is optional, so its 1.06x score bonus is taken back off
+    DTHR_HD_SCORE_DIVISOR: 1.06,
+
     // Overlay layout
     GAMEPLAY_TEAM_NAME_MAX_WIDTH: 550,
     TEAM_HP_BAR_MAX_WIDTH: 238,
