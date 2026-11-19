@@ -808,9 +808,6 @@ function getAccScore(accuracy) {
     return Math.round(Math.max(0, (acc - floor) / (1 - floor)) * constants.ACC_SCORE_MAX)
 }
 
-// The current pool map's mod slot (NM, DTHR, RX...), or "" when it isn't a pool map
-const getCurrentMapMod = () => String(currentBeatmap?.mod ?? "").toUpperCase()
-
 // Lower effective score loses. Tie = nobody loses.
 function getDuelLoser() {
     const duel = abilities.soulweaver
@@ -983,6 +980,9 @@ let currentId, currentChecksum
 let mappoolMapFound = false
 let mappoolMapLabel
 let currentBeatmap
+
+// The current pool map's mod slot (NM, DTHR, RX...), or "" when it isn't a pool map
+const getCurrentMapMod = () => String(currentBeatmap?.mod ?? "").toUpperCase()
 
 // Current map info
 const currentMapEl = document.getElementById("current-map")
